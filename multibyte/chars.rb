@@ -105,7 +105,7 @@ module Multibyte
       if utf8_pragma?
         @@handler
       else
-        ActiveSupport::Multibyte::Handlers::PassthruHandler
+        Multibyte::Handlers::PassthruHandler
       end
     end
 

@@ -201,7 +201,7 @@ module Multibyte::Handlers
       #
       # * <tt>str</tt>: The string to perform normalization on.
       # * <tt>form</tt>: The form you want to normalize in. Should be one of the following: :c, :kc, :d or :kd.
-      def normalize(str, form=ActiveSupport::Multibyte::DEFAULT_NORMALIZATION_FORM)
+      def normalize(str, form=Multibyte::DEFAULT_NORMALIZATION_FORM)
         # See http://www.unicode.org/reports/tr15, Table 1
         codepoints = u_unpack(str)
         case form

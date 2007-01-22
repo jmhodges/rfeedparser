@@ -6,7 +6,7 @@ end
 require 'open-uri'
 require 'tmpdir'
 
-module ActiveSupport::Multibyte::Handlers #:nodoc:
+module Multibyte::Handlers #:nodoc:
   class UnicodeDatabase #:nodoc:
     def self.load
       [Hash.new(Codepoint.new),[],{},{}]
@@ -14,7 +14,7 @@ module ActiveSupport::Multibyte::Handlers #:nodoc:
   end
   
   class UnicodeTableGenerator #:nodoc:
-    BASE_URI = "http://www.unicode.org/Public/#{ActiveSupport::Multibyte::UNICODE_VERSION}/ucd/"
+    BASE_URI = "http://www.unicode.org/Public/#{Multibyte::UNICODE_VERSION}/ucd/"
     SOURCES = {
       :codepoints => BASE_URI + 'UnicodeData.txt',
       :composition_exclusion => BASE_URI + 'CompositionExclusions.txt',
@@ -140,8 +140,8 @@ module ActiveSupport::Multibyte::Handlers #:nodoc:
 end
 
 if __FILE__ == $0
-  filename = ActiveSupport::Multibyte::Handlers::UnicodeDatabase.filename
-  generator = ActiveSupport::Multibyte::Handlers::UnicodeTableGenerator.new
+  filename = Multibyte::Handlers::UnicodeDatabase.filename
+  generator = Multibyte::Handlers::UnicodeTableGenerator.new
   generator.parse
   print "Writing to: #{filename}"
   generator.dump_to filename
