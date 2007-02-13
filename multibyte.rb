@@ -1,11 +1,11 @@
 # Stripped with few changes from Ruby on Rails
 module Multibyte
-  DEFAULT_NORMALIZATION_FORM = :kc
+  DEFAULT_NORMALIZATION_FORM = :c
   NORMALIZATIONS_FORMS = [:c, :kc, :d, :kd]
   UNICODE_VERSION = '5.0.0'
 end
 
-require 'multibyte/chars'
+require File.dirname(__FILE__)+'/multibyte/chars'
 
 module CoreExtensions
   module String
@@ -49,3 +49,6 @@ module CoreExtensions
 end
 
 include CoreExtensions::String::Unicode
+include Multibyte::Handlers::UTF8Handler::Multibyte::Handlers 
+# FIXME how should i really be doing this? good lord, that is stupid.
+# it is, however, necessary to add Codepoint, etc. 

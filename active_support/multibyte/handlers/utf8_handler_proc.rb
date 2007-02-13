@@ -1,10 +1,10 @@
 # Methods in this handler call functions in the utf8proc ruby extension. These are significantly faster than the
 # pure ruby versions. Chars automatically uses this handler when it can load the utf8proc extension. For
 # documentation on handler methods see UTF8Handler.
-class Multibyte::Handlers::UTF8HandlerProc < Multibyte::Handlers::UTF8Handler
+class ActiveSupport::Multibyte::Handlers::UTF8HandlerProc < ActiveSupport::Multibyte::Handlers::UTF8Handler
   
   class << self
-    def normalize(str, form=Multibyte::DEFAULT_NORMALIZATION_FORM) #:nodoc:
+    def normalize(str, form=ActiveSupport::Multibyte::DEFAULT_NORMALIZATION_FORM) #:nodoc:
       codepoints = str.unpack('U*')
       case form
         when :d

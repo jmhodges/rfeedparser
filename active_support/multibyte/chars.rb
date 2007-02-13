@@ -1,8 +1,8 @@
-require 'multibyte/handlers/utf8_handler'
-require 'multibyte/handlers/passthru_handler'
+require 'active_support/multibyte/handlers/utf8_handler'
+require 'active_support/multibyte/handlers/passthru_handler'
 
 # Encapsulates all the functionality related to the Chars proxy.
-module Multibyte
+module ActiveSupport::Multibyte
   # Chars enables you to work transparently with multibyte encodings in the Ruby String class without having extensive
   # knowledge about the encoding. A Chars object accepts a string upon initialization and proxies String methods in an
   # encoding safe manner. All the normal String methods are also implemented on the proxy.
@@ -105,7 +105,7 @@ module Multibyte
       if utf8_pragma?
         @@handler
       else
-        Multibyte::Handlers::PassthruHandler
+        ActiveSupport::Multibyte::Handlers::PassthruHandler
       end
     end
 
@@ -122,8 +122,8 @@ end
 # When we can load the utf8proc library, override normalization with the faster methods
 begin
   require 'utf8proc_native'
-  require 'multibyte/handlers/utf8_handler_proc'
-  Multibyte::Chars.handler = Multibyte::Handlers::UTF8HandlerProc
+  require 'active_support/multibyte/handlers/utf8_handler_proc'
+  ActiveSupport::Multibyte::Chars.handler = ActiveSupport::Multibyte::Handlers::UTF8HandlerProc
 rescue LoadError
-  Multibyte::Chars.handler = Multibyte::Handlers::UTF8Handler
+  ActiveSupport::Multibyte::Chars.handler = ActiveSupport::Multibyte::Handlers::UTF8Handler
 end
