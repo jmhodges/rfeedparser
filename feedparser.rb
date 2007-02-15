@@ -10,23 +10,15 @@ Email Jeff Hodges at jeff@obquo.com for questions
 Required: Ruby 1.8
 """
 $KCODE = 'UTF8'
-#require 'multibyte'
-require 'active_support' # FIXME no longer want to use ActiveSupport
-# I only do this because I believe the unicode_tables.dat file may come in
-# handy and I haven't taken sat down and written something up to remove the
-# 'ActiveSupport::' from all of the class definitions to in it. I had it
-# all nicely stripped down and usable, except for anything like #compose,
-# etc. which may not even be used. We'll see.
-def unichr(i)
-  # FIXME No longer want to use ActiveSupport
-  ActiveSupport::Multibyte::Handlers::UTF8Handler.codepoints_to_pattern([i])
-end
+
+
 
 __version__ = "0.1aleph_naught"
 _debug = true
 # FIXME OVER HERE! Hi. I'm still translating. Grep for "FIXME untranslated" to 
 # figure out, roughly, what needs to be done.  I've tried to put it next to 
-# anything having to do with any unimplemented sections.
+# anything having to do with any unimplemented sections. There are plent of 
+# other FIXMEs however
 
 # HTTP "User-Agent" header to send to servers when downloading feeds.
 # If you are embedding feedparser in a larger application, you should
@@ -58,16 +50,15 @@ PREFERRED_TIDY_INTERFACES = ["uTidy", "mxTidy"] #FIXME untranslated
 require 'stringio'
 require 'enumerator'
 require 'uri'
+require 'net/http'
 require 'zlib'
 # http://www.yoshidam.net/Ruby.html <-- XMLParser uses Expat
 require 'xml/saxdriver' # FIXME this is an external dependency on Expat. On Ubuntu (and Debian), install libxml-parser-ruby1.8
-XML::SAX::Helpers::ParserFactory.makeParser("XML::Parser::SAXDriver") #FIXME well, duh. this is just a placeholder
-_XML_AVAILABLE = true
+
+XML_AVAILABLE = true
 require 'rubygems'
-gem 'builder' # FIXME no rubygems, no builder. is bad.
+gem 'builder' # FIXME no rubygems, no builder. is bad. to_xs
 require 'builder'
-gem 'hpricot'
-require 'hpricot' 
 
 def _xmlescape(text)  # FIXME untranslated, when builder does not exist, must use stupid definition
   # We also need the ability to define new "corrections"
@@ -84,8 +75,30 @@ require 'iconv'
 #FIXME untranslated, ruby gem
 gem 'htmlentities'
 require 'htmlentities/string' #FIXME we need a "manual" attempt if this doesn't exist
+gem 'character-encodings', ">=0.2.0"
+gem 'hpricot', ">=0.5"
+require 'hpricot'
+require 'encoding/character/utf-8'
+require 'open-uri'
+include OpenURI
 
-# This adds a nice scrub method, so we don't need a _HTMLSanitizer class
+def unicode(data, from_encoding)
+  # Takes a single string and converts it from the encoding in 
+  # from_encoding to unicode.
+  uconvert(data, from_encoding, 'unicode')
+end
+
+def uconvert(data, from_encoding, to_encoding = 'utf-8')
+  Iconv.iconv(to_encoding, from_encoding, data)[0]
+end
+
+def unichr(i)
+  # FIXME Would be better to wrap String.chr
+  # How to wrap the ? method (i.e. ?c # => 99 )
+  [i].pack('U*')
+end
+
+# This adds a nice scrub method to Hpricot, so we don't need a _HTMLSanitizer class
 # I have modified it to check for attributes that are only allowed if they are in a certain tag
 module Hpricot
   class Elements
@@ -345,14 +358,6 @@ end
 
 # FIXME untranslated, the sgmllib, can it be replaced with Hpricot?
 
-# FIXME We don't have a deep_copy in Ruby, but we have something that kind of, sort of works.
-# This is completely untested, just here as a placeholder until I work this out. Bonus, I'm not even using it, yet. Just #dup
-class Object
-  def deep_copy
-    Marshal.load(Marshal.dump(self))
-  end
-end
-
 SUPPORTED_VERSIONS = {'' => 'unknown',
                       'rss090' => 'RSS 0.90',
                       'rss091n' => 'RSS 0.91 (Netscape)',
@@ -371,18 +376,21 @@ SUPPORTED_VERSIONS = {'' => 'unknown',
                       'cdf' => 'CDF',
                       'hotrss' => 'Hot RSS'
 }
-class FeedParserDict < Hash
-  # The naming of a certain common attribute (such as, "When was the last
-  # time this feed was updated?") can have many different names depending on
-  # the type of feed we are handling. This class allows us to use both the 
-  # names a person who has knowledge of the feed type expects, as well as 
-  # allowing a developer to rely on one variable to contain the proper 
-  # attribute. @@keymaps is a Hash that contains information on what certain 
-  # attributes "really is" in each feed type. It does so by providing a 
-  # common name that will map to any feed type in the keys, with possible 
-  # "correct" attributes in the its values. the #[] and #[]= methods check 
-  # with keymaps to see what attribute the developer "really means" if they've
-  # asked for one which happens to be in @@keymap's keys.
+class FeedParserDict < Hash  
+=begin
+     The naming of a certain common attribute (such as, "When was the last
+     time this feed was updated?") can have many different names depending
+     on the type of feed we are handling. This class allows us to use
+     both the attribute name a person, who has knowledge of the kind of
+     feed being parsed, expects, as well as allowing a developer to rely
+     on one name to contain the proper attribute no matter what kind of
+     feed is being parsed. @@keymaps is a Hash that contains information
+     on what certain attributes "really is" in each feed type. It does so
+     by providing a common name that will map to any feed type in the keys,
+     with possible "correct" attributes in the its values. the #[] and #[]=
+     methods check with keymaps to see what attribute the developer "really
+     means" if they've asked for one which happens to be in @@keymap's keys.
+=end
   @@keymap = {'channel' => 'feed',
               'items' => 'entries',
               'guid' => 'id',
@@ -652,7 +660,9 @@ module FeedParserMixin
     attrsD = {}
     attrs.each do |l| 
       l[0].downcase! # Downcase all keys
-      l[1].downcase! if ['rel','type'].include?l[0]  # Downcase the value if the key is 'rel' or 'type'
+      if ['rel','type'].include?l[0]
+        l[1].downcase!   # Downcase the value if the key is 'rel' or 'type'
+      end
       attrsD[l[0]] = l[1]
     end
 
@@ -851,7 +861,7 @@ module FeedParserMixin
     # override internal declaration handler to handle CDATA blocks
     $stderr << 'entering parse_declaration\n' if _debug
     if @rawdata[i..i+9] == '<![CDATA['
-      k = k.nil? ? @rawdata.length : @rawdata.index(']]>', i) # length may need to be size with the Hpricot Multibyte
+      k = k.nil? ? @rawdata.size : @rawdata.index(']]>', i) # using a size call just in case :(  
       handle_data(@rawdata[i+9..k].to_xs) # FIXME test the to_xs call.
       return k+3
     else
@@ -1180,7 +1190,7 @@ module FeedParserMixin
     @infeed = true
     _cdf_common(attrsD)
   end
-  _start_feedinfo = _start_channel
+  alias :_start_feedinfo :_start_channel
 
   def _cdf_common(attrsD)
     if attrsD.has_key('lastmod')
@@ -1214,7 +1224,7 @@ module FeedParserMixin
   def _end_channel
     @infeed = false
   end
-  _end_feed = _end_channel
+  alias :_end_feed :_end_channel
 
   def _start_image(attrsD)
     context = _getContext
@@ -1235,180 +1245,180 @@ module FeedParserMixin
     @intextinput = false
     push('textinput', true)
   end
-  _start_textInput = _start_textinput
+  alias :_start_textInput :_start_textinput
 
   def _end_textinput
     pop('textinput')
     @intextinput = false
   end
-  _end_textInput = _end_textinput
+  alias :_end_textInput :_end_textinput
 
   def _start_author(attrsD)
     @inauthor = true
     push('author', true)
   end
-  _start_managingeditor = _start_author
-  _start_dc_author = _start_author
-  _start_dc_creator = _start_author
-  _start_itunes_author = _start_author
+  alias :_start_managingeditor :_start_author
+  alias :_start_dc_author :_start_author
+  alias :_start_dc_creator :_start_author
+  alias :_start_itunes_author :_start_author
 
   def _end_author
-    self.pop('author')
-    self.inauthor = false
-    self._sync_author_detail
+    pop('author')
+    @inauthor = false
+    _sync_author_detail
   end
-  _end_managingeditor = _end_author
-  _end_dc_author = _end_author
-  _end_dc_creator = _end_author
-  _end_itunes_author = _end_author
+  alias :_end_managingeditor :_end_author
+  alias :_end_dc_author :_end_author
+  alias :_end_dc_creator :_end_author
+  alias :_end_itunes_author :_end_author
 
   def _start_itunes_owner(attrsD)
-    self.inpublisher = true
-    self.push('publisher', false)
+    @inpublisher = true
+    push('publisher', false)
   end
 
   def _end_itunes_owner
-    self.pop('publisher') 
-    self.inpublisher = false
-    self._sync_author_detail('publisher')
+    pop('publisher') 
+    @inpublisher = false
+    _sync_author_detail('publisher')
   end
 
   def _start_contributor(attrsD)
-    self.incontributor = true
-    context = self._getContext()
+    @incontributor = true
+    context = _getContext()
     context.setdefault('contributors', [])
     context['contributors'] << FeedParserDict.new
-    self.push('contributor', false)
+    push('contributor', false)
   end
 
   def _end_contributor
-    self.pop('contributor')
-    self.incontributor = false
+    pop('contributor')
+    @incontributor = false
   end
 
   def _start_dc_contributor(attrsD)
-    self._end_name
-    self.incontributor = false
+    _end_name
+    @incontributor = false
   end
 
   def _start_name(attrsD)
-    self.push('name', false)
+    push('name', false)
   end
-  _start_itunes_name = _start_name
+  alias :_start_itunes_name :_start_name
 
   def _end_name
-    value = self.pop('name')
-    if self.inpublisher
-      self._save_author('name', value, 'publisher')
-    elsif self.inauthor
-      self._save_author('name', value)
-    elsif self.incontributor
-      self._save_contributor('name', value)
-    elsif self.intextinput
-      context = self._getContext()
+    value = pop('name')
+    if @inpublisher
+      _save_author('name', value, 'publisher')
+    elsif @inauthor
+      _save_author('name', value)
+    elsif @incontributor
+      _save_contributor('name', value)
+    elsif @intextinput
+      context = _getContext()
       context['name'] = value
     end
   end
-  _end_itunes_name = _end_name
+  alias :_end_itunes_name :_end_name
 
   def _start_width(attrsD)
-    self.push('width', false)
+    push('width', false)
   end
 
   def _end_width
-    value = self.pop('width')
+    value = pop('width')
     begin
-      value = int(value)
+      value = value.to_i
     rescue
       value = 0
     end
-    if self.inimage
-      context = self._getContext()
+    if @inimage
+      context = _getContext()
       context['width'] = value
     end
   end
 
   def _start_height(attrsD)
-    self.push('height', false)
+    push('height', false)
   end
 
   def _end_height
-    value = self.pop('height')
+    value = pop('height')
     begin
-      value = int(value)
+      value = value.to_i
     rescue
       value = 0
     end
-    if self.inimage
-      context = self._getContext()
+    if @inimage
+      context = _getContext()
       context['height'] = value
     end
   end
 
   def _start_url(attrsD)
-    self.push('href', true)
+    push('href', true)
   end
-  _start_homepage = _start_url
-  _start_uri = _start_url
+  alias :_start_homepage :_start_url
+  alias :_start_uri :_start_url
 
   def _end_url
-    value = self.pop('href')
-    if self.inauthor
-      self._save_author('href', value)
-    elsif self.incontributor
-      self._save_contributor('href', value)
+    value = pop('href')
+    if @inauthor
+      _save_author('href', value)
+    elsif @incontributor
+      _save_contributor('href', value)
     end
   end
-  _end_homepage = _end_url
-  _end_uri = _end_url
+  alias :_end_homepage :_end_url
+  alias :_end_uri :_end_url
 
   def _start_email(attrsD)
-    self.push('email', false)
+    push('email', false)
   end
-  _start_itunes_email = _start_email
+  alias :_start_itunes_email :_start_email
 
   def _end_email
-    value = self.pop('email')
-    if self.inpublisher
-      self._save_author('email', value, 'publisher')
-    elsif self.inauthor
-      self._save_author('email', value)
-    elsif self.incontributor
-      self._save_contributor('email', value)
+    value = pop('email')
+    if @inpublisher
+      _save_author('email', value, 'publisher')
+    elsif @inauthor
+      _save_author('email', value)
+    elsif @incontributor
+      _save_contributor('email', value)
     end
   end
-  _end_itunes_email = _end_email
+  alias :_end_itunes_email :_end_email
 
   def _getContext
-    if self.insource
-      context = self.sourcedata
-    elsif self.inimage
-      context = self.feeddata['image']
-    elsif self.intextinput
-      context = self.feeddata['textinput']
-    elsif self.inentry
-      context = self.entries[-1]
+    if @insource
+      context = @sourcedata
+    elsif @inimage
+      context = @feeddata['image']
+    elsif @intextinput
+      context = @feeddata['textinput']
+    elsif @inentry
+      context = @entries[-1]
     else
-      context = self.feeddata
+      context = @feeddata
     end
     return context
   end
 
   def _save_author(key, value, prefix='author')
-    context = self._getContext
+    context = _getContext
     context.setdefault(prefix + '_detail', FeedParserDict.new)
     context[prefix + '_detail'][key] = value
-    self._sync_author_detail
+    _sync_author_detail
   end
 
   def _save_contributor(key, value)
-    context = self._getContext()
+    context = _getContext()
     context.setdefault('contributors', [FeedParserDict.new])
     context['contributors'][-1][key] = value
   end
 
   def _sync_author_detail(key='author')
-    context = self._getContext()
+    context = _getContext()
     detail = context['%s_detail' % key]
     if detail and not detail.empty?
       name = detail['name']
@@ -1450,129 +1460,129 @@ module FeedParserMixin
   end 
 
   def _start_subtitle(attrsD)
-    self.pushContent('subtitle', attrsD, 'text/plain', true) # replace true with 1?
+    pushContent('subtitle', attrsD, 'text/plain', true) # replace true with 1?
   end
-  _start_tagline = _start_subtitle
-  _start_itunes_subtitle = _start_subtitle
+  alias :_start_tagline :_start_subtitle
+  alias :_start_itunes_subtitle :_start_subtitle
 
   def _end_subtitle
-    self.popContent('subtitle')
+    popContent('subtitle')
   end
-  _end_itunes_subtitle = _end_subtitle
+  alias :_end_itunes_subtitle :_end_subtitle
 
   def _start_rights(attrsD)
-    self.pushContent('rights', attrsD, 'text/plain', true)
+    pushContent('rights', attrsD, 'text/plain', true)
   end
-  _start_dc_rights = _start_rights
-  _start_copyright = _start_rights
+  alias :_start_dc_rights :_start_rights
+  alias :_start_copyright :_start_rights
 
   def _end_rights
-    self.popContent('rights')
+    popContent('rights')
   end
-  _end_dc_rights = _end_rights
-  _end_copyright = _end_rights
+  alias :_end_dc_rights :_end_rights
+  alias :_end_copyright :_end_rights
 
   def _start_item(attrsD)
-    self.entries.append(FeedParserDict.new)
-    self.push('item', false)
-    self.inentry = true
-    self.guidislink = false
-    id = self._getAttribute(attrsD, 'rdf:about') # FIXME there is a better way to do this
+    @entries.append(FeedParserDict.new)
+    push('item', false)
+    @inentry = true
+    @guidislink = false
+    id = _getAttribute(attrsD, 'rdf:about') # FIXME there is a better way to do this
     if id and not id.empty?
-      context = self._getContext()
+      context = _getContext()
       context['id'] = id
     end
-    self._cdf_common(attrsD)
+    _cdf_common(attrsD)
   end
-  _start_entry = _start_item
-  _start_product = _start_item
+  alias :_start_entry :_start_item
+  alias :_start_product :_start_item
 
   def _end_item
-    self.pop('item')
-    self.inentry = false
+    pop('item')
+    @inentry = false
   end
-  _end_entry = _end_item
+  alias :_end_entry :_end_item
 
   def _start_dc_language(attrsD)
-    self.push('language', true)
+    push('language', true)
   end
-  _start_language = _start_dc_language
+  alias :_start_language :_start_dc_language
 
   def _end_dc_publisher
-    self.pop('publisher')
-    self._sync_author_detail('publisher')
+    pop('publisher')
+    _sync_author_detail('publisher')
   end
-  _end_webmaster = _end_dc_publisher
+  alias :_end_webmaster :_end_dc_publisher
 
   def _start_published(attrsD)
-    self.push('published', true)
+    push('published', true)
   end
-  _start_dcterms_issued = _start_published
-  _start_issued = _start_published
+  alias :_start_dcterms_issued :_start_published
+  alias :_start_issued :_start_published
 
   def _end_published
-    value = self.pop('published')
-    self._save('published_parsed', _parse_date(value))
+    value = pop('published')
+    _save('published_parsed', _parse_date(value))
   end
-  _end_dcterms_issued = _end_published
-  _end_issued = _end_published
+  alias :_end_dcterms_issued :_end_published
+  alias :_end_issued :_end_published
 
   def _start_updated(attrsD)
-    self.push('updated', true)
+    push('updated', true)
   end
-  _start_modified = _start_updated
-  _start_dcterms_modified = _start_updated
-  _start_pubdate = _start_updated
-  _start_dc_date = _start_updated
+  alias :_start_modified :_start_updated
+  alias :_start_dcterms_modified :_start_updated
+  alias :_start_pubdate :_start_updated
+  alias :_start_dc_date :_start_updated
 
   def _end_updated
-    value = self.pop('updated')
+    value = pop('updated')
     parsed_value = _parse_date(value)
-    self._save('updated_parsed', parsed_value)
+    _save('updated_parsed', parsed_value)
   end
-  _end_modified = _end_updated
-  _end_dcterms_modified = _end_updated
-  _end_pubdate = _end_updated
-  _end_dc_date = _end_updated
+  alias :_end_modified :_end_updated
+  alias :_end_dcterms_modified :_end_updated
+  alias :_end_pubdate :_end_updated
+  alias :_end_dc_date :_end_updated
 
   def _start_created(attrsD)
-    self.push('created', true)
+    push('created', true)
   end
-  _start_dcterms_created = _start_created
+  alias :_start_dcterms_created :_start_created
 
   def _end_created
-    value = self.pop('created')
-    self._save('created_parsed', _parse_date(value))
+    value = pop('created')
+    _save('created_parsed', _parse_date(value))
   end
-  _end_dcterms_created = _end_created
+  alias :_end_dcterms_created :_end_created
 
   def _start_expirationdate(attrsD)
-    self.push('expired', 1)
+    push('expired', true)
   end
 
   def _end_expirationdate
-    self._save('expired_parsed', _parse_date(self.pop('expired')))
+    _save('expired_parsed', _parse_date(self.pop('expired')))
   end
 
   def _start_cc_license(attrsD)
-    self.push('license', true)
-    value = self._getAttribute(attrsD, 'rdf:resource')
+    push('license', true)
+    value = _getAttribute(attrsD, 'rdf:resource')
     if value:
-      self.elementstack[-1][2] << value
+      @elementstack[-1][2] << value
     end
-    self.pop('license')
+    pop('license')
   end
 
   def _start_creativecommons_license(attrsD)
-    self.push('license', true)
+    push('license', true)
   end
 
   def _end_creativecommons_license
-    self.pop('license')
+    pop('license')
   end
 
   def _addXFN(relationships, href, name)
-    context = self._getContext()
+    context = _getContext()
     xfn = context.setdefault('xfn', [])
     value = FeedParserDict.new({'relationships' => relationships, 'href' => href, 'name' => name})
     if not xfn.include? value
@@ -1581,7 +1591,7 @@ module FeedParserMixin
   end
 
   def _addTag(term, scheme, label)
-    context = self._getContext()
+    context = _getContext()
     tags = context.setdefault('tags', [])
     return if (term.nil? or term.empty?) and (scheme.nil? or scheme.empty?) and (label.nil? or label.empty?)
     value = FeedParserDict.new({'term' => term, 'scheme' => scheme, 'label' => label})
@@ -1595,27 +1605,27 @@ module FeedParserMixin
     term = attrsD['term']
     scheme = attrsD.fetch('scheme', attrsD.fetch('domain'))
     label = attrsD['label']
-    self._addTag(term, scheme, label)
-    self.push('category', true)
+    _addTag(term, scheme, label)
+    push('category', true)
   end
-  _start_dc_subject = _start_category
-  _start_keywords = _start_category
+  alias :_start_dc_subject :_start_category
+  alias :_start_keywords :_start_category
 
   def _end_itunes_keywords
-    self.pop('itunes_keywords').split.each do |term|
-      self._addTag(term, 'http://www.itunes.com/', nil)
+    pop('itunes_keywords').split.each do |term|
+      _addTag(term, 'http://www.itunes.com/', nil)
     end
   end
 
   def _start_itunes_category(attrsD)
-    self._addTag(attrsD['text'], 'http://www.itunes.com/', nil)
-    self.push('category', true)
+    _addTag(attrsD['text'], 'http://www.itunes.com/', nil)
+    push('category', true)
   end
 
   def _end_category
-    value = self.pop('category')
+    value = pop('category')
     return if value.nil? or value.empty?
-    context = self._getContext()
+    context = _getContext()
     tags = context['tags']
     term = tag[-1]['term']
     if value and !value.empty? and tags.length > 0 and not (term.nil? or term.empty?)
@@ -1624,11 +1634,12 @@ module FeedParserMixin
       self._addTag(value, nil, nil)
     end
   end
-  _end_dc_subject = _end_category
-  _end_keywords = _end_category
-  _end_itunes_category = _end_category
+  alias :_end_dc_subject :_end_category
+  alias :_end_keywords :_end_category
+  alias :_end_itunes_category :_end_category
+
   def _start_cloud(attrsD)
-    self._getContext()['cloud'] = FeedParserDict.new(attrsD)
+    _getContext()['cloud'] = FeedParserDict.new(attrsD)
   end
 
   def _start_link(attrsD)
@@ -1638,163 +1649,163 @@ module FeedParserMixin
     else
       attrsD.setdefault('type', 'text/html')
     end
-    context = self._getContext()
-    attrsD = self._itsAnHrefDamnIt(attrsD)
+    context = _getContext()
+    attrsD = _itsAnHrefDamnIt(attrsD) # I'm a big fan of this method. Excellent, Mark.
     if attrsD.has_key('href'):
-      attrsD['href'] = self.resolveURI(attrsD['href'])
+      attrsD['href'] = resolveURI(attrsD['href'])
       if attrsD.get('rel')=='enclosure' and (context['id'].nil? or context['id'].empty?) 
         context['id'] = attrsD.get('href')
       end
     end
-    expectingText = self.infeed || self.inentry || self.insource
+    expectingText = @infeed || @inentry || @insource
     context.setdefault('links', [])
     context['links'] << FeedParserDict.new(attrsD)
     if attrsD.has_key('href'):
       expectingText = false
-      if (attrsD['rel'] == 'alternate') and self.html_types.include?self.mapContentType(attrsD['type'])
+      if (attrsD['rel'] == 'alternate') and @html_types.include?mapContentType(attrsD['type'])
         context['link'] = attrsD['href']
       end
     else
-      self.push('link', expectingText)
+      push('link', expectingText)
     end
   end
-  _start_producturl = _start_link
+  alias :_start_producturl :_start_link
 
   def _end_link
-    value = self.pop('link')
-    context = self._getContext()
+    value = pop('link')
+    context = _getContext()
   end
-  _end_producturl = _end_link
+  alias :_end_producturl :_end_link
 
   def _start_guid(attrsD)
-    self.guidislink = (attrsD.fetch('ispermalink', 'true') == 'true')
-    self.push('id', true)
+    @guidislink = (attrsD.fetch('ispermalink', 'true') == 'true')
+    push('id', true)
   end
 
   def _end_guid
-    value = self.pop('id')
-    self._save('guidislink', (self.guidislink and not self._getContext().has_key?('link')))
-    if self.guidislink and not self.guidislink.empty?
+    value = pop('id')
+    _save('guidislink', (self.guidislink and not self._getContext().has_key?('link')))
+    if @guidislink and not @guidislink.empty?
       # guid acts as link, but only if 'ispermalink' is not present or is 'true',
       # and only if the item doesn't already have a link element
-      self._save('link', value)
+      _save('link', value)
     end
   end
 
   def _start_title(attrsD)
-    return self.unknown_starttag('title', attrsD) if self.incontent
-    self.pushContent('title', attrsD, 'text/plain', self.infeed || self.inentry || self.insource)
+    return unknown_starttag('title', attrsD) if @incontent
+    pushContent('title', attrsD, 'text/plain', @infeed || @inentry || @insource)
   end
-  _start_dc_title = _start_title
-  _start_media_title = _start_title
+  alias :_start_dc_title :_start_title
+  alias :_start_media_title :_start_title
 
   def _end_title
-    value = self.popContent('title')
+    value = popContent('title')
     return if value.nil? or value.empty?
-    context = self._getContext() # FIXME why is this being called if we do nothing with it? must reread _getContext
+    context = _getContext() # FIXME why is this being called if we do nothing with it? must reread _getContext
   end
-  _end_dc_title = _end_title
-  _end_media_title = _end_title
+  alias :_end_dc_title :_end_title
+  alias :_end_media_title :_end_title
 
   def _start_description(attrsD)
-    context = self._getContext()
+    context = _getContext()
     if context.has_key('summary')
-      self._summaryKey = 'content'
-      self._start_content(attrsD)
+      @_summaryKey = 'content'
+      _start_content(attrsD)
     else
-      self.pushContent('description', attrsD, 'text/html', self.infeed || self.inentry || self.insource)
+      pushContent('description', attrsD, 'text/html', @infeed || @inentry || @insource)
     end
   end
-  _start_dc_description = _start_description
+  alias :_start_dc_description :_start_description
 
   def _start_abstract(attrsD)
-    self.pushContent('description', attrsD, 'text/plain', self.infeed || self.inentry || self.insource)
+    pushContent('description', attrsD, 'text/plain', @infeed || @inentry || @insource)
   end
 
   def _end_description
-    if self._summaryKey == 'content'
-      self._end_content()
+    if @_summaryKey == 'content'
+      _end_content()
     else
-      value = self.popContent('description')
+      value = popContent('description')
     end
-    self._summaryKey = nil
+    @_summaryKey = nil
   end
-  _end_abstract = _end_description
-  _end_dc_description = _end_description
+  alias :_end_abstract :_end_description
+  alias :_end_dc_description :_end_description
 
   def _start_info(attrsD)
-    self.pushContent('info', attrsD, 'text/plain', true)
+    pushContent('info', attrsD, 'text/plain', true)
   end
   _start_feedburner_browserfriendly = _start_info
 
   def _end_info
-    self.popContent('info')
+    popContent('info')
   end
-  _end_feedburner_browserfriendly = _end_info
+  alias :_end_feedburner_browserfriendly :_end_info
 
   def _start_generator(attrsD)
     if attrsD and not attrsD.empty?
-      attrsD = self._itsAnHrefDamnIt(attrsD)
+      attrsD = _itsAnHrefDamnIt(attrsD)
       if attrsD.has_key?('href')
-        attrsD['href'] = self.resolveURI(attrsD['href'])
+        attrsD['href'] = resolveURI(attrsD['href'])
       end
     end
-    self._getContext()['generator_detail'] = FeedParserDict.new(attrsD)
-    self.push('generator', true)
+    _getContext()['generator_detail'] = FeedParserDict.new(attrsD)
+    push('generator', true)
   end
 
   def _end_generator
-    value = self.pop('generator')
-    context = self._getContext()
+    value = pop('generator')
+    context = _getContext()
     if context.has_key('generator_detail')
       context['generator_detail']['name'] = value
     end
   end
 
   def _start_admin_generatoragent(attrsD)
-    self.push('generator', true)
-    value = self._getAttribute(attrsD, 'rdf:resource')
+    push('generator', true)
+    value = _getAttribute(attrsD, 'rdf:resource')
     if value and not value.empty?
-      self.elementstack[-1][2] << value
+      @elementstack[-1][2] << value
     end
-    self.pop('generator')
-    self._getContext()['generator_detail'] = FeedParserDict.new({'href' => value})
+    pop('generator')
+    _getContext()['generator_detail'] = FeedParserDict.new({'href' => value})
   end
 
   def _start_admin_errorreportsto(attrsD)
-    self.push('errorreportsto', true)
-    value = self._getAttribute(attrsD, 'rdf:resource')
+    push('errorreportsto', true)
+    value = _getAttribute(attrsD, 'rdf:resource')
     if value and not value.empty?
-      self.elementstack[-1][2] << value
+      elementstack[-1][2] << value
     end
-    self.pop('errorreportsto')
+    pop('errorreportsto')
   end
 
   def _start_summary(attrsD)
-    context = self._getContext()
+    context = _getContext()
     if context.has_key?('summary')
-      self._summaryKey = 'content'
-      self._start_content(attrsD)
+      @_summaryKey = 'content'
+      _start_content(attrsD)
     else
-      self._summaryKey = 'summary'
-      self.pushContent(self._summaryKey, attrsD, 'text/plain', true)
+      @_summaryKey = 'summary'
+      pushContent(@_summaryKey, attrsD, 'text/plain', true)
     end
   end
-  _start_itunes_summary = _start_summary
+  alias :_start_itunes_summary :_start_summary
 
   def _end_summary
-    if self._summaryKey == 'content'
-      self._end_content()
+    if @_summaryKey == 'content'
+      _end_content()
     else
-      self.popContent(self._summaryKey || 'summary')
+      popContent(@_summaryKey || 'summary')
     end
-    self._summaryKey = nil
+    @_summaryKey = nil
   end
-  _end_itunes_summary = _end_summary
+  alias :_end_itunes_summary :_end_summary
 
   def _start_enclosure(attrsD)
-    attrsD = self._itsAnHrefDamnIt(attrsD)
-    context = self._getContext
+    attrsD = _itsAnHrefDamnIt(attrsD)
+    context = _getContext
     attrsD['rel'] = 'enclosure'
     context.setdefault('links', []) << FeedParserDict.new(attrsD) # FIXME check the return of setdefault
     href = attrsD['href']
@@ -1804,81 +1815,82 @@ module FeedParserMixin
   end
 
   def _start_source(attrsD)
-    self.insource = true
+    @insource = true
   end
 
   def _end_source
-    self.insource = false
-    self._getContext()['source'] = self.sourcedata.dup # FIXME deepcopy again
-    self.sourcedata.clear
+    @insource = false
+    _getContext()['source'] = @sourcedata.dup # FIXME deepcopy again
+    @sourcedata.clear
   end
 
   def _start_content(attrsD)
-    self.pushContent('content', attrsD, 'text/plain', true)
+    pushContent('content', attrsD, 'text/plain', true)
     src = attrsD['src']
     if src and not src.empty?
-      self.contentparams['src'] = src
+      @contentparams['src'] = src
     end
-    self.push('content', true)
+    push('content', true)
   end
 
   def _start_prodlink(attrsD)
-    self.pushContent('content', attrsD, 'text/html', true)
+    pushContent('content', attrsD, 'text/html', true)
   end
 
   def _start_body(attrsD)
-    self.pushContent('content', attrsD, 'application/xhtml+xml', true)
+    pushContent('content', attrsD, 'application/xhtml+xml', true)
   end
-  _start_xhtml_body = _start_body
+  alias :_start_xhtml_body :_start_body
 
   def _start_content_encoded(attrsD)
-    self.pushContent('content', attrsD, 'text/html', true)
+    pushContent('content', attrsD, 'text/html', true)
   end
-  _start_fullitem = _start_content_encoded
+  alias :_start_fullitem :_start_content_encoded
 
   def _end_content
-    copyToDescription = (self.html_types << 'text/plain').include? self.mapContentType(self.contentparams['type'])
-    value = self.popContent('content')
+    copyToDescription = (@html_types << 'text/plain').include? mapContentType(@contentparams['type'])
+    value = popContent('content')
     if copyToDescription:
-      self._save('description', value)
+      _save('description', value)
     end
   end
-  _end_body = _end_content
-  _end_xhtml_body = _end_content
-  _end_content_encoded = _end_content
-  _end_fullitem = _end_content
-  _end_prodlink = _end_content
+  alias :_end_body :_end_content
+  alias :_end_xhtml_body :_end_content
+  alias :_end_content_encoded :_end_content
+  alias :_end_fullitem :_end_content
+  alias :_end_prodlink :_end_content
 
   def _start_itunes_image(attrsD)
-    self.push('itunes_image', false)
-    self._getContext()['image'] = FeedParserDict.new({'href' => attrsD['href']})
+    push('itunes_image', false)
+    _getContext()['image'] = FeedParserDict.new({'href' => attrsD['href']})
   end
-  _start_itunes_link = _start_itunes_image
+  alias :_start_itunes_link :_start_itunes_image
 
   def _end_itunes_block
-    value = self.pop('itunes_block', false)
-    self._getContext()['itunes_block'] = (value == 'yes') and 1 or 0 # What an interesting hack.
+    value = pop('itunes_block', false)
+    _getContext()['itunes_block'] = (value == 'yes') and 1 or 0 # What an interesting hack.
   end
 
   def _end_itunes_explicit
-    value = self.pop('itunes_explicit', false)
-    self._getContext()['itunes_explicit'] = (value == 'yes') and 1 or 0
+    value = pop('itunes_explicit', false)
+    _getContext()['itunes_explicit'] = (value == 'yes') and 1 or 0
   end
 end # End FeedParserMixin
+
 if XML_AVAILABLE
-  class StrictFeedParser < XML::Parser::SAXDriver::SAXParser # FIXME untranslated this is not finished. thinking about another way
+  class StrictFeedParser < XML::SAX::HandlerBase # FIXME untranslated this is not finished. thinking about another way
     include FeedParserMixin
 
     def new(baseuri, baselang, encoding)
       $stderr << 'trying StrictFeedParser\n'
       super.initialize(self)
-      self.startup(baseuri, baselang, encoding) # FIXME need to grok mixins, if i name #startup #initialize will this happen for me?
-      self.bozo = false
-      self.exc = nil
+      startup(baseuri, baselang, encoding) # FIXME need to grok mixins, if i name #startup #initialize will this happen for me?
+      @bozo = false
+      @exc = nil
     end
 
     def startPrefixMapping(prefix, uri)
-      self.trackNamespace(prefix, uri)
+      trackNamespace(prefix, uri)
     end
 
     def startElementNS(name, qname, attrs) # FIXME this isn't done
@@ -1963,38 +1975,671 @@ end
 
 _date_handlers = []
 
-def registerDateHandler(func)
-  # Register a date handler function (takes string, returns 9-tuple date in GMT)
-  _date_handlers.insert(0, func)
+def registerDateHandler(meth)
+  # Register a date handler method
+  _date_handlers.insert(0, meth)
 end
 
-# ISO-8601 date parsing routines written by Fazal Majid.
-# The ISO 8601 standard is very convoluted and irregular - a full ISO 8601
-# parser is beyond the scope of feedparser and would be a worthwhile addition
-# to the Python library.
-# A single regular expression cannot parse ISO 8601 date formats into groups
-# as the standard is highly irregular (for instance is 030104 2003-01-04 or
-# 0301-04-01), so we use templates instead.
-# Please note the order in templates is significant because we need a
-# greedy match.
-_iso8601_tmpl = ['YYYY-?MM-?DD', 'YYYY-0MM?-?DD', 'YYYY-MM', 'YYYY-?OOO',
-                'YY-?MM-?DD', 'YY-?OOO', 'YYYY', 
-                '-YY-?MM', '-OOO', '-YY',
-                '--MM-?DD', '--MM',
-                '---DD',
-                'CC', '']
-_iso8601_re = []
-
-_iso8601_tmpl.each do |r|
-  r.gsub 'YYYY', '(?P<year>\d{4})'
-  r.gsub 'YY',   '(?P<year>\d\d)'
-  r.gsub 'MM',   '(?P<month>[01]\d)'
-  r.gsub 'DD',   '(?P<day>[0123]\d)'
-  r.gsub 'OOO',  '(?P<ordinal>[0123]\d\d)'
-  r.gsub 'CC',   '(?P<century>\d\d$'
-  r += '(T?(?P<hour>\d{2}):(?P<minute>\d{2})' +
-    '(:(?P<second>\d{2}(\.\d*)?))?' +
-    '(?P<tz>[+-](?P<tzhour>\d{2})(:(?P<tzmin>\d{2}))?|Z)?)?'\
-  _iso8602_re << Regexp.new(r)
+# ISO-8601 date parsing routines written by the Ruby developers.
+# We laugh at the silly Python programmers and their convoluted 
+# regexps. 
+include ParseDate
+def _parse_date_iso8601(dateString)
+  # Parse a variety of ISO-8601-compatible formats like 20040105
+  Time.mktime(ParseDate::parsedate(dateString))
 end
-_iso8601_matches = _iso8601_re.collect{ |r| r.match } 
+
+# 8-bit date handling routes written by ytrewq1
+_korean_year  = u'\ub144' # b3e2 in euc-kr
+_korean_month = u'\uc6d4' # bff9 in euc-kr
+_korean_day   = u'\uc77c' # c0cf in euc-kr
+_korean_am    = u'\uc624\uc804' # bfc0 c0fc in euc-kr
+_korean_pm    = u'\uc624\ud6c4' # bfc0 c8c4 in euc-kr
+
+_korean_onblog_date_re = Regexp.new('(\d{4})%s\s+(\d{2})%s\s+(\d{2})%s\s+(\d{2}):(\d{2}):(\d{2})' % \
+                                    [_korean_year, _korean_month, _korean_day])
+_korean_nate_date_re = Regexp.new(u'(\d{4})-(\d{2})-(\d{2})\s+(%s|%s)\s+(\d{,2}):(\d{,2}):(\d{,2})' % \
+                                  [_korean_am, _korean_pm])
+
+def _parse_date_onblog(dateString)
+  # Parse a string according to the OnBlog 8-bit date format
+  m = _korean_onblog_date_re.match(dateString)
+  return unless m
+  w3dtfdate = '%(year)s-%(month)s-%(day)sT%(hour)s:%(minute)s:%(second)s%(zonediff)s' % \
+    {'year' => m[1], 'month' => m[2], 'day' => m[3],\
+                 'hour' => m[4], 'minute' => m[5], 'second' => m[6],\
+                 'zonediff' => '+09 =>00'}
+
+  $stderr << "OnBlog date parsed as: %s\n" % w3dtfdate if _debug
+  return _parse_date_w3dtf(w3dtfdate)
+end
+registerDateHandler(:_parse_date_onblog)
+
+def _parse_date_name(dateString)
+  # Parse a string according to the Nate 8-bit date format
+  m = _korean_nate_date_re.match(dateString)
+  return unless m
+  hour = m[5].to_i
+  ampm = m[4]
+  if ampm == _korean_pm
+    hour += 12
+  end
+  hour = hour.to_s.rjust(2,'0') 
+  w3dtfdate = '%(year)s-%(month)s-%(day)sT%(hour)s:%(minute)s:%(second)s%(zonediff)s' % \
+    {'year' => m[1], 'month' => m[2], 'day' => m[3],\
+                 'hour' => hour, 'minute' => m[6], 'second' => m[7],\
+                 'zonediff' => '+09 =>00'}
+  $stderr << "Nate date parsed as: %s\n" % w3dtfdate if _debug
+  return _prase_date_w3dtf(w3dtfdate)
+end
+registerDateHandler(:_parse_date_nate)
+
+_mssql_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})(\.\d+)?/
+def _parse_date_mssql(dateString)
+  m = _mssql_date_re.match(dateString)
+  return unless m
+  w3dtfdate =  '%(year)s-%(month)s-%(day)sT%(hour)s:%(minute)s:%(second)s%(zonediff)s' % \
+    {'year' => m[1], 'month' => m[2], 'day' => m[3],\
+                 'hour' => m[4], 'minute' => m[5], 'second' => m[6],\
+                 'zonediff' => '+09 =>00'}
+  $stderr << "MS SQL date parsed as: %s\n" % w3dtfdate if _debug
+  return _parse_date_w3dtf(w3dtfdate)
+end
+registerDateHandler(:_parse_date_mssql)
+
+# Unicode strings for Greek date strings
+_greek_months = { \
+  u'\u0399\u03b1\u03bd' => u'Jan',       # c9e1ed in iso-8859-7
+  u'\u03a6\u03b5\u03b2' => u'Feb',       # d6e5e2 in iso-8859-7
+  u'\u039c\u03ac\u03ce' => u'Mar',       # ccdcfe in iso-8859-7
+  u'\u039c\u03b1\u03ce' => u'Mar',       # cce1fe in iso-8859-7
+  u'\u0391\u03c0\u03c1' => u'Apr',       # c1f0f1 in iso-8859-7
+  u'\u039c\u03ac\u03b9' => u'May',       # ccdce9 in iso-8859-7
+  u'\u039c\u03b1\u03ca' => u'May',       # cce1fa in iso-8859-7
+  u'\u039c\u03b1\u03b9' => u'May',       # cce1e9 in iso-8859-7
+  u'\u0399\u03bf\u03cd\u03bd' => u'Jun', # c9effded in iso-8859-7
+  u'\u0399\u03bf\u03bd' => u'Jun',       # c9efed in iso-8859-7
+  u'\u0399\u03bf\u03cd\u03bb' => u'Jul', # c9effdeb in iso-8859-7
+  u'\u0399\u03bf\u03bb' => u'Jul',       # c9f9eb in iso-8859-7
+  u'\u0391\u03cd\u03b3' => u'Aug',       # c1fde3 in iso-8859-7
+  u'\u0391\u03c5\u03b3' => u'Aug',       # c1f5e3 in iso-8859-7
+  u'\u03a3\u03b5\u03c0' => u'Sep',       # d3e5f0 in iso-8859-7
+  u'\u039f\u03ba\u03c4' => u'Oct',       # cfeaf4 in iso-8859-7
+  u'\u039d\u03bf\u03ad' => u'Nov',       # cdefdd in iso-8859-7
+  u'\u039d\u03bf\u03b5' => u'Nov',       # cdefe5 in iso-8859-7
+  u'\u0394\u03b5\u03ba' => u'Dec',       # c4e5ea in iso-8859-7
+}
+
+_greek_wdays = \
+  { \
+    u'\u039a\u03c5\u03c1' => u'Sun', # caf5f1 in iso-8859-7
+    u'\u0394\u03b5\u03c5' => u'Mon', # c4e5f5 in iso-8859-7
+    u'\u03a4\u03c1\u03b9' => u'Tue', # d4f1e9 in iso-8859-7
+    u'\u03a4\u03b5\u03c4' => u'Wed', # d4e5f4 in iso-8859-7
+    u'\u03a0\u03b5\u03bc' => u'Thu', # d0e5ec in iso-8859-7
+    u'\u03a0\u03b1\u03c1' => u'Fri', # d0e1f1 in iso-8859-7
+    u'\u03a3\u03b1\u03b2' => u'Sat', # d3e1e2 in iso-8859-7   
+}
+
+# FIXME I'm not sure that Regexp and Encoding play well together
+_greek_date_format_re = Regexp.new(u'([^,]+),\s+(\d{2})\s+([^\s]+)\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+([^\s]+)')
+
+def _parse_date_greek(dateString)
+  # Parse a string according to a Greek 8-bit date format
+  m = _greek_date_format.match(dateString)
+  return unless m
+  begin
+    wday = _greek_wdays[m[1]]
+    month = _greek_months[m[3]]
+  rescue
+    return # I hate silent exceptions. :(
+  end
+  rfc822date = '%(wday)s, %(day)s %(month)s %(year)s %(hour)s:%(minute)s:%(second)s %(zonediff)s' % \
+    {'wday' => wday, 'day' => m[2], 'month' => month, 'year' => m[4],\
+                  'hour' => m[5], 'minute' => m[6], 'second' => m[7],\
+                  'zonediff' => m[8]}
+  $stderr << "Greek date parsed as: %s\n" % rfc822date
+  return _parse_date_rfc822(rfc822date) # FIXME these are just wrappers around Time.  Easily removed
+end
+registerDateHandler(:_parse_date_greek)
+
+# Unicode strings for Hungarian date strings
+_hungarian_months = \
+  { \
+    u'janu\u00e1r':   u'01',  # e1 in iso-8859-2
+    u'febru\u00e1ri': u'02',  # e1 in iso-8859-2
+    u'm\u00e1rcius':  u'03',  # e1 in iso-8859-2
+    u'\u00e1prilis':  u'04',  # e1 in iso-8859-2
+    u'm\u00e1ujus':   u'05',  # e1 in iso-8859-2
+    u'j\u00fanius':   u'06',  # fa in iso-8859-2
+    u'j\u00falius':   u'07',  # fa in iso-8859-2
+    u'augusztus':     u'08',
+    u'szeptember':    u'09',
+    u'okt\u00f3ber':  u'10',  # f3 in iso-8859-2
+    u'november':      u'11',
+    u'december':      u'12',
+}
+_hungarian_date_format_re = Regexp.new(u'(\d{4})-([^-]+)-(\d{,2})T(\d{,2}):(\d{2})((\+|-)(\d{,2}:\d{2}))')
+
+def _parse_date_hungarian(dateString)
+  # Parse a string according to a Hungarian 8-bit date format.
+  return unless m
+  begin
+    month = _hungarian_months[m[2]]
+    day = m[3]
+    day = day.rjust(2,'0')
+    hour = hour.rjust(2,'0')
+  rescue
+    return
+  end
+
+  w3dtfdate = '%(year)s-%(month)s-%(day)sT%(hour)s =>%(minute)s%(zonediff)s' % \
+    {'year' => m[1], 'month' => month, 'day' => day,\
+                 'hour' => hour, 'minute' => m[5],\
+                 'zonediff' => m[6]}
+  $stderr << "Hungarian date parsed as: %s\n" % w3dtfdate
+  return _parse_date_w3dtf(w3dtfdate)
+end
+
+# W3DTF-style date parsing
+# FIXME shouldn't it be "W3CDTF"?
+def _parse_date_w3dtf(dateString)
+  # Ruby's Time docs claim w3dtf is an alias for iso8601 which is an alias fro xmlschema
+  Time.xmlschema(dateString)
+end
+
+def _parse_date_rfc822(dateString)
+  # Parse an RFC822, RFC1123, RFC2822 or asctime-style date 
+  Time.rfc822(dateString)
+end
+
+def _parse_date_perfoce(aDateString)
+  # Parse a date in yyyy/mm/dd hh:mm:ss TTT format
+  # Note that there is a day of the week at the beginning 
+  # Ex. Fri, 2006/09/15 08:19:53 EDT
+  Time.parse(aDateString)
+end
+
+def _parse_date(dateString)
+  # Parses a variety of date formats into a Time object in UTC/GMT.
+  # FIXME No, this doesn't match up with the tests. Why? Because I haven't 
+  # figured out why Mark went the 9-tuple path. Is Python's time module so 
+  # screwed up? Or was there another reason?
+  for handler in _date_handlers
+    begin 
+      datething = send(handler,dateString)
+      return datething
+    rescue Exception => e
+      $stderr << "%s raised %s\n" % [handler.to_s, e]
+    end
+  end
+  return nil
+end
+
+def _getCharacterEncoding(feed, xml_data)
+  # Get the character encoding of the XML document
+  sniffed_xml_encoding = ''
+  xml_encoding = ''
+  true_encoding = ''
+  http_headers = feed.meta || {}
+  begin 
+    http_content_type = feed.content_type
+    http_encoding = feed.charset
+  rescue NoMethodError
+    http_content_type = nil
+    http_encoding = nil
+  end
+  # Must sniff for non-ASCII-compatible character encodings before
+  # searching for XML declaration.  This heuristic is defined in
+  # section F of the XML specification:
+  # http://www.w3.org/TR/REC-xml/#sec-guessing-no-ext-info
+  begin 
+    if xml_data[0..3] == "\x4c\x6f\xa7\x94"
+      # EBCDIC
+      xml_data = _ebcdic_to_ascii(xml_data)
+    elsif xml_data[0..3] == "\x00\x3c\x00\x3f"
+      # UTF-16BE
+      sniffed_xml_encoding = 'utf-16be'
+      xml_data = uconvert(xml_data, 'utf-16be', 'utf-8')
+    elsif xml_data.size >= 4 and xml_data[0..1] == "\xfe\xff" and xml_data[2..3] != "\x00\x00"
+      # UTF-16BE with BOM
+      sniffed_xml_encoding = 'utf-16be'
+      xml_data = uconvert(xml_data[2..-1], 'utf-16be', 'utf-8')
+    elsif xml_data[0..3] == "\x3c\x00\x3f\x00"
+      # UTF-16LE
+      sniffed_xml_encoding = 'utf-16le'
+      xml_data = uconvert(xml_data, 'utf-16le', 'utf-8')
+    elsif xml_data.size >=4 and xml_data[0..1] == "\xff\xfe" and xml_data[2..3] != "\x00\x00"
+      # UTF-16LE with BOM
+      sniffed_xml_encoding = 'utf-16le'
+      xml_data = uconvert(xml_data[2..-1], 'utf-16le', 'utf-8')
+    elsif xml_data[0..3] = "\x00\x00\x00\x3c"
+      # UTF-32BE
+      sniffed_xml_encoding = 'utf-32be'
+      xml_data = uconvert(xml_data, 'utf-32be', 'utf-8')
+    elsif xml_data[0..3] == "\x3c\x00\x00\x00"
+      # UTF-32LE
+      sniffed_xml_encoding = 'utf-32le'
+      xml_data = uconvert(xml_data, 'utf-32le', 'utf-8')
+    elsif xml_data[0..3] == "\x00\x00\xfe\xff"
+      # UTF-32BE with BOM
+      sniffed_xml_encoding = 'utf-32be'
+      xml_data = uconvert(xml_data[4..-1], 'utf-32BE', 'utf-8')
+    elsif xml_data[0..3] == "\xef\xfe\x00\x00"
+      # UTF-32LE with BOM
+      sniffed_xml_encoding = 'utf-32le'
+      xml_data = uconvert(xml_data[4..-1], 'utf-32le', 'utf-8')
+    elsif xml_data[0..2] == "\xef\xbb\xbf"
+      # UTF-8 with BOM
+      sniffed_xml_encoding = 'utf-8'
+      xml_data = uconvert(xml_data[3..-1], 'utf-8', 'utf-8')
+    else
+      # ASCII-compatible
+    end
+    xml_encoding_match = /^<\?.*encoding=[\'"](.*?)[\'"].*\?>/.match(xml_data)
+  rescue
+    xml_encoding_match = nil
+  end
+
+  if xml_encoding_match
+    xml_encoding = xml_encoding.match.group(0).lower
+    xencodings = ['iso-10646-ucs-2', 'ucs-2', 'csunicode', 'iso-10646-ucs-4', 'ucs-4', 'csucs4', 'utf-16', 'utf-32', 'utf16', 'u16']
+    if sniffed_xml_encoding and xencodings.include?xml_encoding
+      xml_encoding =  sniffed_xml_encoding
+    end
+  end
+
+  acceptable_content_type = false
+  application_content_types = ['application/xml', 'application/xml-dtd', 'application/xml-external-parsed-entity']
+  text_content_types = ['text/xml', 'text/xml-external-parsed-entity']
+
+  if application_content_types.include? http_content_type or 
+    (/^text\// =~ http_content_type and /+xml$/ =~ http_content_type)
+    acceptable_content_type = true
+    true_encoding = http_encoding || xml_encoding || 'utf-8'
+  elsif text_content_types.include? http_content_type or
+    /^text\// =~ http_content_type and /+xml$/ =~ http_content_type
+    acceptable_content_type = true
+    true_encoding = http_encoding || 'us-ascii'
+  elsif /text\// =~ http_content_type 
+    true_encoding = http_encoding || 'us-ascii'
+  elsif http_headers and not http_headers.empty? and 
+    not http_headers.has_key?'content-type'
+    true_encoding = xml_encoding || 'iso-8859-1'
+  else
+    true_encoding = xml_encoding || 'utf-8'
+  end
+  return true_encoding, http_encoding, xml_encoding, sniffed_xml_encoding, acceptable_content_type
+end
+
+def _toUTF8(data, encoding)
+=begin
+    Changes an XML data stream on the fly to specify a new encoding
+
+    data is a raw sequence of bytes (not Unicode) that is presumed to be in %encoding already
+    encoding is a string recognized by encodings.aliases
+=end
+  $stderr << "enterings _toUTF8, trying encoding %s\n" % encoding if _debug
+  # NOTE we must use double quotes when dealing with \x encodings!
+  if data.size >= 4 and data[0..1] == "\xfe\xff" and data[2..3] != "\x00\x00" 
+    if _debug
+      $stderr << "stripping BOM\n"
+      if encoding != 'utf-16be'
+        $stderr << "string utf-16be instead\n"
+      end
+    end
+    encoding = 'utf-16be'
+    data = data[2..-1]
+  elsif data.size >= 4 and data[0..1] == "\xff\xfe" and data[2..3] != "\x00\x00"
+    if _debug
+      $stderr << "stripping BOM\n"
+      if encoding !- 'utf-16le'
+        $stderr << "trying utf-16le instead\n"
+      end
+    end
+  encoding = 'utf-16le'
+  data = data[2..-1]
+  elsif data[0..2] == "\xef\xbb\xbf"
+    if _debug
+      $stderr << "stripping BOM\n"
+      if encoding != 'utf-8'
+        $stderr << "trying utf-8 instead\n"
+      end
+    end
+  encoding = 'utf-8'
+  data = data[2..-1]
+  elsif data[0..3] == "\x00\x00\xfe\xff"
+    if _debug
+      $stderr << "stripping BOM\n"
+      if encoding != 'utf-32be'
+        $stderr << "trying utf-32be instead\n"
+      end
+    end
+  encoding = 'utf-32be'
+  data = data[3..-1]
+  elsif data[0..3] == "\xff\xfe\x00\x00"
+    if _debug
+      $stderr << "stripping BOM\n"
+      if encoding != 'utf-3lbe'
+        $stderr << "trying utf-32le instead\n"
+      end
+    end
+  encoding = 'utf-32le'
+  data = data[3..-1]
+  end
+  newdata = unicode(data, encoding) # Woohoo! Works!
+  $stderr << "successfully converted %s data to unicode\n" % encoding
+  declmatch = /^<\?xml[^>]*?>/
+  newdecl = "<?xml version=\'1.0\' encoding=\'utf-8\'?>"
+  if declmatch =~ newdata
+    newdata.sub!(declmatch, newdecl) #FIXME this was late night coding
+  else
+    newdata = newdecl + "\n" + newdata
+  end
+  return newdata
+end
+
+def _stripDoctype(data)
+=begin
+Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
+
+    rss_version may be 'rss091n' or None
+    stripped_data is the same XML document, minus the DOCTYPE
+=end
+  entity_pattern = /<!ENTITY([^>]*?)>/m # m is for Regexp::MULTILINE
+  entity_results = data.scan(entity_pattern)
+  data = data.sub(entity_pattern,data)
+
+  doctype_pattern = /<!DOCTYPE([^>]*?)>/m
+  doctype_results = data.scan(doctype_pattern)
+  doctype = doctype_results and doctype_results[0] or ''
+  if /netscape/ =~ doctype.lower
+    version = 'rss091n'
+  else
+    version = nil
+  end
+
+  # only allow in 'safe' inline entity definitions
+  replacement = nil
+  if doctype_results.length == 1 and not entity_results.empty?
+    safe_pattern = /\s+(\w+)\s+"(&#\w+;|[^&"]*)"/
+    safe_entities = entity_results.select { |e| e.match(safe_pattern) }
+    if not safe_entities.empty?
+      replacement = "<!DOCTYPE feed [\n  <!ENTITY %s>\n]>" % safe_entities.join(">\n  <!ENTITY ")
+    end
+  end
+
+  data.sub!(doctype_pattern, replacement)
+  rdict = {}
+  finds = replacement.scan(safe_pattern) || []
+  if replacement and not replacement.empty?
+    find.each { |l| rdict[l[0]] = l[1] } 
+  end
+  return version, data, rdict
+end
+
+def parse(url_file_stream_or_string, etag=nil, modified=nil, agent=nil, referrer=nil, handlers=[])
+  # Parse a feed from a URL, file, stream or string
+  result = FeedParserDict.new
+  result['feed'] = FeedParserDict.new
+  result['entries'] = []
+  if XML_AVAILABLE 
+    result['bozo'] = false
+  end
+  if handlers.class != Array # FIXME is this right?
+    handlers = [handlers]
+  end
+  begin 
+    f = OpenURI::open(url_file_stream_or_string, 
+                      "If-None-Match" => etag, 
+                      "If-Modified-Since" => modified.rfc2822, 
+                      "User-Agent" => agent, 
+                      "Referer" => referrer
+                     )
+  rescue 
+    result['bozo'] = true
+    result['bozo_exception'] = e
+    data = ''
+    f = nil
+  end
+
+  data = f.read
+  f.close
+  if f.class == StringIO
+    result['etag'] = f.meta['etag']
+    last_modified = f.last_modified
+    result['modified'] = last_modified if last_modified
+    result['url'] = f.base_uri
+    result['status'] = f.status[0]
+    result['headers'] = f.meta
+  end
+
+  # there are four encodings to keep track of:
+  # - http_encoding is the encoding declared in the Content-Type HTTP header
+  # - xml_encoding is the encoding declared in the <?xml declaration
+  # - sniffed_encoding is the encoding sniffed from the first 4 bytes of the XML data
+  # - result['encoding'] is the actual encoding, as per RFC 3023 and a variety of other conflicting specifications
+  http_headers ||= result['headers'] || {} # File's don't have #meta, but we've already put them in for 
+  result['encoding'], http_encoding, xml_encoding, sniffed_xml_encoding, acceptable_content_type =
+    _getCharacterEncoding(f,data)
+
+  if not http_headers.empty? and not acceptable_content_type
+    if http_headers.has_key?('content-type')
+      bozo_message = "%s is not an XML media type" % http_headers['content-type']
+    else
+      bozo_message = 'no Content-type specified'
+    end
+    result['bozo'] = true
+    result['bozo_exception'] = NonXMLContentType(bozo_message) # I get to care about this, cuz Mark says I should.
+  end
+
+  result['version'], data, entities = _stripDoctype(data)
+
+  baseuri = http_headers['content-location'] || results['href'] # FIXME Hope this works.
+  baselang = http_headers['content-language']
+
+  # if server sent 304, we're done
+  if result['status'] == 304
+    result['version'] = ''
+    result['debug_message'] = "The feed has not changed sicne you last checked, " +
+      "so the server sent no data. This is a feature, not a bug!"
+      return result
+  end
+
+  # if there was a problem downloading, we're done
+  if data.nil? or data.empty?
+    return result
+  end
+
+  # determine character encoding
+  use_script_parser = false
+  known_encoding = false
+  tried_encodings = []
+  # try: HTTP encoding, declared XML encodin, encoding sniffed from BOM
+  [result['encoding'], xml_encoding, sniffed_xml_encoding].each do |proposed_encoding|
+    next if proposed_encoding.nil? or proposed_encoding.empty?
+    next if tried_encodings.include? proposed_encoding
+    tried_encodings << proposed_encoding
+    begin
+      data = _toUTF8(data, proposed_encoding)
+      known_encoding = use_strict_parser = true
+      break
+    rescue
+    end
+  end
+  # if no luck and we ahve auto-detection library, try that
+  #if known_encoding and chardet
+  # FIXME untranslated
+  #end
+  #
+
+  # if still no luck and we haven't tried utf-8 yet, try that
+  if not known_encoding and not tried_encodings.include?'utf-8'
+    begin
+      proposed_encoding = 'utf-8'
+      tried_encodings << proposed_encoding
+      data = _toUTF8(data, proposed_encoding)
+      known_encoding = use_strict_parser = true
+    rescue
+    end
+  end
+  # if still no luck and we haven't tried windows-1252 yet, try that
+  if not known_encoding and not tried_encodings.include?'windows-1252'
+    begin
+      proposed_encdoing = 'windows-1252'
+      tried_encodings << proposed_encoding
+      data = _toUTF8(data, proposed_encoding)
+      known_encoding = use_strict_parser = true
+    rescue
+    end
+  end
+  # if still no luck and we haven't tried iso-8859-2 yet, try that.
+  if not known_encoding and not tried_encodings.include?'iso-8859-2'
+    begin
+      proposed_encoding = 'iso-8859-2'
+      tried_encodings << proposed_encoding
+      data = _toUTF8(data, proposed_encoding)
+      known_encoding = use_strict_parser = true
+    rescue
+    end
+  end
+  # if still no luck, give up
+  if not known_encoding
+    result['bozo'] = true
+    result['bozo_exception'] = CharacterEncodingUnknown("documented declared as %s, but parsed as %s" % [result['encoding'], xml_encoding])
+    result['encoding'] = proposed_encoding
+  end
+
+  if not XML_AVAILABLE
+    use_strict_parser = false
+  end
+  if use_strict_parser
+    # initialize the SAX parser
+    feedparser = StrictFeedParser.new(baseuri, baselang, 'utf-8')
+    saxparser = XML::SAX::Helpers::ParserFactory.makeParser("XML::Parser::SAXDriver")
+    saxparser.setDocumentHandler(feedparser)
+    saxparser.setErrorHandler(feedparser)
+    source = XML::SAX::InputSource.new(StringIO.new(data)) # NOTE large files are slow
+    # FIXME are namespaces being checked?
+    begin
+      saxparser.parse(source)
+    rescue Exception => e
+      if _debug
+        $stderr << "xml parsing failed\n"
+        $stderr << e # Hrmph.
+      end
+      result['bozo'] = true
+      result['bozo_exception'] = feedparser.exc || e 
+      use_strict_parser
+    end
+  end
+  if not use_strict_parser
+    feedparser = LooseFeedParser.new(baseuri, baselang, known_encoding && 'utf-8' || '', entities)
+    feedparser.feed(data)
+  end
+  result['feed'] = feedparser.feeddata
+  result['entries'] = feedparser.entries
+  result['version'] = result['version'] || feedparser.version
+  result['namespaces'] = feedparser.namespacesInUse
+  return result
+end
+
+require 'pp'
+
+class Serializer 
+  def new(results)
+    @results = results
+  end
+end
+
+class TextSerializer < Serializer
+  def write(stream=$stdout)
+    writer(stream, @results, '')
+  end
+
+  private
+  def writer(stream, node, prefix)
+    return if (node.nil? or node.empty?)
+    if node.methods.include?'keys'
+      node.keys.sort.each do |key|
+      next if ['description','link'].include? key
+      next if node.has_key? k+'_detail'
+      next if node.has_key? k+'_parsed'
+      writer(stream,node[k], prefix+k+'.')
+      end
+    elsif node.class == Array
+      node.each_with_index do |thing, index|
+        writer(stream, thing, prefix[0..-2] + '[' + index.to_s + '].')
+      end
+    else
+      begin
+        s = u(node.to_s)
+        stream << prefix[0..-2]
+        stream << '='
+        stream << s
+        stream << "\n"
+      rescue
+      end
+    end
+  end
+end
+
+class PprintSerializer < Serializer # FIXME ? use pp instead?
+  def write(stream = $stdout)
+    stream << @results['href'] + '\n\n'
+    pp(results)
+    stream << "\n"
+  end
+end
+
+
+require 'optparse'
+require 'ostruct'
+options = OpenStruct.new
+options.etag = options.modified = options.agent = options.referrer = nil
+options.format = 'pprint'
+
+opts.verbose = false
+
+opts = OptionParser.new do |opts|
+  opts.banner 
+  opts.separator ""
+  opts.on("-A", "--user-agent [AGENT]",
+          "User-Agent for HTTP URLs") {|agent|
+    options.agent = agent
+  }
+
+  opts.on("-e", "--referrer [URL]", 
+          "Referrer for HTTP URLs") {|referrer|
+    options.referrer = referrer
+  }
+
+  opts.on("-t", "--etag [TAG]",
+          "ETag/If-None-Match for HTTP URLs") {|etag|
+    options.etag = etag
+  }
+
+  opts.on("-m", "--last-modified [DATE]",
+          "Last-modified/If-Modified-Since for HTTP URLs (any supported date format)") {|modified|
+    options.modified = modified
+  }
+
+  opts.on("-f", "--format [FORMAT]", [:text, :pprint],
+          "output resutls in FORMAT (text, pprint)") {|format|
+    options.format = format
+  }
+
+  opts.on("-v", "--[no-]verbose",
+          "write debugging information to stderr") {|v|
+    options.verbose = v
+  }
+end
+
+opts.parse!(ARGV)
+if options.verbose 
+  _debug = true
+end
+ARGV.each do |url| # opts.parse! removes everything but the urls from the command line
+  results = parse(url, etag=options.etag, modified=options.modified, agent=options.agent, referrer=options.referrer)
+  serializer(results).write($stdout)
+end
