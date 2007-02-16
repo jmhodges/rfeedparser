@@ -10,43 +10,6 @@ Email Jeff Hodges at jeff@obquo.com for questions
 Required: Ruby 1.8
 """
 $KCODE = 'UTF8'
-
-
-
-__version__ = "0.1aleph_naught"
-_debug = true
-# FIXME OVER HERE! Hi. I'm still translating. Grep for "FIXME untranslated" to 
-# figure out, roughly, what needs to be done.  I've tried to put it next to 
-# anything having to do with any unimplemented sections. There are plent of 
-# other FIXMEs however
-
-# HTTP "User-Agent" header to send to servers when downloading feeds.
-# If you are embedding feedparser in a larger application, you should
-# change this to your application name and URL.
-USER_AGENT = "UniversalFeedParser/%s +http://feedparser.org/" % __version__
-
-# HTTP "Accept" header to send to servers when downloading feeds.  If you don't
-# want to send an Accept header, set this to None.
-ACCEPT_HEADER = "application/atom+xml,application/rdf+xml,application/rss+xml,application/x-netcdf,application/xml;q=0.9,text/xml;q=0.2,*/*;q=0.1"
-
-
-# List of preferred XML parsers, by SAX driver name.  These will be tried first,
-# but if they're not installed, Python will keep searching through its own list
-# of pre-installed parsers until it finds one that supports everything we need.
-PREFERRED_XML_PARSERS = ["drv_libxml2"] #FIXME untranslated
-
-# If you want feedparser to automatically run HTML markup through HTML Tidy, set
-# this to true.  Requires mxTidy <http://www.egenix.com/files/python/mxTidy.html>
-# or utidylib <http://utidylib.berlios.de/>.
-TIDY_MARKUP = false #FIXME untranslated
-
-# List of Python interfaces for HTML Tidy, in order of preference.  Only useful
-# if TIDY_MARKUP = true
-PREFERRED_TIDY_INTERFACES = ["uTidy", "mxTidy"] #FIXME untranslated
-
-# The original Python import. I'm using it to help translate
-#import sgmllib, re, sys, copy, urlparse, time, rfc822, types, cgi, urllib, urllib2
-
 require 'stringio'
 require 'enumerator'
 require 'uri'
@@ -54,7 +17,6 @@ require 'net/http'
 require 'zlib'
 # http://www.yoshidam.net/Ruby.html <-- XMLParser uses Expat
 require 'xml/saxdriver' # FIXME this is an external dependency on Expat. On Ubuntu (and Debian), install libxml-parser-ruby1.8
-
 XML_AVAILABLE = true
 require 'rubygems'
 gem 'builder' # FIXME no rubygems, no builder. is bad. to_xs
@@ -99,6 +61,7 @@ def unichr(i)
 end
 
 # This adds a nice scrub method to Hpricot, so we don't need a _HTMLSanitizer class
+# http://underpantsgnome.com/2007/01/20/hpricot-scrub
 # I have modified it to check for attributes that are only allowed if they are in a certain tag
 module Hpricot
   class Elements
@@ -160,9 +123,9 @@ module Hpricot
 
         next if value.nil? or value.empty?
 
-        if ok_props.include?prop.lower
+        if ok_props.include?prop.downcase
           clean << prop + ': ' + value + ';'
-        elsif ['background','border','margin','padding'].include? prop.split('-')[0].lower 
+        elsif ['background','border','margin','padding'].include? prop.split('-')[0].downcase 
 
           did_not_break = true # This is a terrible, but working way to mimic Python's for/else
 
@@ -181,6 +144,7 @@ module Hpricot
 
       self['href'] = clean.join(' ')
     end
+
     def strip_removes?
       # I'm sure there are others that shuould be ripped instead of stripped
       attributes && attributes['type'] =~ /script|css/
@@ -335,17 +299,57 @@ module Hpricot
         # certain attributes allowed through.  Note that this overrides any of the "generic" attributes they could have
         (self/tag).strip_attributes(@config[:allow_tag_specific_attributes][tag] || @config[:allow_attributes])
       }
-      self/tag.strip_style(
-                           children.reverse.each do |e|
+      self/tag.strip_style(@config[:allow_css_style_properties], @config[:allow_css_style_keywords])
+      children.reverse.each do |e|
         unless e.class == Hpricot::Text or config[:allow_tags].include?e.name or e.name == 'style'
           e.strip 
         end
-                           end
+      end
     end
   end
 end
+
+
+module FeedParser
+@version = "0.1aleph_naught"
+$debug = false
+# FIXME OVER HERE! Hi. I'm still translating. Grep for "FIXME untranslated" to 
+# figure out, roughly, what needs to be done.  I've tried to put it next to 
+# anything having to do with any unimplemented sections. There are plent of 
+# other FIXMEs however
+
+# HTTP "User-Agent" header to send to servers when downloading feeds.
+# If you are embedding feedparser in a larger application, you should
+# change this to your application name and URL.
+USER_AGENT = "UniversalFeedParser/%s +http://feedparser.org/" % @version__
+
+# HTTP "Accept" header to send to servers when downloading feeds.  If you don't
+# want to send an Accept header, set this to None.
+ACCEPT_HEADER = "application/atom+xml,application/rdf+xml,application/rss+xml,application/x-netcdf,application/xml;q=0.9,text/xml;q=0.2,*/*;q=0.1"
+
+
+# List of preferred XML parsers, by SAX driver name.  These will be tried first,
+# but if they're not installed, Python will keep searching through its own list
+# of pre-installed parsers until it finds one that supports everything we need.
+PREFERRED_XML_PARSERS = ["drv_libxml2"] #FIXME untranslated
+
+# If you want feedparser to automatically run HTML markup through HTML Tidy, set
+# this to true.  Requires mxTidy <http://www.egenix.com/files/python/mxTidy.html>
+# or utidylib <http://utidylib.berlios.de/>.
+TIDY_MARKUP = false #FIXME untranslated
+
+# List of Python interfaces for HTML Tidy, in order of preference.  Only useful
+# if TIDY_MARKUP = true
+PREFERRED_TIDY_INTERFACES = ["uTidy", "mxTidy"] #FIXME untranslated
+
+# The original Python import. I'm using it to help translate
+#import sgmllib, re, sys, copy, urlparse, time, rfc822, types, cgi, urllib, urllib2
+
+
+
+
 # ---------- don't touch these ----------
-class ThingsNobodyCaresAboutButM < Exception
+class ThingsNobodyCaresAboutButMe < Exception
 end
 class CharacterEncodingOverride < ThingsNobodyCaresAboutButMe
 end
@@ -410,7 +414,7 @@ class FeedParserDict < Hash
   # We could include the [] rewrite in new using Hash.new's fancy pants block thing
   # but we'd still have to overwrite []= and such. 
   # I'm going to make it easy to turn lists of pairs into FeedParserDicts's though.
-  def initialize(pairs=nil,*args)
+  def new( pairs = nil)
     if pairs.class == Array and pairs[0].class == Array and pairs[0].length == 2
       pairs.each do |l| 
         k,v = l
@@ -418,10 +422,7 @@ class FeedParserDict < Hash
       end
     elsif pairs.class == Hash
       self.merge!(pairs) 
-    else
-      args.insert(0,pairs)
     end
-    super.new(args)
   end
 
   def [](key)
@@ -448,7 +449,7 @@ class FeedParserDict < Hash
     end
     # Note that the original key is preferred over the realkey we (might 
     # have) found in @@keymaps
-    return super[key] || super[realkey]
+    return super(key) || super(realkey)
   end
 
   def []=(key,value)
@@ -481,16 +482,17 @@ class FeedParserDict < Hash
 
   def setdefault(key, value) 
     # FIXME i'm not entirely sure of how useful this is, but I've written less than 1/4 of the code, so we'll see.
-    if not self.has_key(key)
+    if not has_key(key)
       self[key] = value
     end
     return self[key]
   end
 
-  def method_missing(methodname, *args)
-    if methodname.chars[-1] == '='
-      return self[methodname.chars[0..-2]] = args[0]
-    elsif methodname.chars[-1] != '!' and methodname.chars[-1] != '?'
+  def method_missing(msym, *args)
+    methodname = msym.to_s
+    if methodname[-1] == '='
+      return self[methodname[0..-2]] = args[0]
+    elsif methodname[-1] != '!' and methodname[-1] != '?'
       return self[methodname]
     else
       raise NoMethodError, "whoops, we don't know about the attribute or method called `#{methodname}' for #{self}:#{self.class}"
@@ -533,7 +535,7 @@ _cp1252 = {
   unichr(159) => unichr( 376) # latin capital letter y with diaeresis
 }
 
-_urifixer = RegExp.new('^([A-Za-z][A-Za-z0-9+-.]*://)(/*)(.*?)')
+_urifixer = Regexp.new('^([A-Za-z][A-Za-z0-9+-.]*://)(/*)(.*?)')
 def _urljoin(base, uri)
   uri = _urifixer.sub('\1\3', uri) 
   begin
@@ -547,7 +549,16 @@ end
 
 
 module FeedParserMixin
-  @namespaces = {'' => '',
+  attr_accessor :feeddata, :entries, :version, :namespacesInUse
+
+  def startup(baseuri=nil, baselang=nil, encoding='utf-8')
+    $stderr << "initializing FeedParser\n" if $debug
+    unless @matchnamespaces.nil? or @matchnamespaces.empty?
+      @namespaces.each do |k,v|
+        @matchnamespaces[k.downcase] = v
+      end
+    end
+    @namespaces = {'' => '',
                 'http =>//backend.userland.com/rss' => '',
                 'http =>//blogs.law.harvard.edu/tech/rss' => '',
                 'http =>//purl.org/rss/1.0/' => '',
@@ -560,7 +571,6 @@ module FeedParserMixin
                   'http =>//purl.org/atom/ns#' => '',
                   'http =>//www.w3.org/2005/Atom' => '',
                   'http =>//purl.org/rss/1.0/modules/rss091#' => '',
-
                   'http =>//webns.net/mvcb/' =>                               'admin',
                   'http =>//purl.org/rss/1.0/modules/aggregation/' =>         'ag',
                   'http =>//purl.org/rss/1.0/modules/annotate/' =>            'annotate',
@@ -608,21 +618,12 @@ module FeedParserMixin
                   'http =>//www.w3.org/XML/1998/namespace' =>                 'xml',
                   'http =>//www.w3.org/1999/xlink' =>                         'xlink',
                   'http =>//schemas.pocketsoap.com/rss/myDescModule/' =>      'szf'
-  }
-  @matchnamespaces = {}
-  @can_be_relative_uri = ['link', 'id', 'wfw_comment', 'wfw_commentrss', 'docs', 'url', 'href', 'comments', 'license', 'icon', 'logo']
-  @can_contain_relative_uris = ['content', 'title', 'summary', 'info', 'tagline', 'subtitle', 'copyright', 'rights', 'description']
-  @can_contain_dangerous_markup = ['content', 'title', 'summary', 'info', 'tagline', 'subtitle', 'copyright', 'rights', 'description']
-  @html_types = ['text/html', 'application/xhtml+xml']
-
-  def startup(baseuri=nil, baselang=nil, encoding='utf-8')
-    $stderr << "initializing FeedParser\n" if _debug
-    unless @matchnamespaces.nil? or @matchnamespaces.empty?
-      @namespaces.each do |k,v|
-        @matchnamespaces[k.downcase] = v
-      end
-    end
-
+    }
+    @matchnamespaces = {}
+    @can_be_relative_uri = ['link', 'id', 'wfw_comment', 'wfw_commentrss', 'docs', 'url', 'href', 'comments', 'license', 'icon', 'logo']
+    @can_contain_relative_uris = ['content', 'title', 'summary', 'info', 'tagline', 'subtitle', 'copyright', 'rights', 'description']
+    @can_contain_dangerous_markup = ['content', 'title', 'summary', 'info', 'tagline', 'subtitle', 'copyright', 'rights', 'description']
+    @html_types = ['text/html', 'application/xhtml+xml']
     @feeddata = FeedParserDict.new # feed-level data
     @encoding = encoding # character encoding
     @entries = [] # list of entry-level data
@@ -640,8 +641,8 @@ module FeedParserMixin
     @incontributor = false
     @inpublisher = false
     @insource = false
-    @sourcedata = FeedParserDict()
-    @contentparams = FeedParserDict()
+    @sourcedata = FeedParserDict.new
+    @contentparams = FeedParserDict.new
     @_summaryKey = nil
     @namespacemap = {}
     @elementstack = []
@@ -650,12 +651,13 @@ module FeedParserMixin
     @baseuri = baseuri or ''
     @lang = baselang or nil
     if baselang 
-      @feeddata['language'] = baselang.chars.gsub('_','-')
+      @feeddata['language'] = baselang.gsub('_','-')
     end
+    $stderr << "Leaving startup\n" if $debug # My addition
   end
 
   def unknown_starttag(tag, attrs)
-    $stderr << 'start %s with %s\n' % [tag, attrs] if _debug
+    $stderr << 'start %s with %s\n' % [tag, attrs] if $debug
     # normalize attrs
     attrsD = {}
     attrs.each do |l| 
@@ -667,7 +669,7 @@ module FeedParserMixin
     end
 
     # track xml:base and xml:lang
-    baseuri = attrsD.fetch('xml:base', attrsD.fetch('base')) || self.baseuri 
+    baseuri = attrsD.fetch('xml:base', attrsD.fetch('base')) || @baseuri 
     lang = attrsD.fetch('xml:lang', attrsD.fetch('lang')) 
     if lang == '' # This next bit of code is right? Wtf?
       # xml:lang could be explicitly set to '', we need to capture that
@@ -682,7 +684,7 @@ module FeedParserMixin
       end
     end
     @lang = lang
-    @basestack << @baseuri #FIXME check that these are arrays
+    @basestack << @baseuri 
     @langstack << lang
 
     # track namespaces
@@ -710,7 +712,7 @@ module FeedParserMixin
       # This will horribly munge inline content with non-empty qnames,
       # but nobody actually does that, so I'm not fixing it.
       if not tag.grep(/:/).empty?
-        prefix, tag = tag.chars.split(':',2)
+        prefix, tag = tag.split(':',2)
         namespace = @namespacesInUse.fetch(prefix,'')
         if tag == 'math' and namespace == 'http://www.w3.org/1998/Math/MathML':
           attrs << ['xmlns', namespace] 
@@ -718,17 +720,17 @@ module FeedParserMixin
         if tag == 'svg' and namespace == 'http://www.w3.org/2000/svg':
           attrs << ['xmlns',namespace]
         end
-        return self.handle_data('<%s%s>' % [tag, self.strattrs(attrs), escape=false]) 
+        return handle_data('<%s%s>' % [tag, strattrs(attrs), escape=false]) 
       end
     end
 
     # match namespaces
     if not tag.grep(/:/).empty?
-      prefix, suffix = tag.chars.split(':', 2)
+      prefix, suffix = tag.split(':', 2)
     else
       prefix, suffix = '', tag
     end
-    prefix = @namespacemap.fetch(prefix, prefix)
+    prefix = @namespacemap[prefix] || prefix
     if prefix and not prefix.empty?
       prefix = prefix + '_'
     end
@@ -750,7 +752,7 @@ module FeedParserMixin
   end # End unknown_starttag
 
   def unknown_endtag(tag)
-    $stderr < 'end %s\n' % tag if _debug
+    $stderr < 'end %s\n' % tag if $debug
     # match namespaces
     if not tag.grep(/:/).empty?
       prefix, suffix = tag.split(':',2)
@@ -775,7 +777,7 @@ module FeedParserMixin
       @contentparams['type'] = 'applicatoin/xhtml+xml'
     end
     if @incontent != 0 and @contentparams.fetch('type') == 'application/xhtml+xml'
-      tag = tag.chars.split(/:/)[-1]
+      tag = tag.split(/:/)[-1]
       handle_data('</%s>' % tag, escape=false)
     end
 
@@ -818,7 +820,7 @@ module FeedParserMixin
     if @elementstack.nil? or @elementstack.empty?
       return
     end
-    $stderr << 'entering handle_entityref with %s\n' % ref if _debug
+    $stderr << 'entering handle_entityref with %s\n' % ref if $debug
     if ['lt', 'gt', 'quot', 'amp', 'apos'].include? ref
       text = "$%s;" % ref
     elsif @entities.has_key? ref
@@ -859,7 +861,7 @@ module FeedParserMixin
 
   def parse_declaration(i)
     # override internal declaration handler to handle CDATA blocks
-    $stderr << 'entering parse_declaration\n' if _debug
+    $stderr << 'entering parse_declaration\n' if $debug
     if @rawdata[i..i+9] == '<![CDATA['
       k = k.nil? ? @rawdata.size : @rawdata.index(']]>', i) # using a size call just in case :(  
       handle_data(@rawdata[i+9..k].to_xs) # FIXME test the to_xs call.
@@ -871,7 +873,7 @@ module FeedParserMixin
   end
 
   def mapContentType(contentType)
-    contentType.lower!
+    contentType.downcase!
     case contentType
     when 'text'
       contentType = 'text/plain'
@@ -884,7 +886,7 @@ module FeedParserMixin
   end
 
   def trackNamespace(prefix, uri)
-    loweruri = uri.lower
+    loweruri = uri.downcase
     if [prefix, loweruri] == [nil, 'http://my.netscape.com/rdf/simple/0.9'] and (not @version or @version.empty?)
       @version = 'rss090'
     end
@@ -908,7 +910,7 @@ module FeedParserMixin
   end 
 
   def resolveURI(uri)
-    return _urljoin(self.baseuri || '', uri) # FIXME untranslated (?)
+    return _urljoin(@baseuri || '', uri) # FIXME untranslated (?)
   end
 
   def decodeEntities(element, data)
@@ -1009,7 +1011,7 @@ module FeedParserMixin
       mfresults = _parseMicroformats(output, @baseuri, @encoding)
       if mfresults
         mfresults.fetch('tags', []).each { |tag| _addTag(tag['term'], tag['scheme'], tag['label']) }
-        mfresults.fetch('enclosures', []).each { |enclosure| self._start_enclosure(enclosure) }
+        mfresults.fetch('enclosures', []).each { |enclosure| _start_enclosure(enclosure) }
         mfresults.fetch('xfn',[]).each { |xfn| _addXFN(xfn['relationships'], xfn['href'], xfn['name']) }
         if mfresults['vcard']
           _getContext()['vcard'] = vcard # FIXME need to see if _getContext can be better done
@@ -1033,8 +1035,8 @@ module FeedParserMixin
     # address common error where people take data that is already in 
     # utf-8, presume that it is iso-8859-1, and re-encode it.
     #
-    if @encoding == 'utf-8' and output.class == ''.class # FIXME this doesn't check encodings
-      output = Iconv.new('iso-8859-1','utf-8').iconv(output)
+    if @encoding == 'utf-8' and output.class == ''.class 
+      output = unicode(output, 'utf-8') # FIXME this is probably wrong
     end
     #
 
@@ -1090,7 +1092,7 @@ module FeedParserMixin
 
   def pushContent(tag, attrsD, defaultContentType, expectingText)
     @incontent += 1
-    @lang.chars.replace!('_','-') if @lang
+    @lang.replace!('_','-') if @lang
     @contentparams = FeedParserDict.new({'type' => mapContentType(attrsD.fetch('type', defaultContentType)),
                 'language' => lang,
                 'base' => @baseuri })# One day, I will learn to write braces with proper indentations
@@ -1117,7 +1119,7 @@ module FeedParserMixin
     return if not (/<\/(\w+)>/ =~ str) or /&#?\w+;/ =~ str 
 
     # all tags must be in restricted subset of valid HTML tags
-    if str.scan(/<\/?(\w+)/).any?{ |t| not _HTMLSanitizer.acceptable_elements.include? t.lower }
+    if str.scan(/<\/?(\w+)/).any?{ |t| not _HTMLSanitizer.acceptable_elements.include? t.downcase }
       return
     end
 
@@ -1433,19 +1435,19 @@ module FeedParserMixin
     else
       author, email = context[key], nil
       return unless author and not author.empty?
-      emailmatch = author.chars.match(/(([a-zA-Z0-9\_\-\.\+]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?))(\?subject=\S+)?(([a-zA-Z0-9\_\-\.\+]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?))(\?subject=\S+)?/)
+      emailmatch = author.match(/(([a-zA-Z0-9\_\-\.\+]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?))(\?subject=\S+)?(([a-zA-Z0-9\_\-\.\+]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?))(\?subject=\S+)?/)
       if emailmatch
         email = emailmatch[0]
         # this is better than the original, i hope.
-        author.chars.gsub!(/(#{email})|(\(\))|(<>)|(&lt;&gt;)/)
-        author.chars.strip!
-        if author and author.chars[0] == ')'
-          author = author.chars[1..-1]
+        author.gsub!(/(#{email})|(\(\))|(<>)|(&lt;&gt;)/)
+        author.strip!
+        if author and author[0] == ')'
+          author = author[1..-1]
         end
-        if author and author.chars[-1] == ')'
+        if author and author[-1] == ')'
           author = author[0..-2]
         end
-        author.chars.strip!
+        author.strip!
       end
       if (author and not author.empty?) or email # email will never be empty (#match method)
         context.setdefault('%s_detail' % key, FeedParserDict.new)
@@ -1561,7 +1563,7 @@ module FeedParserMixin
   end
 
   def _end_expirationdate
-    _save('expired_parsed', _parse_date(self.pop('expired')))
+    _save('expired_parsed', _parse_date(pop('expired')))
   end
 
   def _start_cc_license(attrsD)
@@ -1601,7 +1603,7 @@ module FeedParserMixin
   end
 
   def _start_category(attrsD)
-    $stderr << 'entering _start_category with %s\n' % attrsD.to_s if _debug
+    $stderr << 'entering _start_category with %s\n' % attrsD.to_s if $debug
     term = attrsD['term']
     scheme = attrsD.fetch('scheme', attrsD.fetch('domain'))
     label = attrsD['label']
@@ -1631,7 +1633,7 @@ module FeedParserMixin
     if value and !value.empty? and tags.length > 0 and not (term.nil? or term.empty?)
       tags[-1]['term'] = value
     else
-      self._addTag(value, nil, nil)
+      _addTag(value, nil, nil)
     end
   end
   alias :_end_dc_subject :_end_category
@@ -1684,7 +1686,7 @@ module FeedParserMixin
 
   def _end_guid
     value = pop('id')
-    _save('guidislink', (self.guidislink and not self._getContext().has_key?('link')))
+    _save('guidislink', (guidislink and not _getContext().has_key?('link')))
     if @guidislink and not @guidislink.empty?
       # guid acts as link, but only if 'ispermalink' is not present or is 'true',
       # and only if the item doesn't already have a link element
@@ -1736,7 +1738,7 @@ module FeedParserMixin
   def _start_info(attrsD)
     pushContent('info', attrsD, 'text/plain', true)
   end
-  _start_feedburner_browserfriendly = _start_info
+  alias :_start_feedburner_browserfriendly :_start_info
 
   def _end_info
     popContent('info')
@@ -1878,56 +1880,115 @@ module FeedParserMixin
 end # End FeedParserMixin
 
 if XML_AVAILABLE
-  class StrictFeedParser < XML::SAX::HandlerBase # FIXME untranslated this is not finished. thinking about another way
+  class StrictFeedParser < XML::SAX::HandlerBase
+    
     include FeedParserMixin
-
-    def new(baseuri, baselang, encoding)
-      $stderr << 'trying StrictFeedParser\n'
-      super.initialize(self)
+    attr_accessor :bozo, :exc
+    def initialize(baseuri, baselang, encoding)
+      $stderr << "trying StrictFeedParser\n" if $debug
       startup(baseuri, baselang, encoding) # FIXME need to grok mixins, if i name #startup #initialize will this happen for me?
       @bozo = false
       @exc = nil
+      $stderr << "Leaving initialize\n" if $debug # My addition
     end
-
-    def startPrefixMapping(prefix, uri)
+    
+    def setDocumentLocator(loc)
+      @locator = loc
+    end
+    def getPos
+      [@locator.getSystemId, @locator.getLineNumber]
+    end
+    def startNamespaceDecl(prefix, uri) # Equivalent to startPrefixMapping in Python's SAX
+      $stderr << "startNamespaceDecl: prefix => #{prefix}, uri => #{uri}" if $debug
       trackNamespace(prefix, uri)
     end
 
-    def startElementNS(name, qname, attrs) # FIXME this isn't done
-      namespace, localname = name
-      lowernamespace = (namespace.to_s || '').lower
+    def startElement(name, attrs) # Equivalent to startElementNS in Python's SAX
+      $stderr << "name is class: #{name.class} and name is #{name} and attrs is #{attrs}" if $debug # FIXME remove if not needed
+      namespace, localname = name.split(';',2)
+      lowernamespace = (namespace.to_s || '').downcase
       if /backend\.userland\.com\/rss/ =~ lowernamespace
         # match any backend.userland.com namespace
         namespace = 'http://backend.userland.com/rss'
         lowernamespace = namespace
-        if qname and qname.index(':') > 0
-          givenprefix = qname.split(':')[0]
-        else
-          givenprefix = nil
-        end
-        prefix = self.matchnamespaces.fetch(lowernamespace, givenprefix)
       end
+      # FIXME If you look at feedparser.py, you'll notice that we are
+      # supposed to take in a qname here.  That doesn't happen with the
+      # expat parser we're using. Tell me how to fix this, would ya?
+      givenprefix = nil
+      prefix = matchnamespaces[lowernamespace] || givenprefix
+
+      attrsD = {}
+      if localname == 'math' and namespace == 'http://www.w3.org/1998/Math/MathML'
+        attrsD['xmlns'] = namespace
+      end
+      if localname == 'svg' and namespace == 'http://www.w3.org/2000/svg'
+        attrsD['xmlns'] = namespace
+      end
+
+      if prefix and not prefix.empty?
+        localname = prefox.downcase + ':' + localname
+      elsif namespace and not namespace.empty? #Expat (ah, suck).
+        @namespacesInUse.to_a.each do |l| 
+          name, value = l
+          if name and not name.empty? and value == namespace
+            localname = name + ':' + localname
+            break
+          end
+        end
+      end
+      $stderr << "startElement: qname = %s, namespace = %s, givenprefix = %s, prefix = %s, attrs = %s, localname = %s\n" % [nil, givenprefix, prefix, attrs.to_a, localname]
+
+      attrs.to_a.flatten.each_slice(3) do |namespace, attrlocalname, attrvalue|
+        lowernamespace = (namespace || '').downcase
+        prefix = matchnamespaces[lowernamespace] || ''
+        if not prefix.empty?
+          attrlocalname = prefix + ':' + attrlocalname
+        end
+        attrsD[attrlocalname.downcase] = attrvalue
+      end
+      unknown_starttag(localname, attrsD.to_a)
+    end
+    def characters(text)
+      handle_data(text)
+    end
+
+    def endElement(name)
+      namespace, localname = name.split(';',2)
+      lowernamespace = (namespace || '').downcase
+      givenprefix = ''
+
+      prefix = matchnamespaces[lowernamespace] || givenprefix
+      if prefix and not prefix.empty? 
+        localname = prefix + ':' + localname
+      elsif namespace and not namespace.empty? #Expat 
+        # yeah, I'm keeping the if statements as similar as possible
+        @namespacesInUse.to_a.each do |l| 
+          name, value = l
+          if name and not name.empty? and value == namespace
+            localname = name + ':' + localname
+            break
+          end
+        end
+      end
+      localname.downcase! # No default unicode shenanigans, I believe
+      unknown_endtag(localname)
+    end
+
+    def error(exc)
+      @bozo = 1
+      @exc = exc
+    end
+
+    def fatalError(exc)
+      error(exc)
+      raise exc
     end
   end
 end
 
-class BaseHTMLProcessor 
-  attr_accessor :encoding, :type
-  def initialize(encoding, type)
-    @special = re.compile(/\[<>'"\]/)
-    @bare_ampersand = re.compile("&(?!#\d+;|#x[0-9a-fA-F]+;|\w+;)")
-    @elements_no_end_tag = ['area', 'base', 'basefont', 'br', 'col', 'frame', 
-                          'hr', 'img', 'input', 'isindex', 'link', 'meta', 
-                          'param']
-
-    @encoding = encoding
-    @type = type
-    $stderr << "entering BaseHTMLProcesser, encoding=%s\n" % encoding if _debug
-  end
-
-end # End BaseHTMLProcessor
 def _resolveRelativeURIs(htmlSource, baseURI, encoding, type)
-  $stderr << 'entering _resolveRelativeURIs\n' if _debug # FIXME write a decent logger
+  $stderr << 'entering _resolveRelativeURIs\n' if $debug # FIXME write a decent logger
   relative_uris = { 'a' => 'href',
                     'applet' => 'codebase',
                     'area' => 'href',
@@ -1973,12 +2034,7 @@ def sanitizeHTML(html)
   h = Hpricot.scrub(html)
 end
 
-_date_handlers = []
-
-def registerDateHandler(meth)
-  # Register a date handler method
-  _date_handlers.insert(0, meth)
-end
+@date_handlers = []
 
 # ISO-8601 date parsing routines written by the Ruby developers.
 # We laugh at the silly Python programmers and their convoluted 
@@ -1990,16 +2046,14 @@ def _parse_date_iso8601(dateString)
 end
 
 # 8-bit date handling routes written by ytrewq1
-_korean_year  = u'\ub144' # b3e2 in euc-kr
-_korean_month = u'\uc6d4' # bff9 in euc-kr
-_korean_day   = u'\uc77c' # c0cf in euc-kr
-_korean_am    = u'\uc624\uc804' # bfc0 c0fc in euc-kr
-_korean_pm    = u'\uc624\ud6c4' # bfc0 c8c4 in euc-kr
+_korean_year  = u("\ub144") # b3e2 in euc-kr
+_korean_month = u("\uc6d4") # bff9 in euc-kr
+_korean_day   = u("\uc77c") # c0cf in euc-kr
+_korean_am    = u("\uc624\uc804") # bfc0 c0fc in euc-kr
+_korean_pm    = u("\uc624\ud6c4") # bfc0 c8c4 in euc-kr
 
-_korean_onblog_date_re = Regexp.new('(\d{4})%s\s+(\d{2})%s\s+(\d{2})%s\s+(\d{2}):(\d{2}):(\d{2})' % \
-                                    [_korean_year, _korean_month, _korean_day])
-_korean_nate_date_re = Regexp.new(u'(\d{4})-(\d{2})-(\d{2})\s+(%s|%s)\s+(\d{,2}):(\d{,2}):(\d{,2})' % \
-                                  [_korean_am, _korean_pm])
+_korean_onblog_date_re = Regexp.new("(\d{4})%s\s+(\d{2})%s\s+(\d{2})%s\s+(\d{2}):(\d{2}):(\d{2})" % [_korean_year, _korean_month, _korean_day])
+_korean_nate_date_re = Regexp.new("(\d{4})-(\d{2})-(\d{2})\s+(%s|%s)\s+(\d{0,2}):(\d{0,2}):(\d{0,2})" % [_korean_am, _korean_pm])
 
 def _parse_date_onblog(dateString)
   # Parse a string according to the OnBlog 8-bit date format
@@ -2010,10 +2064,10 @@ def _parse_date_onblog(dateString)
                  'hour' => m[4], 'minute' => m[5], 'second' => m[6],\
                  'zonediff' => '+09 =>00'}
 
-  $stderr << "OnBlog date parsed as: %s\n" % w3dtfdate if _debug
+  $stderr << "OnBlog date parsed as: %s\n" % w3dtfdate if $debug
   return _parse_date_w3dtf(w3dtfdate)
 end
-registerDateHandler(:_parse_date_onblog)
+@date_handlers << :_parse_date_onblog
 
 def _parse_date_name(dateString)
   # Parse a string according to the Nate 8-bit date format
@@ -2029,10 +2083,10 @@ def _parse_date_name(dateString)
     {'year' => m[1], 'month' => m[2], 'day' => m[3],\
                  'hour' => hour, 'minute' => m[6], 'second' => m[7],\
                  'zonediff' => '+09 =>00'}
-  $stderr << "Nate date parsed as: %s\n" % w3dtfdate if _debug
+  $stderr << "Nate date parsed as: %s\n" % w3dtfdate if $debug
   return _prase_date_w3dtf(w3dtfdate)
 end
-registerDateHandler(:_parse_date_nate)
+@date_handlers << :_parse_date_nate
 
 _mssql_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})(\.\d+)?/
 def _parse_date_mssql(dateString)
@@ -2042,47 +2096,46 @@ def _parse_date_mssql(dateString)
     {'year' => m[1], 'month' => m[2], 'day' => m[3],\
                  'hour' => m[4], 'minute' => m[5], 'second' => m[6],\
                  'zonediff' => '+09 =>00'}
-  $stderr << "MS SQL date parsed as: %s\n" % w3dtfdate if _debug
+  $stderr << "MS SQL date parsed as: %s\n" % w3dtfdate if $debug
   return _parse_date_w3dtf(w3dtfdate)
 end
-registerDateHandler(:_parse_date_mssql)
+@date_handlers << :_parse_date_mssql
 
 # Unicode strings for Greek date strings
-_greek_months = { \
-  u'\u0399\u03b1\u03bd' => u'Jan',       # c9e1ed in iso-8859-7
-  u'\u03a6\u03b5\u03b2' => u'Feb',       # d6e5e2 in iso-8859-7
-  u'\u039c\u03ac\u03ce' => u'Mar',       # ccdcfe in iso-8859-7
-  u'\u039c\u03b1\u03ce' => u'Mar',       # cce1fe in iso-8859-7
-  u'\u0391\u03c0\u03c1' => u'Apr',       # c1f0f1 in iso-8859-7
-  u'\u039c\u03ac\u03b9' => u'May',       # ccdce9 in iso-8859-7
-  u'\u039c\u03b1\u03ca' => u'May',       # cce1fa in iso-8859-7
-  u'\u039c\u03b1\u03b9' => u'May',       # cce1e9 in iso-8859-7
-  u'\u0399\u03bf\u03cd\u03bd' => u'Jun', # c9effded in iso-8859-7
-  u'\u0399\u03bf\u03bd' => u'Jun',       # c9efed in iso-8859-7
-  u'\u0399\u03bf\u03cd\u03bb' => u'Jul', # c9effdeb in iso-8859-7
-  u'\u0399\u03bf\u03bb' => u'Jul',       # c9f9eb in iso-8859-7
-  u'\u0391\u03cd\u03b3' => u'Aug',       # c1fde3 in iso-8859-7
-  u'\u0391\u03c5\u03b3' => u'Aug',       # c1f5e3 in iso-8859-7
-  u'\u03a3\u03b5\u03c0' => u'Sep',       # d3e5f0 in iso-8859-7
-  u'\u039f\u03ba\u03c4' => u'Oct',       # cfeaf4 in iso-8859-7
-  u'\u039d\u03bf\u03ad' => u'Nov',       # cdefdd in iso-8859-7
-  u'\u039d\u03bf\u03b5' => u'Nov',       # cdefe5 in iso-8859-7
-  u'\u0394\u03b5\u03ba' => u'Dec',       # c4e5ea in iso-8859-7
+_greek_months = { 
+  u("\u0399\u03b1\u03bd") => u("Jan"),       # c9e1ed in iso-8859-7
+  u("\u03a6\u03b5\u03b2") => u("Feb"),       # d6e5e2 in iso-8859-7
+  u("\u039c\u03ac\u03ce") => u("Mar"),       # ccdcfe in iso-8859-7
+  u("\u039c\u03b1\u03ce") => u("Mar"),       # cce1fe in iso-8859-7
+  u("\u0391\u03c0\u03c1") => u("Apr"),       # c1f0f1 in iso-8859-7
+  u("\u039c\u03ac\u03b9") => u("May"),       # ccdce9 in iso-8859-7
+  u("\u039c\u03b1\u03ca") => u("May"),       # cce1fa in iso-8859-7
+  u("\u039c\u03b1\u03b9") => u("May"),       # cce1e9 in iso-8859-7
+  u("\u0399\u03bf\u03cd\u03bd") => u("Jun"), # c9effded in iso-8859-7
+  u("\u0399\u03bf\u03bd") => u("Jun"),       # c9efed in iso-8859-7
+  u("\u0399\u03bf\u03cd\u03bb") => u("Jul"), # c9effdeb in iso-8859-7
+  u("\u0399\u03bf\u03bb") => u("Jul"),       # c9f9eb in iso-8859-7
+  u("\u0391\u03cd\u03b3") => u("Aug"),       # c1fde3 in iso-8859-7
+  u("\u0391\u03c5\u03b3") => u("Aug"),       # c1f5e3 in iso-8859-7
+  u("\u03a3\u03b5\u03c0") => u("Sep"),       # d3e5f0 in iso-8859-7
+  u("\u039f\u03ba\u03c4") => u("Oct"),       # cfeaf4 in iso-8859-7
+  u("\u039d\u03bf\u03ad") => u("Nov"),       # cdefdd in iso-8859-7
+  u("\u039d\u03bf\u03b5") => u("Nov"),       # cdefe5 in iso-8859-7
+  u("\u0394\u03b5\u03ba") => u("Dec"),       # c4e5ea in iso-8859-7
 }
 
-_greek_wdays = \
-  { \
-    u'\u039a\u03c5\u03c1' => u'Sun', # caf5f1 in iso-8859-7
-    u'\u0394\u03b5\u03c5' => u'Mon', # c4e5f5 in iso-8859-7
-    u'\u03a4\u03c1\u03b9' => u'Tue', # d4f1e9 in iso-8859-7
-    u'\u03a4\u03b5\u03c4' => u'Wed', # d4e5f4 in iso-8859-7
-    u'\u03a0\u03b5\u03bc' => u'Thu', # d0e5ec in iso-8859-7
-    u'\u03a0\u03b1\u03c1' => u'Fri', # d0e1f1 in iso-8859-7
-    u'\u03a3\u03b1\u03b2' => u'Sat', # d3e1e2 in iso-8859-7   
+_greek_wdays =   { 
+  u("\u039a\u03c5\u03c1") => u("Sun"), # caf5f1 in iso-8859-7
+  u("\u0394\u03b5\u03c5") => u("Mon"), # c4e5f5 in iso-8859-7
+  u("\u03a4\u03c1\u03b9") => u("Tue"), # d4f1e9 in iso-8859-7
+  u("\u03a4\u03b5\u03c4") => u("Wed"), # d4e5f4 in iso-8859-7
+  u("\u03a0\u03b5\u03bc") => u("Thu"), # d0e5ec in iso-8859-7
+  u("\u03a0\u03b1\u03c1") => u("Fri"), # d0e1f1 in iso-8859-7
+  u("\u03a3\u03b1\u03b2") => u("Sat"), # d3e1e2 in iso-8859-7   
 }
 
 # FIXME I'm not sure that Regexp and Encoding play well together
-_greek_date_format_re = Regexp.new(u'([^,]+),\s+(\d{2})\s+([^\s]+)\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+([^\s]+)')
+_greek_date_format_re = Regexp.new(u("([^,]+),\s+(\d{2})\s+([^\s]+)\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+([^\s]+)"))
 
 def _parse_date_greek(dateString)
   # Parse a string according to a Greek 8-bit date format
@@ -2101,25 +2154,24 @@ def _parse_date_greek(dateString)
   $stderr << "Greek date parsed as: %s\n" % rfc822date
   return _parse_date_rfc822(rfc822date) # FIXME these are just wrappers around Time.  Easily removed
 end
-registerDateHandler(:_parse_date_greek)
+@date_handlers << :_parse_date_greek
 
 # Unicode strings for Hungarian date strings
-_hungarian_months = \
-  { \
-    u'janu\u00e1r':   u'01',  # e1 in iso-8859-2
-    u'febru\u00e1ri': u'02',  # e1 in iso-8859-2
-    u'm\u00e1rcius':  u'03',  # e1 in iso-8859-2
-    u'\u00e1prilis':  u'04',  # e1 in iso-8859-2
-    u'm\u00e1ujus':   u'05',  # e1 in iso-8859-2
-    u'j\u00fanius':   u'06',  # fa in iso-8859-2
-    u'j\u00falius':   u'07',  # fa in iso-8859-2
-    u'augusztus':     u'08',
-    u'szeptember':    u'09',
-    u'okt\u00f3ber':  u'10',  # f3 in iso-8859-2
-    u'november':      u'11',
-    u'december':      u'12',
+_hungarian_months = { 
+  u("janu\u00e1r") =>   u("01"),  # e1 in iso-8859-2
+  u("febru\u00e1ri") => u("02"),  # e1 in iso-8859-2
+  u("m\u00e1rcius") =>  u("03"),  # e1 in iso-8859-2
+  u("\u00e1prilis") =>  u("04"),  # e1 in iso-8859-2
+  u("m\u00e1ujus") =>   u("05"),  # e1 in iso-8859-2
+  u("j\u00fanius") =>   u("06"),  # fa in iso-8859-2
+  u("j\u00falius") =>   u("07"),  # fa in iso-8859-2
+  u("augusztus") =>     u("08"),
+  u("szeptember") =>    u("09"),
+  u("okt\u00f3ber") =>  u("10"),  # f3 in iso-8859-2
+  u("november") =>      u("11"),
+  u("december") =>      u("12"),
 }
-_hungarian_date_format_re = Regexp.new(u'(\d{4})-([^-]+)-(\d{,2})T(\d{,2}):(\d{2})((\+|-)(\d{,2}:\d{2}))')
+_hungarian_date_format_re = /(\d{4})-([^-]+)-(\d{0,2})T(\d{0,2}):(\d{2})((\+|-)(\d{0,2}:\d{2}))/
 
 def _parse_date_hungarian(dateString)
   # Parse a string according to a Hungarian 8-bit date format.
@@ -2165,7 +2217,7 @@ def _parse_date(dateString)
   # FIXME No, this doesn't match up with the tests. Why? Because I haven't 
   # figured out why Mark went the 9-tuple path. Is Python's time module so 
   # screwed up? Or was there another reason?
-  for handler in _date_handlers
+  for handler in @_date_handlers
     begin 
       datething = send(handler,dateString)
       return datething
@@ -2176,16 +2228,17 @@ def _parse_date(dateString)
   return nil
 end
 
-def _getCharacterEncoding(feed, xml_data)
+def self._getCharacterEncoding(feed, xml_data)
   # Get the character encoding of the XML document
   sniffed_xml_encoding = ''
   xml_encoding = ''
   true_encoding = ''
-  http_headers = feed.meta || {}
   begin 
+    http_headers = feed.meta
     http_content_type = feed.content_type
     http_encoding = feed.charset
   rescue NoMethodError
+    http_headers = {}
     http_content_type = nil
     http_encoding = nil
   end
@@ -2242,7 +2295,7 @@ def _getCharacterEncoding(feed, xml_data)
   end
 
   if xml_encoding_match
-    xml_encoding = xml_encoding.match.group(0).lower
+    xml_encoding = xml_encoding.match.group(0).downcase
     xencodings = ['iso-10646-ucs-2', 'ucs-2', 'csunicode', 'iso-10646-ucs-4', 'ucs-4', 'csucs4', 'utf-16', 'utf-32', 'utf16', 'u16']
     if sniffed_xml_encoding and xencodings.include?xml_encoding
       xml_encoding =  sniffed_xml_encoding
@@ -2254,11 +2307,11 @@ def _getCharacterEncoding(feed, xml_data)
   text_content_types = ['text/xml', 'text/xml-external-parsed-entity']
 
   if application_content_types.include? http_content_type or 
-    (/^text\// =~ http_content_type and /+xml$/ =~ http_content_type)
+    (/^text\// =~ http_content_type and /\+xml$/ =~ http_content_type)
     acceptable_content_type = true
     true_encoding = http_encoding || xml_encoding || 'utf-8'
   elsif text_content_types.include? http_content_type or
-    /^text\// =~ http_content_type and /+xml$/ =~ http_content_type
+    /^text\// =~ http_content_type and /\+xml$/ =~ http_content_type
     acceptable_content_type = true
     true_encoding = http_encoding || 'us-ascii'
   elsif /text\// =~ http_content_type 
@@ -2272,17 +2325,17 @@ def _getCharacterEncoding(feed, xml_data)
   return true_encoding, http_encoding, xml_encoding, sniffed_xml_encoding, acceptable_content_type
 end
 
-def _toUTF8(data, encoding)
+def self.toUTF8(data, encoding)
 =begin
     Changes an XML data stream on the fly to specify a new encoding
 
     data is a raw sequence of bytes (not Unicode) that is presumed to be in %encoding already
     encoding is a string recognized by encodings.aliases
 =end
-  $stderr << "enterings _toUTF8, trying encoding %s\n" % encoding if _debug
+  $stderr << "entering self.toUTF8, trying encoding %s\n" % encoding if $debug
   # NOTE we must use double quotes when dealing with \x encodings!
   if data.size >= 4 and data[0..1] == "\xfe\xff" and data[2..3] != "\x00\x00" 
-    if _debug
+    if $debug
       $stderr << "stripping BOM\n"
       if encoding != 'utf-16be'
         $stderr << "string utf-16be instead\n"
@@ -2291,7 +2344,7 @@ def _toUTF8(data, encoding)
     encoding = 'utf-16be'
     data = data[2..-1]
   elsif data.size >= 4 and data[0..1] == "\xff\xfe" and data[2..3] != "\x00\x00"
-    if _debug
+    if $debug
       $stderr << "stripping BOM\n"
       if encoding !- 'utf-16le'
         $stderr << "trying utf-16le instead\n"
@@ -2300,7 +2353,7 @@ def _toUTF8(data, encoding)
   encoding = 'utf-16le'
   data = data[2..-1]
   elsif data[0..2] == "\xef\xbb\xbf"
-    if _debug
+    if $debug
       $stderr << "stripping BOM\n"
       if encoding != 'utf-8'
         $stderr << "trying utf-8 instead\n"
@@ -2309,7 +2362,7 @@ def _toUTF8(data, encoding)
   encoding = 'utf-8'
   data = data[2..-1]
   elsif data[0..3] == "\x00\x00\xfe\xff"
-    if _debug
+    if $debug
       $stderr << "stripping BOM\n"
       if encoding != 'utf-32be'
         $stderr << "trying utf-32be instead\n"
@@ -2318,7 +2371,7 @@ def _toUTF8(data, encoding)
   encoding = 'utf-32be'
   data = data[3..-1]
   elsif data[0..3] == "\xff\xfe\x00\x00"
-    if _debug
+    if $debug
       $stderr << "stripping BOM\n"
       if encoding != 'utf-3lbe'
         $stderr << "trying utf-32le instead\n"
@@ -2339,7 +2392,7 @@ def _toUTF8(data, encoding)
   return newdata
 end
 
-def _stripDoctype(data)
+def self.stripDoctype(data)
 =begin
 Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
 
@@ -2352,63 +2405,61 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
 
   doctype_pattern = /<!DOCTYPE([^>]*?)>/m
   doctype_results = data.scan(doctype_pattern)
-  doctype = doctype_results and doctype_results[0] or ''
-  if /netscape/ =~ doctype.lower
+  if doctype_results and doctype_results[0]
+    doctype = doctype_results[0]
+  else
+    doctype = ''
+  end
+  #doctype = doctype_results and doctype_results[0] or '' # I cannot figure out why this doesn't work
+  if /netscape/ =~ doctype.downcase
     version = 'rss091n'
   else
     version = nil
   end
-
-  # only allow in 'safe' inline entity definitions
-  replacement = nil
-  if doctype_results.length == 1 and not entity_results.empty?
-    safe_pattern = /\s+(\w+)\s+"(&#\w+;|[^&"]*)"/
-    safe_entities = entity_results.select { |e| e.match(safe_pattern) }
-    if not safe_entities.empty?
-      replacement = "<!DOCTYPE feed [\n  <!ENTITY %s>\n]>" % safe_entities.join(">\n  <!ENTITY ")
-    end
-  end
-
-  data.sub!(doctype_pattern, replacement)
-  rdict = {}
-  finds = replacement.scan(safe_pattern) || []
-  if replacement and not replacement.empty?
-    find.each { |l| rdict[l[0]] = l[1] } 
-  end
-  return version, data, rdict
+  data = data.sub(doctype_pattern, '')
+  return version, data
 end
 
-def parse(url_file_stream_or_string, etag=nil, modified=nil, agent=nil, referrer=nil, handlers=[])
+def parse(*args); FeedParser.parse(*args); end
+def FeedParser.parse(url_file_stream_or_string, etag=nil, modified=nil, agent=nil, referrer=nil, handlers=[])
   # Parse a feed from a URL, file, stream or string
   result = FeedParserDict.new
   result['feed'] = FeedParserDict.new
   result['entries'] = []
+  begin 
+    modified = modified.rfc2822
+  rescue NoMethodError
+  end
   if XML_AVAILABLE 
     result['bozo'] = false
   end
   if handlers.class != Array # FIXME is this right?
     handlers = [handlers]
   end
-  begin 
-    f = OpenURI::open(url_file_stream_or_string, 
+  begin
+    if URI::parse(url_file_stream_or_string).class == URI::Generic
+      f = open(url_file_stream_or_string) # OpenURI doesn't behave well when passed HTTP options for a file.
+    else
+      f = open(url_file_stream_or_string, 
                       "If-None-Match" => etag, 
-                      "If-Modified-Since" => modified.rfc2822, 
+                      "If-Modified-Since" => modified, 
                       "User-Agent" => agent, 
                       "Referer" => referrer
-                     )
-  rescue 
+              )
+    end
+
+    data = f.read
+    f.close 
+  rescue => e
+    $stderr << "Rescued in parse: "+e.to_s+"\n" if $debug # My addition
     result['bozo'] = true
     result['bozo_exception'] = e
     data = ''
     f = nil
   end
-
-  data = f.read
-  f.close
   if f.class == StringIO
     result['etag'] = f.meta['etag']
-    last_modified = f.last_modified
-    result['modified'] = last_modified if last_modified
+    result['modified'] = f.last_modified 
     result['url'] = f.base_uri
     result['status'] = f.status[0]
     result['headers'] = f.meta
@@ -2419,9 +2470,9 @@ def parse(url_file_stream_or_string, etag=nil, modified=nil, agent=nil, referrer
   # - xml_encoding is the encoding declared in the <?xml declaration
   # - sniffed_encoding is the encoding sniffed from the first 4 bytes of the XML data
   # - result['encoding'] is the actual encoding, as per RFC 3023 and a variety of other conflicting specifications
-  http_headers ||= result['headers'] || {} # File's don't have #meta, but we've already put them in for 
+  http_headers = result['headers'] || {} 
   result['encoding'], http_encoding, xml_encoding, sniffed_xml_encoding, acceptable_content_type =
-    _getCharacterEncoding(f,data)
+    self._getCharacterEncoding(f,data)
 
   if not http_headers.empty? and not acceptable_content_type
     if http_headers.has_key?('content-type')
@@ -2432,10 +2483,9 @@ def parse(url_file_stream_or_string, etag=nil, modified=nil, agent=nil, referrer
     result['bozo'] = true
     result['bozo_exception'] = NonXMLContentType(bozo_message) # I get to care about this, cuz Mark says I should.
   end
+  result['version'], data = self.stripDoctype(data)
 
-  result['version'], data, entities = _stripDoctype(data)
-
-  baseuri = http_headers['content-location'] || results['href'] # FIXME Hope this works.
+  baseuri = http_headers['content-location'] || result['href'] # FIXME Hope this works.
   baselang = http_headers['content-language']
 
   # if server sent 304, we're done
@@ -2461,7 +2511,7 @@ def parse(url_file_stream_or_string, etag=nil, modified=nil, agent=nil, referrer
     next if tried_encodings.include? proposed_encoding
     tried_encodings << proposed_encoding
     begin
-      data = _toUTF8(data, proposed_encoding)
+      data = self.toUTF8(data, proposed_encoding)
       known_encoding = use_strict_parser = true
       break
     rescue
@@ -2478,7 +2528,7 @@ def parse(url_file_stream_or_string, etag=nil, modified=nil, agent=nil, referrer
     begin
       proposed_encoding = 'utf-8'
       tried_encodings << proposed_encoding
-      data = _toUTF8(data, proposed_encoding)
+      data = self.toUTF8(data, proposed_encoding)
       known_encoding = use_strict_parser = true
     rescue
     end
@@ -2488,7 +2538,7 @@ def parse(url_file_stream_or_string, etag=nil, modified=nil, agent=nil, referrer
     begin
       proposed_encdoing = 'windows-1252'
       tried_encodings << proposed_encoding
-      data = _toUTF8(data, proposed_encoding)
+      data = self.toUTF8(data, proposed_encoding)
       known_encoding = use_strict_parser = true
     rescue
     end
@@ -2498,7 +2548,7 @@ def parse(url_file_stream_or_string, etag=nil, modified=nil, agent=nil, referrer
     begin
       proposed_encoding = 'iso-8859-2'
       tried_encodings << proposed_encoding
-      data = _toUTF8(data, proposed_encoding)
+      data = self.toUTF8(data, proposed_encoding)
       known_encoding = use_strict_parser = true
     rescue
     end
@@ -2506,7 +2556,7 @@ def parse(url_file_stream_or_string, etag=nil, modified=nil, agent=nil, referrer
   # if still no luck, give up
   if not known_encoding
     result['bozo'] = true
-    result['bozo_exception'] = CharacterEncodingUnknown("documented declared as %s, but parsed as %s" % [result['encoding'], xml_encoding])
+    result['bozo_exception'] = CharacterEncodingUnknown.new("documented declared as %s, but parsed as %s" % [result['encoding'], xml_encoding])
     result['encoding'] = proposed_encoding
   end
 
@@ -2520,18 +2570,21 @@ def parse(url_file_stream_or_string, etag=nil, modified=nil, agent=nil, referrer
     saxparser.setDocumentHandler(feedparser)
     saxparser.setErrorHandler(feedparser)
     source = XML::SAX::InputSource.new(StringIO.new(data)) # NOTE large files are slow
+    source.setSystemId('fp')
+    source.setEncoding('utf-8')
+    puts "source's getEncoding: #{source.getEncoding || source.getEncoding.class}"
     # FIXME are namespaces being checked?
-    begin
+   # begin
       saxparser.parse(source)
-    rescue Exception => e
-      if _debug
+   # rescue Exception => e
+      if $debug
         $stderr << "xml parsing failed\n"
         $stderr << e # Hrmph.
       end
       result['bozo'] = true
       result['bozo_exception'] = feedparser.exc || e 
-      use_strict_parser
-    end
+      use_strict_parser = false
+   # end
   end
   if not use_strict_parser
     feedparser = LooseFeedParser.new(baseuri, baselang, known_encoding && 'utf-8' || '', entities)
@@ -2543,11 +2596,11 @@ def parse(url_file_stream_or_string, etag=nil, modified=nil, agent=nil, referrer
   result['namespaces'] = feedparser.namespacesInUse
   return result
 end
-
+end # End FeedPraser module
 require 'pp'
 
 class Serializer 
-  def new(results)
+  def initialize(results)
     @results = results
   end
 end
@@ -2557,7 +2610,6 @@ class TextSerializer < Serializer
     writer(stream, @results, '')
   end
 
-  private
   def writer(stream, node, prefix)
     return if (node.nil? or node.empty?)
     if node.methods.include?'keys'
@@ -2586,8 +2638,8 @@ end
 
 class PprintSerializer < Serializer # FIXME ? use pp instead?
   def write(stream = $stdout)
-    stream << @results['href'] + '\n\n'
-    pp(results)
+    stream << @results['href'].to_s + '\n\n'
+    pp(@results)
     stream << "\n"
   end
 end
@@ -2599,7 +2651,7 @@ options = OpenStruct.new
 options.etag = options.modified = options.agent = options.referrer = nil
 options.format = 'pprint'
 
-opts.verbose = false
+options.verbose = false
 
 opts = OptionParser.new do |opts|
   opts.banner 
@@ -2637,9 +2689,14 @@ end
 
 opts.parse!(ARGV)
 if options.verbose 
-  _debug = true
+  $debug = true
+end
+if options.format == :text
+  serializer = TextSerializer
+else
+  serializer = PprintSerializer
 end
 ARGV.each do |url| # opts.parse! removes everything but the urls from the command line
-  results = parse(url, etag=options.etag, modified=options.modified, agent=options.agent, referrer=options.referrer)
-  serializer(results).write($stdout)
+  results = FeedParser.parse(url, etag=options.etag, modified=options.modified, agent=options.agent, referrer=options.referrer)
+  serializer.new(results).write($stdout)
 end
