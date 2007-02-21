@@ -157,8 +157,6 @@ module Hpricot
 
     def initialize(children, config={})
       old_initialize(children)
-
-
       setup_filter(config)
     end
 
@@ -298,8 +296,9 @@ module Hpricot
         # This is the crux of my changes.  It just checks if the tag has 
         # certain attributes allowed through.  Note that this overrides any of the "generic" attributes they could have
         (self/tag).strip_attributes(@config[:allow_tag_specific_attributes][tag] || @config[:allow_attributes])
+        (self/tag).strip_style(@config[:allow_css_style_properties], @config[:allow_css_style_keywords])
+
       }
-      self/tag.strip_style(@config[:allow_css_style_properties], @config[:allow_css_style_keywords])
       children.reverse.each do |e|
         unless e.class == Hpricot::Text or config[:allow_tags].include?e.name or e.name == 'style'
           e.strip 
@@ -414,7 +413,7 @@ class FeedParserDict < Hash
   # We could include the [] rewrite in new using Hash.new's fancy pants block thing
   # but we'd still have to overwrite []= and such. 
   # I'm going to make it easy to turn lists of pairs into FeedParserDicts's though.
-  def new( pairs = nil)
+  def new(pairs = nil)
     if pairs.class == Array and pairs[0].class == Array and pairs[0].length == 2
       pairs.each do |l| 
         k,v = l
@@ -752,7 +751,7 @@ module FeedParserMixin
   end # End unknown_starttag
 
   def unknown_endtag(tag)
-    $stderr < 'end %s\n' % tag if $debug
+    $stderr << "end %s\n" % tag if $debug
     # match namespaces
     if not tag.grep(/:/).empty?
       prefix, suffix = tag.split(':',2)
