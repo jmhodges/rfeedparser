@@ -170,7 +170,8 @@ module Hpricot
             clean << prop + ': ' + value + ';'
           elsif ['background','border','margin','padding'].include? prop.split('-')[0].downcase 
 
-            did_not_break = true # This is a terrible, but working way to mimic Python's for/else
+            # This is a terrible, but working way to mimic Python's for/else
+            did_not_break = true 
 
             value.split.each do |keyword|
               if not ok_keywords.include? keyword and not valid_css_values.match(keyword)
@@ -884,7 +885,7 @@ module FeedParser
       if @inentry and not @insource
         if element == 'content'
           @entries[-1][element] ||= []
-          contentparams = @contentparams.dup # FIXME does this work?
+          contentparams = Marshal.load(Marshal.dump(@contentparams)) # deepcopy
           contentparams['value'] = output
           @entries[-1][element] << contentparams
         elsif element == 'link'
@@ -896,7 +897,7 @@ module FeedParser
           element = 'summary' if element == 'description'
           @entries[-1][element] = output
           if @incontent != 0
-            contentparams = @contentparams.dup
+            contentparams = Marshal.load(Marshal.copy(@contentparams))
             contantparams['value'] = output
             @entries[-1][element + '_detail'] = contentparams
           end
@@ -908,7 +909,7 @@ module FeedParser
         if element == 'link'
           context['links'][-1]['href'] = output
         elsif @incontent != 0
-          contentparams = @contentparams.dup
+          contentparams = Marshal.load(Marshal.dump(@contentparams))
           contentparams['value'] = output
           context[element + '_detail'] = contentparams
         end
@@ -1014,7 +1015,7 @@ module FeedParser
     end
 
     def _start_feed(attrsD)
-      @infeed = 1
+      @infeed = true 
       versionmap = {'0.1' => 'atom01',
                   '0.2' => 'atom02',
                   '0.3' => 'atom03'
@@ -1633,7 +1634,7 @@ module FeedParser
 
     def _end_source
       @insource = false
-      getContext()['source'] = @sourcedata.dup
+      getContext()['source'] = Marshal.load(Marshal.dump(@sourcedata))
       @sourcedata.clear()
     end
 
@@ -1691,7 +1692,6 @@ module FeedParser
 
   end # End FeedParserMixin
 
-  if XML_AVAILABLE
     class StrictFeedListener 
       include REXML::SAX2Listener
       include FeedParserMixin
@@ -1764,7 +1764,7 @@ module FeedParser
       end
 
       def error(exc)
-        @bozo = 1
+        @bozo = true 
         @exc = exc
       end
 
@@ -1773,7 +1773,6 @@ module FeedParser
         raise exc
       end
     end
-  end
 
   def FeedParser.resolveRelativeURIs(htmlSource, baseURI, encoding)
     $stderr << "entering resolveRelativeURIs\n" if $debug # FIXME write a decent logger
@@ -2349,9 +2348,7 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
       result['bozo_exception'] = CharacterEncodingUnknown.new("documented declared as %s, but parsed as %s" % [result['encoding'], xml_encoding])
       result['encoding'] = proposed_encoding
     end
-    if not XML_AVAILABLE
-      use_strict_parser = false
-    end
+    use_strict_parser = true
     if use_strict_parser
       # initialize the SAX parser
       feedlistener = StrictFeedListener.new(baseuri, baselang, 'utf-8')
@@ -2371,7 +2368,7 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
       end
     end
     if not use_strict_parser
-      #feedparser = LooseFeedParser.new(baseuri, baselang, known_encoding && 'utf-8' || '', entities)
+      #feedparser = LooseFeedParser.new(baseuri, baselang, known_encoding && 'utf-8' || '')
       #feedparser.feed(data)
       $stderr << "Using LooseFeed" if $debug
     end
