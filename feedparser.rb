@@ -898,7 +898,7 @@ module FeedParser
           @entries[-1][element] = output
           if @incontent != 0
             contentparams = Marshal.load(Marshal.copy(@contentparams))
-            contantparams['value'] = output
+            contentparams['value'] = output
             @entries[-1][element + '_detail'] = contentparams
           end
         end
