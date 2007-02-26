@@ -1097,7 +1097,7 @@ module FeedParser
       @incontributor = true
       context = getContext()
       context['contributors'] ||= []
-      conext['contributors'] << FeedParserDict.new
+      context['contributors'] << FeedParserDict.new
       push('contributor', false)
     end
 
