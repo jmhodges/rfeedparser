@@ -11,14 +11,16 @@ Required: Ruby 1.8
 """
 $KCODE = 'UTF8'
 require 'stringio'
-require 'enumerator'
+require 'enumerator' # each_slice among other things
 require 'uri'
-XML_AVAILABLE = true
+require 'cgi' # escaping html
+require 'time'
+#XML_AVAILABLE = true
 require 'rexml/parsers/sax2parser'
 require 'rexml/sax2listener'
 require 'pp'
 require 'rubygems'
-
+require 'parsedate' # Used in _parse_date_rfc822
 
 require 'base64'
 require 'iconv'
@@ -26,12 +28,14 @@ require 'iconv'
 #FIXME need charset detection
 
 #FIXME untranslated, ruby gem
-gem 'htmlentities'
-require 'htmlentities/string' #FIXME we need a "manual" attempt if this doesn't exist
 gem 'character-encodings', ">=0.2.0"
 gem 'hpricot', ">=0.5"
+gem 'tzinfo'
+
 require 'hpricot'
 require 'encoding/character/utf-8'
+require 'tzinfo'
+include TZInfo
 require 'open-uri'
 include OpenURI
 
@@ -57,7 +61,7 @@ def _xmlescape(text) # FIXME unused
 end
 
 def _ebcdic_to_ascii(s)   
-  return Iconv.iconv("EBCDIC-US", "ASCII", s)[0]
+  return Iconv.iconv("iso88591", "ebcdic-cp-be", s)[0]
 end
 
 _cp1252 = {
@@ -95,7 +99,7 @@ def urljoin(base, uri)
   uri = uri.sub(urifixer, '\1\3') 
   begin
     return URI.join(base, uri).to_s #FIXME untranslated, error handling from original needed?
-  rescue URI::BadURIError
+  rescue URI::BadURIError => e
     if URI.parse(base).relative?
       return URI::parse(uri).to_s
     end
@@ -107,8 +111,8 @@ end
 # I have modified it to check for attributes that are only allowed if they are in a certain tag
 module Hpricot
   class Elements 
-    def strip # I completely route around this with the recursive_strip in Doc
-      each { |x| x.strip }
+    def strip(allowed_tags=[]) # I completely route around this with the recursive_strip in Doc
+      each { |x| x.strip(allowed_tags) }
     end
 
     def strip_attributes(safe=[])
@@ -120,38 +124,63 @@ module Hpricot
     end
   end
 
+  class Text
+    def strip(foo)
+    end
+    def strip_attributes(foo)
+    end
+  end
+  class Comment
+    def strip(foo)
+    end
+    def strip_attributes(foo)
+    end
+  end
+  class BogusETag
+    def strip(foo)
+    end
+    def strip_attributes(foo)
+    end
+  end
+
   class Elem
-    def remove
-      parent.children.delete(self)
+    def decode_entities
+      children.each{ |x| x.decode_entities }
     end
 
-    def strip
-      children.each { |x| x.strip unless x.class == Hpricot::Text }
+    def cull
+      swap(children.to_s)
+    end
 
-      if strip_removes?
-        remove
-      else
-        parent.replace_child self, Hpricot.make(inner_html) unless parent.nil?
+    def strip(allowed_tags=[])
+      if strip_removes? or not allowed_tags.include?self.name
+        cull
       end
+      children.each{ |x| x.strip(allowed_tags) } 
     end
 
     def strip_attributes(safe=[])
+      children.each { |x| x.strip_attributes(safe) }
+
       unless attributes.nil?
         attributes.each do |atr|
-          unless safe.include?atr[0] or atr[0] == 'style'
+          unless safe.include?atr[0] or (atr[0] == 'style' and not $compatible)
             remove_attribute(atr[0]) 
           end
         end
       end
     end
-    
+
     # Much of this method was translated from Mark Pilgrim's FeedParser, including comments
     def strip_style(ok_props = [], ok_keywords = [])
+      children.each do |e| 
+        e.strip_style(ok_props, ok_keywords) unless e.class == Hpricot::Text 
+      end
+
       unless self['style'].nil?
         # disallow urls 
         style = self['style'].sub(/url\s*\(\s*[^\s)]+?\s*\)\s*'/, ' ')
-        valid_css_values = re.compile('^(#[0-9a-f]+|rgb\(\d+%?,\d*%?,?\d*%?\)?|' +
-        '\d{0,2}\.?\d{0,2}(cm|em|ex|in|mm|pc|pt|px|%|,|\))?)$')
+        valid_css_values = /^(#[0-9a-f]+|rgb\(\d+%?,\d*%?,?\d*%?\)?|\d{0,2}\.?\d{0,2}(cm|em|ex|in|mm|pc|pt|px|%|,|\))?)$/
         # gauntlet
         if not style.match(/^([:,;#%.\sa-zA-Z0-9!]|\w-\w|'[\s\w]+'|"[\s\w]+"|\([\d,\s]+\))*$/)
           return ''
@@ -188,167 +217,155 @@ module Hpricot
         self['style'] = clean.join(' ')
       end
     end
-    
+
     def strip_removes?
       # I'm sure there are others that shuould be ripped instead of stripped
       attributes && attributes['type'] =~ /script|css/
     end
   end
+end
 
-  class Doc
-    alias :old_initialize :initialize
-    attr_accessor :config
-     @@acceptable_elements = ['a', 'abbr', 'acronym', 'address', 'area', 'b',
-      'big', 'blockquote', 'br', 'button', 'caption', 'center', 'cite',
-      'code', 'col', 'colgroup', 'dd', 'del', 'dfn', 'dir', 'div', 'dl', 'dt',
-      'em', 'fieldset', 'font', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-      'hr', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'map',
-      'menu', 'ol', 'optgroup', 'option', 'p', 'pre', 'q', 's', 'samp',
-      'select', 'small', 'span', 'strike', 'strong', 'sub', 'sup', 'table',
-      'tbody', 'td', 'textarea', 'tfoot', 'th', 'thead', 'tr', 'tt', 'u',
-      'ul', 'var']
-
-      @@acceptable_attributes = ['abbr', 'accept', 'accept-charset', 'accesskey',
-      'action', 'align', 'alt', 'axis', 'border', 'cellpadding',
-      'cellspacing', 'char', 'charoff', 'charset', 'checked', 'cite', 'class',
-      'clear', 'cols', 'colspan', 'color', 'compact', 'coords', 'datetime',
-      'dir', 'disabled', 'enctype', 'for', 'frame', 'headers', 'height',
-      'href', 'hreflang', 'hspace', 'id', 'ismap', 'label', 'lang',
-      'longdesc', 'maxlength', 'media', 'method', 'multiple', 'name',
-      'nohref', 'noshade', 'nowrap', 'prompt', 'readonly', 'rel', 'rev',
-      'rows', 'rowspan', 'rules', 'scope', 'selected', 'shape', 'size',
-      'span', 'src', 'start', 'summary', 'tabindex', 'target', 'title', 
-      'type', 'usemap', 'valign', 'value', 'vspace', 'width', 'xml:lang']
-
-      @@unacceptable_elements_with_end_tag = ['script', 'applet']
-
-      @@acceptable_css_properties = ['azimuth', 'background-color',
-      'border-bottom-color', 'border-collapse', 'border-color',
-      'border-left-color', 'border-right-color', 'border-top-color', 'clear',
-      'color', 'cursor', 'direction', 'display', 'elevation', 'float', 'font',
-      'font-family', 'font-size', 'font-style', 'font-variant', 'font-weight',
-      'height', 'letter-spacing', 'line-height', 'overflow', 'pause',
-      'pause-after', 'pause-before', 'pitch', 'pitch-range', 'richness',
-      'speak', 'speak-header', 'speak-numeral', 'speak-punctuation',
-      'speech-rate', 'stress', 'text-align', 'text-decoration', 'text-indent',
-      'unicode-bidi', 'vertical-align', 'voice-family', 'volume',
-      'white-space', 'width']
-
-      # survey of common keywords found in feeds
-      @@acceptable_css_keywords = ['auto', 'aqua', 'black', 'block', 'blue',
-      'bold', 'both', 'bottom', 'brown', 'center', 'collapse', 'dashed',
-      'dotted', 'fuchsia', 'gray', 'green', '!important', 'italic', 'left',
-      'lime', 'maroon', 'medium', 'none', 'navy', 'normal', 'nowrap', 'olive',
-      'pointer', 'purple', 'red', 'right', 'solid', 'silver', 'teal', 'top',
-      'transparent', 'underline', 'white', 'yellow']
-
-      @@mathml_elements = ['maction', 'math', 'merror', 'mfrac', 'mi',
-      'mmultiscripts', 'mn', 'mo', 'mover', 'mpadded', 'mphantom',
-      'mprescripts', 'mroot', 'mrow', 'mspace', 'msqrt', 'mstyle', 'msub',
-      'msubsup', 'msup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder',
-      'munderover', 'none']
-
-      @@mathml_attributes = ['actiontype', 'align', 'columnalign', 'columnalign',
-      'columnalign', 'columnlines', 'columnspacing', 'columnspan', 'depth',
-      'display', 'displaystyle', 'equalcolumns', 'equalrows', 'fence',
-      'fontstyle', 'fontweight', 'frame', 'height', 'linethickness', 'lspace',
-      'mathbackground', 'mathcolor', 'mathvariant', 'mathvariant', 'maxsize',
-      'minsize', 'other', 'rowalign', 'rowalign', 'rowalign', 'rowlines',
-      'rowspacing', 'rowspan', 'rspace', 'scriptlevel', 'selection',
-      'separator', 'stretchy', 'width', 'width', 'xlink:href', 'xlink:show',
-      'xlink:type', 'xmlns', 'xmlns:xlink']
-
-      # svgtiny - foreignObject + linearGradient + radialGradient + stop
-      @@svg_elements = ['a', 'animate', 'animateColor', 'animateMotion',
-      'animateTransform', 'circle', 'defs', 'desc', 'ellipse', 'font-face',
-      'font-face-name', 'font-face-src', 'g', 'glyph', 'hkern', 'image',
-      'linearGradient', 'line', 'metadata', 'missing-glyph', 'mpath', 'path',
-      'polygon', 'polyline', 'radialGradient', 'rect', 'set', 'stop', 'svg',
-      'switch', 'text', 'title', 'use']
-
-      # svgtiny + class + opacity + offset + xmlns + xmlns:xlink
-      @@svg_attributes = ['accent-height', 'accumulate', 'additive', 'alphabetic',
-       'arabic-form', 'ascent', 'attributeName', 'attributeType',
-       'baseProfile', 'bbox', 'begin', 'by', 'calcMode', 'cap-height',
-       'class', 'color', 'color-rendering', 'content', 'cx', 'cy', 'd',
-       'descent', 'display', 'dur', 'end', 'fill', 'fill-rule', 'font-family',
-       'font-size', 'font-stretch', 'font-style', 'font-variant',
-       'font-weight', 'from', 'fx', 'fy', 'g1', 'g2', 'glyph-name', 
-       'gradientUnits', 'hanging', 'height', 'horiz-adv-x', 'horiz-origin-x',
-       'id', 'ideographic', 'k', 'keyPoints', 'keySplines', 'keyTimes',
-       'lang', 'mathematical', 'max', 'min', 'name', 'offset', 'opacity',
-       'origin', 'overline-position', 'overline-thickness', 'panose-1',
-       'path', 'pathLength', 'points', 'preserveAspectRatio', 'r',
-       'repeatCount', 'repeatDur', 'requiredExtensions', 'requiredFeatures',
-       'restart', 'rotate', 'rx', 'ry', 'slope', 'stemh', 'stemv', 
-       'stop-color', 'stop-opacity', 'strikethrough-position',
-       'strikethrough-thickness', 'stroke', 'stroke-dasharray',
-       'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin',
-       'stroke-miterlimit', 'stroke-width', 'systemLanguage', 'target',
-       'text-anchor', 'to', 'transform', 'type', 'u1', 'u2',
-       'underline-position', 'underline-thickness', 'unicode',
-       'unicode-range', 'units-per-em', 'values', 'version', 'viewBox',
-       'visibility', 'width', 'widths', 'x', 'x-height', 'x1', 'x2',
-       'xlink:actuate', 'xlink:arcrole', 'xlink:href', 'xlink:role',
-       'xlink:show', 'xlink:title', 'xlink:type', 'xml:base', 'xml:lang',
-       'xml:space', 'xmlns', 'xmlns:xlink', 'y', 'y1', 'y2', 'zoomAndPan']
-
-      @@svg_attr_map = nil
-      @@svg_elem_map = nil
-
-      @@acceptable_svg_properties = [ 'fill', 'fill-opacity', 'fill-rule',
-      'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin',
-      'stroke-opacity']
-
-      @@acceptable_tag_specific_attributes = {}
-      unless $compatible 
-        @@mathml_elements.each{|e| @@acceptable_tag_specific_attributes[e] = @@mathml_attributes }
-        @@svg_elements.each{|e| @@acceptable_tag_specific_attributes[e] = @@svg_attributes }
-      end
-
-    def initialize(children, config=nil)
-      old_initialize(children)
-      @config = { :nuke_tags => @@unacceptable_elements_with_end_tag ,
-          :allow_tags => @@acceptable_elements,
-          :allow_attributes => @@acceptable_attributes,
-          :allow_tag_specific_attributes => @@acceptable_tag_specific_attributes
-      }
-      unless $compatible
-        @config.merge!({:allow_css_properties => @@acceptable_css_properties,
-            :allow_css_keywords => @@acceptable_css_keywords
-        })
-      end
-      @config.merge!(config) unless config.nil?
-    end
-    
-    def recursive_strip(e)
-      unless e.class == Hpricot::Text
-        if e.class == Hpricot::Elements or e.class == Array
-          e.reverse.each{ |ce| recursive_strip(ce) }
+def unescapeHTML(string) # Stupid hack.
+  string = string.gsub(/&(.*?);/n) do
+    match = $1.dup
+    case match
+    when /\Aamp\z/ni           then '&'
+    when /\Aquot\z/ni          then '"'
+    when /\Agt\z/ni            then '>'
+      #when /\Alt\z/ni            then '<' # See below
+    when /\A#0*(\d+)\z/n       then
+      if Integer($1) < 256
+        Integer($1).chr
+      else
+        if Integer($1) < 65536 and ($KCODE[0] == ?u or $KCODE[0] == ?U)
+          [Integer($1)].pack("U")
         else
-          e.children.reverse.each{ |ce| recursive_strip(ce) }
-          unless @config[:allow_tags].include?e.name
-            e.strip
-          end
+            "&##{$1};"
         end
       end
+    when /\A#x([0-9a-f]+)\z/ni then
+      if $1.hex < 256
+        $1.hex.chr
+      else
+        if $1.hex < 65536 and ($KCODE[0] == ?u or $KCODE[0] == ?U)
+          [$1.hex].pack("U")
+        else
+            "&#x#{$1};"
+        end
+      end
+    else
+        "&#{match};"
     end
+  end
+  string.gsub!(/&lt;(?!!)/n,'<') # Avoid unescaping entity refs
+  return string
+end
+module REXML
+  module Parsers
+    class BetterSAXParser < SAX2Parser
+      # In REXML::SAX2Parser#parse, the guys at REXML do this stupid entity 
+      # decoding thing, where they do ONLY deocde numeric entities. They also 
+      # do not provide a way to fix this (that @entities Hash you see in 
+      # SAX2Parser's initialize method? Totally unused. Awesome.)  So, we get 
+      # to hack around it. Or rather, copy the original parse but comment out
+      # the stupid code.
+      def parse
+        @procs.each { |sym,match,block| block.call if sym == :start_document }
+        @listeners.each { |sym,match,block| 
+          block.start_document if sym == :start_document or sym.nil?
+        }
+        root = context = []
+        while true
+          event = @parser.pull
+          case event[0]
+          when :end_document
+            handle( :end_document )
+            break
+          when :end_doctype
+            context = context[1]
+          when :start_element
+            @tag_stack.push(event[1])
+            # find the observers for namespaces
+            procs = get_procs( :start_prefix_mapping, event[1] )
+            listeners = get_listeners( :start_prefix_mapping, event[1] )
+            if procs or listeners
+              # break out the namespace declarations
+              # The attributes live in event[2]
+              event[2].each {|n, v| event[2][n] = @parser.normalize(v)}
+              nsdecl = event[2].find_all { |n, value| n =~ /^xmlns(:|$)/ }
+              nsdecl.collect! { |n, value| [ n[6..-1], value ] }
+              @namespace_stack.push({})
+              nsdecl.each do |n,v|
+                @namespace_stack[-1][n] = v
+                # notify observers of namespaces
+                procs.each { |ob| ob.call( n, v ) } if procs
+                listeners.each { |ob| ob.start_prefix_mapping(n, v) } if listeners
+              end
+            end
+            event[1] =~ Namespace::NAMESPLIT
+            prefix = $1
+            local = $2
+            uri = get_namespace(prefix)
+            # find the observers for start_element
+            procs = get_procs( :start_element, event[1] )
+            listeners = get_listeners( :start_element, event[1] )
+            # notify observers
+            procs.each { |ob| ob.call( uri, local, event[1], event[2] ) } if procs
+            listeners.each { |ob| 
+              ob.start_element( uri, local, event[1], event[2] ) 
+            } if listeners
+          when :end_element
+            @tag_stack.pop
+            event[1] =~ Namespace::NAMESPLIT
+            prefix = $1
+            local = $2
+            uri = get_namespace(prefix)
+            # find the observers for start_element
+            procs = get_procs( :end_element, event[1] )
+            listeners = get_listeners( :end_element, event[1] )
+            # notify observers
+            procs.each { |ob| ob.call( uri, local, event[1] ) } if procs
+            listeners.each { |ob| 
+              ob.end_element( uri, local, event[1] ) 
+            } if listeners
 
-    def scrub
-      @config[:nuke_tags].each { |tag| (self/tag).remove } # yes, that '/' should be there
-      @config[:allow_tags].each do |tag|
-        (self/tag).strip_attributes(@config[:allow_tag_specific_attributes][tag] || @config[:allow_attributes])
-        unless $compatible
-          (self/tag).strip_style(@config[:allow_css_properties], @config[:allow_css_keywords])
+            namespace_mapping = @namespace_stack.pop
+            # find the observers for namespaces
+            procs = get_procs( :end_prefix_mapping, event[1] )
+            listeners = get_listeners( :end_prefix_mapping, event[1] )
+            if procs or listeners
+              namespace_mapping.each do |prefix, uri|
+                # notify observers of namespaces
+                procs.each { |ob| ob.call( prefix ) } if procs
+                listeners.each { |ob| ob.end_prefix_mapping(prefix) } if listeners
+              end
+            end
+          when :text
+            #normalized = @parser.normalize( event[1] )
+            #handle( :characters, normalized )
+            #copy = event[1].clone
+            # NOTE This is the part that is stupid. -- Jeff
+            #@entities.each { |key, value| copy = copy.gsub("&#{key};", value) }
+            #copy.gsub!( Text::NUMERICENTITY ) {|m|
+            #  m=$1
+            #  m = "0#{m}" if m[0] == ?x
+            #  [Integer(m)].pack('U*')
+            #}
+            #handle( :characters, copy )
+            handle( :characters, event[1])
+          when :entitydecl
+            @entities[ event[1] ] = event[2] if event.size == 3
+            handle( *event )
+          when :processing_instruction, :comment, :doctype, :attlistdecl, 
+            :elementdecl, :cdata, :notationdecl, :xmldecl
+            handle( *event )
+          end
+          handle( :progress, @parser.source.position )
         end
       end
-      recursive_strip(children)
-      return self
     end
   end
 end
-
-
 module FeedParser
   @version = "0.1aleph_naught"
   # FIXME OVER HERE! Hi. I'm still translating. Grep for "FIXME untranslated" to 
@@ -382,7 +399,6 @@ module FeedParser
 
   # The original Python import. I'm using it to help translate
   #import sgmllib, re, sys, copy, urlparse, time, rfc822, types, cgi, urllib, urllib2
-
 
 
 
@@ -448,7 +464,7 @@ module FeedParser
               'copyright_detail' => 'rights_detail',
               'tagline' => 'subtitle',
               'tagline_detail' => 'subtitle_detail'}
-  
+
     def entries # Apparently, Hash has an entries method!  That blew a good 3 hours or more of my time
       return self['entries']
     end
@@ -496,7 +512,7 @@ module FeedParser
     end
 
     #def fetch(key, default=nil) 
-      # fetch is to Ruby's Hash as get is to Python's Dict
+    # fetch is to Ruby's Hash as get is to Python's Dict
     #  if self.has_key?key
     #    return self[key]
     #  else
@@ -505,7 +521,7 @@ module FeedParser
     #end
 
     #def get(key, default=nil)
-      # in case people don't get the memo. i'm betting this will be removed soon
+    # in case people don't get the memo. i'm betting this will be removed soon
     #  self.fetch(key, default)
     #end
 
@@ -525,11 +541,11 @@ module FeedParser
 
 
   module FeedParserMixin
-    attr_accessor :feeddata, :version, :namespacesInUse
+    attr_accessor :feeddata, :version, :namespacesInUse, :date_handlers
 
     def startup(baseuri=nil, baselang=nil, encoding='utf-8')
       $stderr << "initializing FeedParser\n" if $debug
-      
+
       @namespaces = {'' => '',
                 'http://backend.userland.com/rss' => '',
                 'http://blogs.law.harvard.edu/tech/rss' => '',
@@ -628,6 +644,10 @@ module FeedParser
       if baselang 
         @feeddata['language'] = baselang.gsub('_','-')
       end
+      @date_handlers = [:_parse_date_rfc822,
+        :_parse_date_hungarian, :_parse_date_greek,:_parse_date_mssql,
+        :_parse_date_nate,:_parse_date_onblog,:_parse_date_w3dtf,:_parse_date_iso8601
+      ]
       $stderr << "Leaving startup\n" if $debug # My addition
     end
 
@@ -656,11 +676,13 @@ module FeedParser
       end
       if lang and not lang.empty? # Seriously, this cannot be correct
         if ['feed', 'rss', 'rdf:RDF'].include?tag
-          @feeddata['language'] = lang.replace('_','-')
+          @feeddata['language'] = lang.gsub('_','-')
         end
       end
       @lang = lang
       @basestack << @baseuri 
+      #puts "START TAG is #{tag}\n"
+      #puts "START BASE: #{@baseuri} STACK: #{@basestack}\n"
       @langstack << lang
 
       # track namespaces
@@ -676,6 +698,7 @@ module FeedParser
       # track inline content
       if @incontent != 0 and @contentparams.has_key?('type') and not ( /xml$/ =~ (@contentparams['type'] || 'xml') )
         # element declared itself as escaped markup, but isn't really
+        
         @contentparams['type'] = 'application/xhtml+xml'
       end
       if @incontent != 0 and @contentparams['type'] == 'application/xhtml+xml'
@@ -688,9 +711,9 @@ module FeedParser
         # This will horribly munge inline content with non-empty qnames,
         # but nobody actually does that, so I'm not fixing it.
         tag = tag.split(':')[-1]
-        attrsA = attrs.to_a.collect{|l| "#{l[0]}=\"#{l[1]}\""} # FIXME this is just ugly
+        attrsA = attrs.to_a.collect{|l| "#{l[0]}=\"#{l[1]}\""}
         attrsS = ' '+attrsA.join(' ')
-        return handle_data('<%s%s>' % [tag,attrsS], escape=false) 
+        return handle_data("<#{tag}#{attrsS}>", escape=false) 
       end
 
       # match namespaces
@@ -714,9 +737,9 @@ module FeedParser
 
       # call special handler (if defined) or default handler
       begin
-        return send(('_start_'+prefix+suffix).strip, attrsD)
+        return send('_start_'+prefix+suffix, attrsD)
       rescue NoMethodError
-        return push((prefix + suffix).strip, true) # I recognize this strip is probably paranoid
+        return push(prefix + suffix, true) 
       end  
     end # End unknown_starttag
 
@@ -732,16 +755,16 @@ module FeedParser
       if prefix and not prefix.empty?
         prefix = prefix + '_'
       end
-      
+
       # call special handler (if defined) or default handler
       begin
-        send(('_end_' + prefix + suffix).strip) # NOTE no return here! do not add it!
-      rescue NoMethodError
-        return pop((prefix + suffix).strip)
+        send('_end_' + prefix + suffix) # NOTE no return here! do not add it!
+      rescue NoMethodError => details
+        pop(prefix + suffix)
       end
 
       # track inline content
-      if @incontent != 0 and @contentparams.has_key?'type' and /xml$/ =~ (@contentparams['type'] || 'xml')
+     if @incontent != 0 and @contentparams.has_key?'type' and /xml$/ =~ (@contentparams['type'] || 'xml')
         # element declared itself as escaped markup, but it isn't really
         @contentparams['type'] = 'application/xhtml+xml'
       end
@@ -763,15 +786,16 @@ module FeedParser
           @lang = @langstack[-1]
         end
       end
+      #puts "END TAG is #{tag}\n"
+      #puts "END BASE: #{@baseuri} STACK: #{@basestack}\n"
     end
 
     def handle_data(text, escape=true)
-
       # called for each block of plain text, i.e. outside of any tag and
       # not containing any character or entity references
       return if @elementstack.nil? or @elementstack.empty?
       if escape and @contentparams['type'] == 'application/xhtml+xml'
-        text = REXML::Text.new(text).to_s # FIXME test this
+        text = REXML::Text.new(text).to_s # FIXME can this be done with CGI.escapeHTML?
       end
       @elementstack[-1][2] << text
     end
@@ -794,7 +818,7 @@ module FeedParser
     end
 
     def trackNamespace(prefix, uri)
-      
+
       loweruri = uri.downcase.strip
       if [prefix, loweruri] == [nil, 'http://my.netscape.com/rdf/simple/0.9/'] and (@version.nil? or @version.empty?)
         @version = 'rss090'
@@ -831,7 +855,11 @@ module FeedParser
       return if @elementstack.nil? or @elementstack.empty?
       return if @elementstack[-1][0] != element
       element, expectingText, pieces = @elementstack.pop
-      output = pieces.join('')
+      if pieces.class == Array
+        output = pieces.join('')
+      else
+        output = pieces
+      end
       if stripWhitespace
         output.strip!
       end
@@ -859,7 +887,7 @@ module FeedParser
       # remove temporary cruft from contentparams
       @contentparams.delete('mode')
       @contentparams.delete('base64')
-      
+
       # resolve relative URIs within embedded markup
       if @html_types.include?mapContentType(@contentparams['type'] || 'text/html')
         if @can_contain_relative_uris.include?element
@@ -897,7 +925,7 @@ module FeedParser
           element = 'summary' if element == 'description'
           @entries[-1][element] = output
           if @incontent != 0
-            contentparams = Marshal.load(Marshal.copy(@contentparams))
+            contentparams = Marshal.load(Marshal.dump(@contentparams))
             contentparams['value'] = output
             @entries[-1][element + '_detail'] = contentparams
           end
@@ -997,7 +1025,7 @@ module FeedParser
 
     def _start_channel(attrsD)
       @infeed = true
-      _cdf_comment(attrsD)
+      _cdf_common(attrsD)
     end
     alias :_start_feedinfo :_start_channel
 
@@ -1008,7 +1036,7 @@ module FeedParser
         _end_modified
       end
       if attrsD.has_key?'href'
-        start_link({})
+        _start_link({})
         @elementstack[-1][-1] = attrsD['href']
         _end_link
       end
@@ -1065,7 +1093,7 @@ module FeedParser
 
     def _start_author(attrsD)
       @inauthor = true
-      push('author', false)
+      push('author', true)
     end
     alias :_start_managingeditor :_start_author
     alias :_start_dc_author :_start_author
@@ -1233,6 +1261,7 @@ module FeedParser
       if detail and not detail.empty?
         name = detail['name']
         email = detail['email']
+        
         if name and email and not (name.empty? or name.empty?)
           context[key] = "#{name} (#{email})"
         elsif name and not name.empty?
@@ -1241,17 +1270,15 @@ module FeedParser
           context[key] = email
         end
       else
-        author = context[key]
-        return unless (author and not author.empty?)
-        emailmatch = author.scan(/(([a-zA-Z0-9\_\-\.\+]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?))/)
-        email = emailmatch[0]
-        author.gsub!(email, '').gsub!('()', '').strip!
-        if author and author[0] == '(' 
-          author = author[1..-1]
-        end
-        if author and author[-1] == ')'
-          author = author[0..-2]
-        end
+        author = context[key].dup unless context[key].nil?
+        return if not author or author.empty?
+        emailmatch = author.match(/(([a-zA-Z0-9\_\-\.\+]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?))/)
+        email = emailmatch[1]
+        author.gsub!(email, '')
+        author.gsub!("\(\)", '')
+        author.strip!
+        author.gsub!(/^\(/,'')
+        author.gsub!(/\)$/,'')
         author.strip!
         context["#{key}_detail"] ||= FeedParserDict.new
         context["#{key}_detail"]['name'] = author
@@ -1314,7 +1341,7 @@ module FeedParser
     end
     alias :_end_language :_end_dc_language
 
-    def _start_dc_publisher
+    def _start_dc_publisher(attrsD)
       push('publisher', true)
     end
     alias :_start_webmaster :_start_dc_publisher
@@ -1332,8 +1359,8 @@ module FeedParser
     alias :_start_issued :_start_published
 
     def _end_published
-      value = self.pop('published')
-      _save('published_parsed', _parse_date(value))
+      value = pop('published')
+      _save('published_parsed', parse_date(value))
     end
     alias :_end_dcterms_issued :_end_published
     alias :_end_issued :_end_published
@@ -1348,8 +1375,7 @@ module FeedParser
 
     def _end_updated
       value = pop('updated')
-      parsed_value = _parse_date(value)
-      _save('updated_parsed', parsed_value)
+      _save('updated_parsed', parse_date(value))
     end
     alias :_end_modified :_end_updated
     alias :_end_dcterms_modified :_end_updated
@@ -1363,7 +1389,7 @@ module FeedParser
 
     def _end_created
       value = pop('created')
-      _save('created_parsed', _parse_date(value))
+      _save('created_parsed', parse_date(value))
     end
     alias :_end_dcterms_created :_end_created
 
@@ -1371,7 +1397,7 @@ module FeedParser
       push('expired', true)
     end
     def _end_expirationdate
-      _save('expired_parsed', _parse_date(pop('expired')))
+      _save('expired_parsed', parse_date(pop('expired')))
     end
 
     def _start_cc_license(attrsD)
@@ -1393,13 +1419,14 @@ module FeedParser
 
     def addTag(term, scheme, label)
       context = getContext()
-      tags = context['tags'] ||= []
+      context['tags'] ||= []
+      tags = context['tags']
       if (term.nil? or term.empty?) and (scheme.nil? or scheme.empty?) and (label.nil? or label.empty?)
         return
       end
       value = FeedParserDict.new({'term' => term, 'scheme' => scheme, 'label' => label})
       if not tags.include?value
-        tags << FeedParserDict.new({'term' => term, 'scheme' => scheme, 'label' => label})
+        context['tags'] << FeedParserDict.new({'term' => term, 'scheme' => scheme, 'label' => label})
       end
     end
 
@@ -1429,7 +1456,7 @@ module FeedParser
     def _end_category
       value = pop('category')
       return if value.nil? or value.empty?
-      context = _getContext()
+      context = getContext()
       tags = context['tags']
       if value and not value.empty? and not tags.empty? and not tags[-1]['term']:
         tags[-1]['term'] = value
@@ -1483,14 +1510,14 @@ module FeedParser
     alias :_end_producturl :_end_link
 
     def _start_guid(attrsD)
-      guidislink = ((attrsD['ispermalink'] || 'true') == 'true')
+      @guidislink = ((attrsD['ispermalink'] || 'true') == 'true')
       push('id', true)
     end
 
     def _end_guid
       value = pop('id')
-      _save('guidislink', (guidislink and not getContext().has_key?('link')))
-      if guidislink:
+      _save('guidislink', (@guidislink and not getContext().has_key?('link')))
+      if @guidislink:
         # guid acts as link, but only if 'ispermalink' is not present or is 'true',
         # and only if the item doesn't already have a link element
         _save('link', value)
@@ -1589,7 +1616,7 @@ module FeedParser
       push('errorreportsto', true)
       value = getAttribute(attrsD, 'rdf:resource')
       if value and not value.empty?
-        elementstack[-1][2] << value
+        @elementstack[-1][2] << value
       end
       pop('errorreportsto')
     end
@@ -1618,7 +1645,8 @@ module FeedParser
 
     def _start_enclosure(attrsD)
       attrsD = itsAnHrefDamnIt(attrsD)
-      getContext()['enclosures'] ||= [FeedParserDict.new(attrsD)]
+      getContext()['enclosures'] ||= []
+      getContext()['enclosures'] << FeedParserDict.new(attrsD)
       href = attrsD['href']
       if href and not href.empty?
         context = getContext()
@@ -1676,13 +1704,13 @@ module FeedParser
 
     def _start_itunes_image(attrsD)
       push('itunes_image', false)
-      _getContext()['image'] = FeedParserDict.new({'href' => attrsD['href']})
+      getContext()['image'] = FeedParserDict.new({'href' => attrsD['href']})
     end
     alias :_start_itunes_link :_start_itunes_image
 
     def _end_itunes_block
       value = pop('itunes_block', false)
-      _getContext()['itunes_block'] = (value == 'yes') and true or false
+      getContext()['itunes_block'] = (value == 'yes') and true or false
     end
 
     def _end_itunes_explicit
@@ -1690,347 +1718,694 @@ module FeedParser
       getContext()['itunes_explicit'] = (value == 'yes') and true or false
     end
 
-  end # End FeedParserMixin
 
-    class StrictFeedListener 
-      include REXML::SAX2Listener
-      include FeedParserMixin
-
-      attr_accessor :bozo, :entries, :feeddata, :exc
-      def initialize(baseuri, baselang, encoding)
-        $stderr << "trying StrictFeedParser\n" if $debug
-        startup(baseuri, baselang, encoding) # FIXME need to grok mixins, if i name #startup #initialize will this happen for me?
-        @bozo = false
-        @exc = nil
-      end
-
-      def start_document
-      end
-      def end_document
-      end
-
-      def start_prefix_mapping(prefix, uri)
-        trackNamespace(prefix, uri)
-      end
-
-      def end_prefix_mapping(prefix)
-      end
-
-      def start_element(namespace, localname, qname, attributes)
-        lowernamespace = (namespace || '').downcase 
-
-        if /backend\.userland\.com\/rss/ =~ lowernamespace
-          # match any backend.userland.com namespace
-          namespace = 'http://backend.userland.com/rss'
-          lowernamespace = namespace
-        end
-        if qname and qname.index(':')
-          givenprefix = qname.split(':')[0] # Not sure if this is appropriate
-        else
-          givenprefix = nil
-        end
-        prefix = @matchnamespaces[lowernamespace] || givenprefix
-        if givenprefix and (prefix or (prefix.empty? and lowernamespace.empty?)) and not namespacesInUse.has_key?givenprefix
-          raise UndeclaredNamespace #FIXME no such error
-        end
-        if prefix and not prefix.empty?
-          localname = prefix + ':' + localname
-        end
-        localname = localname.to_s.downcase # No utf/unicode
-        unknown_starttag(localname, attributes)
-      end
-
-      def characters(text)
-        handle_data(text)
-      end
-
-      def end_element(namespace, localname, qname) # FIXME untranslated, other than this first line
-        lowernamespace = (namespace || '').downcase
-        if qname and qname.index(':')
-          givenprefix = qname.split(':')[0] # NOTE I'm fairly certain that REXML never passes anything like xhtml:div
-        else
-          givenprefix = ''
-        end
-        prefix = @matchnamespaces[lowernamespace] || givenprefix
-        if prefix and not prefix.empty?
-          localname = prefix + ':' + localname
-        end
-        localname.downcase!
-        unknown_endtag(localname)
-      end
-
-      def comment(comment)
-        handle_comment(comment)
-      end
-
-      def error(exc)
-        @bozo = true 
-        @exc = exc
-      end
-
-      def fatalError(exc)
-        error(exc)
-        raise exc
-      end
-    end
-
-  def FeedParser.resolveRelativeURIs(htmlSource, baseURI, encoding)
-    $stderr << "entering resolveRelativeURIs\n" if $debug # FIXME write a decent logger
-    relative_uris = { 'a' => 'href',
-                    'applet' => 'codebase',
-                    'area' => 'href',
-                    'blockquote' => 'cite',
-                    'body' => 'background',
-                    'del' => 'cite',
-                    'form' => 'action',
-                    'frame' => 'longdesc',
-                    'frame' => 'src',
-                    'iframe' => 'longdesc',
-                    'iframe' => 'src',
-                    'head' => 'profile',
-                    'img' => 'longdesc',
-                    'img' => 'src',
-                    'img' => 'usemap',
-                    'input' => 'src',
-                    'input' => 'usemap',
-                    'ins' => 'cite',
-                    'link' => 'href',
-                    'object' => 'classid',
-                    'object' => 'codebase',
-                    'object' => 'data',
-                    'object' => 'usemap',
-                    'q' => 'cite',
-                    'script' => 'src'
-    }
-    h = Hpricot(htmlSource)
-    relative_uris.each do |ename|
-      h.search(ename).each do |elem|
-        elem_attr = relative_uris[ename]
-        elem_uri = elem.attributes[elem_attr]
-        break unless elem_uri
-        if URI.parse(the_uri).relative?
-          elem.attributes[elem_attr] = URI.join(baseURI, elem_uri)
-        end
-      end
-    end
-    return h.to_html
-  end
-
-  def self.sanitizeHTML(html,encoding)
-    # FIXME Does not do encoding, nor Tidy
-    h = Hpricot(html)
-    h = h.scrub
-    return h.to_html
-  end
-
-  @date_handlers = []
-
-  # ISO-8601 date parsing routines written by the Ruby developers.
-  # We laugh at the silly Python programmers and their convoluted 
-  # regexps. 
-  include ParseDate
+# ISO-8601 date parsing routines written by Fazal Majid.
+# The ISO 8601 standard is very convoluted and irregular - a full ISO 8601
+# parser is beyond the scope of feedparser and the current Time.iso8601 
+# method does not work.  
+# A single regular expression cannot parse ISO 8601 date formats into groups
+# as the standard is highly irregular (for instance is 030104 2003-01-04 or
+# 0301-04-01), so we use templates instead.
+# Please note the order in templates is significant because we need a
+# greedy match.
   def _parse_date_iso8601(dateString)
     # Parse a variety of ISO-8601-compatible formats like 20040105
-    Time.mktime(ParseDate::parsedate(dateString))
+    
+    # What I'm about to show you may be the ugliest code in all of 
+    # rfeedparser.
+    # FIXME The century regexp maybe not work ('\d\d$' says "two numbers at 
+    # end of line" but we then attach more of a regexp.  
+    iso8601_regexps = [ '^(\d{4})-?([01]\d)-([0123]\d)',
+                        '^(\d{4})-([01]\d)',
+                        '^(\d{4})-?([0123]\d\d)',
+                        '^(\d\d)-?([01]\d)-?([0123]\d)',
+                        '^(\d\d)-?([0123]\d\d)',
+                        '^(\d{4})',
+                        '-(\d\d)-?([01]\d)',
+                        '-([0123]\d\d)',
+                        '-(\d\d)',
+                        '--([01]\d)-?([0123]\d)',
+                        '--([01]\d)',
+                        '---([0123]\d)',
+                        '(\d\d$)',
+                        ''
+    ]
+    iso8601_values = { '^(\d{4})-?([01]\d)-([0123]\d)' => ['year', 'month', 'day'],
+                    '^(\d{4})-([01]\d)' => ['year','month'], 
+                    '^(\d{4})-?([0123]\d\d)' => ['year', 'ordinal'],
+                    '^(\d\d)-?([01]\d)-?([0123]\d)' => ['year','month','day'], 
+                    '^(\d\d)-?([0123]\d\d)' => ['year','ordinal'],
+                    '^(\d{4})' => ['year'],
+                    '-(\d\d)-?([01]\d)' => ['year','month'], 
+                    '-([0123]\d\d)' => ['ordinal'], 
+                    '-(\d\d)' => ['year'],
+                    '--([01]\d)-?([0123]\d)' => ['month','day'],
+                    '--([01]\d)' => ['month'],
+                    '---([0123]\d)' => ['day'],
+                    '(\d\d$)' => ['century'], 
+                    '' => []
+    }
+    add_to_all = '(T?(\d\d):(\d\d)(?::(\d\d))?([+-](\d\d)(?::(\d\d))?|Z)?)?'
+    add_to_all_fields = ['hour', 'minute', 'second', 'tz', 'tzhour', 'tzmin'] 
+    # NOTE We use '(?:' to prevent grouping of optional matches (ones trailed
+    # by '?'). The second ':' *are* matched.
+    m = nil
+    param_keys = []
+    iso8601_regexps.each do |s|
+      $stderr << "Trying iso8601 regexp: #{s+add_to_all}\n" if $debug
+      param_keys = iso8601_values[s] + add_to_all_fields
+      m = dateString.match(Regexp.new(s+add_to_all))
+      break if m
+    end
+    return if m.nil? or (m.begin(0).zero? and m.end(0).zero?) 
+
+    param_values = m.to_a
+    param_values = param_values[1..-1] 
+    params = {}
+    param_keys.each_with_index do |key,i|
+      params[key] = param_values[i]
+    end
+
+    ordinal = params['ordinal'].to_i unless params['ordinal'].nil?
+    year = params['year'] || '--'
+    if year.nil? or year.empty? or year == '--' # FIXME When could the regexp ever return a year equal to '--'?
+      year = Time.now.utc.year
+    elsif year.length == 2
+      # ISO 8601 assumes current century, i.e. 93 -> 2093, NOT 1993
+      year = 100 * (Time.now.utc.year / 100) + year.to_i
+    else
+      year = year.to_i
+    end
+
+    month = params['month'] || '-'
+    if month.nil? or month.empty? or month == '-'
+      # ordinals are NOT normalized by mktime, we simulate them
+      # by setting month=1, day=ordinal
+      if ordinal
+        month = DateTime.ordinal(year,ordinal).month
+      else
+        month = Time.now.utc.month
+      end
+    end
+    month = month.to_i unless month.nil?
+    day = params['day']
+    if day.nil? or day.empty?
+      # see above
+      if ordinal
+        day = DateTime.ordinal(year,ordinal).day
+      elsif params['century'] or params['year'] or params['month']
+        day = 1
+      else
+        day = Time.now.utc.day
+      end
+    else
+      day = day.to_i
+    end
+    # special case of the century - is the first year of the 21st century
+    # 2000 or 2001 ? The debate goes on...
+    if params.has_key? 'century'
+      year = (params['century'].to_i - 1) * 100 + 1
+    end
+    # in ISO 8601 most fields are optional
+    hour = params['hour'].to_i 
+    minute = params['minute'].to_i 
+    second = params['second'].to_i 
+    weekday = nil
+    # daylight savings is complex, but not needed for feedparser's purposes
+    # as time zones, if specified, include mention of whether it is active
+    # (e.g. PST vs. PDT, CET). Using -1 is implementation-dependent and
+    # and most implementations have DST bugs
+      tm = [second, minute, hour, day, month, year, nil, ordinal, false, nil]
+      tz = params['tz']
+      if tz and not tz.empty? and tz != 'Z'
+        # FIXME does this cross over days?
+        if tz[0] == '-'
+          tm[3] += params['tzhour'].to_i
+          tm[4] += params['tzmin'].to_i
+        elsif tz[0] == '+'
+          tm[3] -= params['tzhour'].to_i
+          tm[4] -= params['tzmin'].to_i
+        else
+          return nil
+        end
+      end
+      return Time.utc(*tm) # Magic!
+    
   end
-
-  # 8-bit date handling routes written by ytrewq1
-  _korean_year  = u("\ub144") # b3e2 in euc-kr
-  _korean_month = u("\uc6d4") # bff9 in euc-kr
-  _korean_day   = u("\uc77c") # c0cf in euc-kr
-  _korean_am    = u("\uc624\uc804") # bfc0 c0fc in euc-kr
-  _korean_pm    = u("\uc624\ud6c4") # bfc0 c8c4 in euc-kr
-
-  _korean_onblog_date_re = Regexp.new("(\d{4})%s\s+(\d{2})%s\s+(\d{2})%s\s+(\d{2}):(\d{2}):(\d{2})" % [_korean_year, _korean_month, _korean_day])
-  _korean_nate_date_re = Regexp.new("(\d{4})-(\d{2})-(\d{2})\s+(%s|%s)\s+(\d{0,2}):(\d{0,2}):(\d{0,2})" % [_korean_am, _korean_pm])
 
   def _parse_date_onblog(dateString)
     # Parse a string according to the OnBlog 8-bit date format
-    m = _korean_onblog_date_re.match(dateString)
+    # 8-bit date handling routes written by ytrewq1
+    korean_year  = u("년") # b3e2 in euc-kr
+    korean_month = u("월") # bff9 in euc-kr
+    korean_day   = u("일") # c0cf in euc-kr
+
+
+    korean_onblog_date_re = /(\d{4})#{korean_year}\s+(\d{2})#{korean_month}\s+(\d{2})#{korean_day}\s+(\d{2}):(\d{2}):(\d{2})/
+
+
+    m = korean_onblog_date_re.match(dateString)
     return unless m
-    w3dtfdate = '%(year)s-%(month)s-%(day)sT%(hour)s:%(minute)s:%(second)s%(zonediff)s' % \
-      {'year' => m[1], 'month' => m[2], 'day' => m[3],\
-                 'hour' => m[4], 'minute' => m[5], 'second' => m[6],\
-                 'zonediff' => '+09 =>00'}
+    w3dtfdate = "#{m[1]}-#{m[2]}-#{m[3]}T#{m[4]}:#{m[5]}:#{m[6]}+09:00"
 
     $stderr << "OnBlog date parsed as: %s\n" % w3dtfdate if $debug
     return _parse_date_w3dtf(w3dtfdate)
   end
-  @date_handlers << :_parse_date_onblog
 
-  def _parse_date_name(dateString)
+  def _parse_date_nate(dateString)
     # Parse a string according to the Nate 8-bit date format
-    m = _korean_nate_date_re.match(dateString)
+    # 8-bit date handling routes written by ytrewq1
+    korean_am    = u("오전") # bfc0 c0fc in euc-kr
+    korean_pm    = u("오후") # bfc0 c8c4 in euc-kr
+
+    korean_nate_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(#{korean_am}|#{korean_pm})\s+(\d{0,2}):(\d{0,2}):(\d{0,2})/
+    m = korean_nate_date_re.match(dateString)
     return unless m
     hour = m[5].to_i
     ampm = m[4]
-    if ampm == _korean_pm
+    if ampm == korean_pm
       hour += 12
     end
     hour = hour.to_s.rjust(2,'0') 
-    w3dtfdate = '%(year)s-%(month)s-%(day)sT%(hour)s:%(minute)s:%(second)s%(zonediff)s' % \
-      {'year' => m[1], 'month' => m[2], 'day' => m[3],\
-                 'hour' => hour, 'minute' => m[6], 'second' => m[7],\
-                 'zonediff' => '+09 =>00'}
+    w3dtfdate = "#{m[1]}-#{m[2]}-#{m[3]}T#{hour}:#{m[6]}:#{m[7]}+09:00"
     $stderr << "Nate date parsed as: %s\n" % w3dtfdate if $debug
-    return _prase_date_w3dtf(w3dtfdate)
+    return _parse_date_w3dtf(w3dtfdate)
   end
-  @date_handlers << :_parse_date_nate
 
-  _mssql_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})(\.\d+)?/
   def _parse_date_mssql(dateString)
-    m = _mssql_date_re.match(dateString)
+    mssql_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})(\.\d+)?/
+
+    m = mssql_date_re.match(dateString)
     return unless m
-    w3dtfdate =  '%(year)s-%(month)s-%(day)sT%(hour)s:%(minute)s:%(second)s%(zonediff)s' % \
-      {'year' => m[1], 'month' => m[2], 'day' => m[3],\
-                 'hour' => m[4], 'minute' => m[5], 'second' => m[6],\
-                 'zonediff' => '+09 =>00'}
+    w3dtfdate =  "#{m[1]}-#{m[2]}-#{m[3]}T#{m[4]}:#{m[5]}:#{m[6]}+09:00"
     $stderr << "MS SQL date parsed as: %s\n" % w3dtfdate if $debug
     return _parse_date_w3dtf(w3dtfdate)
   end
-  @date_handlers << :_parse_date_mssql
-
-  # Unicode strings for Greek date strings
-  _greek_months = { 
-    u("\u0399\u03b1\u03bd") => u("Jan"),       # c9e1ed in iso-8859-7
-    u("\u03a6\u03b5\u03b2") => u("Feb"),       # d6e5e2 in iso-8859-7
-    u("\u039c\u03ac\u03ce") => u("Mar"),       # ccdcfe in iso-8859-7
-    u("\u039c\u03b1\u03ce") => u("Mar"),       # cce1fe in iso-8859-7
-    u("\u0391\u03c0\u03c1") => u("Apr"),       # c1f0f1 in iso-8859-7
-    u("\u039c\u03ac\u03b9") => u("May"),       # ccdce9 in iso-8859-7
-    u("\u039c\u03b1\u03ca") => u("May"),       # cce1fa in iso-8859-7
-    u("\u039c\u03b1\u03b9") => u("May"),       # cce1e9 in iso-8859-7
-    u("\u0399\u03bf\u03cd\u03bd") => u("Jun"), # c9effded in iso-8859-7
-    u("\u0399\u03bf\u03bd") => u("Jun"),       # c9efed in iso-8859-7
-    u("\u0399\u03bf\u03cd\u03bb") => u("Jul"), # c9effdeb in iso-8859-7
-    u("\u0399\u03bf\u03bb") => u("Jul"),       # c9f9eb in iso-8859-7
-    u("\u0391\u03cd\u03b3") => u("Aug"),       # c1fde3 in iso-8859-7
-    u("\u0391\u03c5\u03b3") => u("Aug"),       # c1f5e3 in iso-8859-7
-    u("\u03a3\u03b5\u03c0") => u("Sep"),       # d3e5f0 in iso-8859-7
-    u("\u039f\u03ba\u03c4") => u("Oct"),       # cfeaf4 in iso-8859-7
-    u("\u039d\u03bf\u03ad") => u("Nov"),       # cdefdd in iso-8859-7
-    u("\u039d\u03bf\u03b5") => u("Nov"),       # cdefe5 in iso-8859-7
-    u("\u0394\u03b5\u03ba") => u("Dec"),       # c4e5ea in iso-8859-7
-  }
-
-  _greek_wdays =   { 
-    u("\u039a\u03c5\u03c1") => u("Sun"), # caf5f1 in iso-8859-7
-    u("\u0394\u03b5\u03c5") => u("Mon"), # c4e5f5 in iso-8859-7
-    u("\u03a4\u03c1\u03b9") => u("Tue"), # d4f1e9 in iso-8859-7
-    u("\u03a4\u03b5\u03c4") => u("Wed"), # d4e5f4 in iso-8859-7
-    u("\u03a0\u03b5\u03bc") => u("Thu"), # d0e5ec in iso-8859-7
-    u("\u03a0\u03b1\u03c1") => u("Fri"), # d0e1f1 in iso-8859-7
-    u("\u03a3\u03b1\u03b2") => u("Sat"), # d3e1e2 in iso-8859-7   
-  }
 
   # FIXME I'm not sure that Regexp and Encoding play well together
-  _greek_date_format_re = Regexp.new(u("([^,]+),\s+(\d{2})\s+([^\s]+)\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+([^\s]+)"))
 
   def _parse_date_greek(dateString)
     # Parse a string according to a Greek 8-bit date format
-    m = _greek_date_format.match(dateString)
+    # Unicode strings for Greek date strings
+    greek_months = { 
+      u("Ιαν") => u("Jan"),       # c9e1ed in iso-8859-7
+      u("Φεβ") => u("Feb"),       # d6e5e2 in iso-8859-7
+      u("Μάώ") => u("Mar"),       # ccdcfe in iso-8859-7
+      u("Μαώ") => u("Mar"),       # cce1fe in iso-8859-7
+      u("Απρ") => u("Apr"),       # c1f0f1 in iso-8859-7
+      u("Μάι") => u("May"),       # ccdce9 in iso-8859-7
+      u("Μαϊ") => u("May"),       # cce1fa in iso-8859-7
+      u("Μαι") => u("May"),       # cce1e9 in iso-8859-7
+      u("Ιούν") => u("Jun"), # c9effded in iso-8859-7
+      u("Ιον") => u("Jun"),       # c9efed in iso-8859-7
+      u("Ιούλ") => u("Jul"), # c9effdeb in iso-8859-7
+      u("Ιολ") => u("Jul"),       # c9f9eb in iso-8859-7
+      u("Αύγ") => u("Aug"),       # c1fde3 in iso-8859-7
+      u("Αυγ") => u("Aug"),       # c1f5e3 in iso-8859-7
+      u("Σεπ") => u("Sep"),       # d3e5f0 in iso-8859-7
+      u("Οκτ") => u("Oct"),       # cfeaf4 in iso-8859-7
+      u("Νοέ") => u("Nov"),       # cdefdd in iso-8859-7
+      u("Νοε") => u("Nov"),       # cdefe5 in iso-8859-7
+      u("Δεκ") => u("Dec"),       # c4e5ea in iso-8859-7
+    }
+
+    greek_wdays =   { 
+      u("Κυρ") => u("Sun"), # caf5f1 in iso-8859-7
+      u("Δευ") => u("Mon"), # c4e5f5 in iso-8859-7
+      u("Τρι") => u("Tue"), # d4f1e9 in iso-8859-7
+      u("Τετ") => u("Wed"), # d4e5f4 in iso-8859-7
+      u("Πεμ") => u("Thu"), # d0e5ec in iso-8859-7
+      u("Παρ") => u("Fri"), # d0e1f1 in iso-8859-7
+      u("Σαβ") => u("Sat"), # d3e1e2 in iso-8859-7   
+    }
+
+    greek_date_format = /([^,]+),\s+(\d{2})\s+([^\s]+)\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+([^\s]+)/
+
+    m = greek_date_format.match(dateString)
     return unless m
     begin
-      wday = _greek_wdays[m[1]]
-      month = _greek_months[m[3]]
+      wday = greek_wdays[m[1]]
+      month = greek_months[m[3]]
     rescue
-      return # I hate silent exceptions. :(
+      return nil
     end
-    rfc822date = '%(wday)s, %(day)s %(month)s %(year)s %(hour)s:%(minute)s:%(second)s %(zonediff)s' % \
-      {'wday' => wday, 'day' => m[2], 'month' => month, 'year' => m[4],\
-                  'hour' => m[5], 'minute' => m[6], 'second' => m[7],\
-                  'zonediff' => m[8]}
-    $stderr << "Greek date parsed as: %s\n" % rfc822date
-    return _parse_date_rfc822(rfc822date) # FIXME these are just wrappers around Time.  Easily removed
+    rfc822date = "#{wday}, #{m[2]} #{month} #{m[4]} #{m[5]}:#{m[6]}:#{m[7]} #{m[8]}" 
+    $stderr << "Greek date parsed as: #{rfc822date}\n" if $debug
+    return _parse_date_rfc822(rfc822date) 
   end
-  @date_handlers << :_parse_date_greek
-
-  # Unicode strings for Hungarian date strings
-  _hungarian_months = { 
-    u("janu\u00e1r") =>   u("01"),  # e1 in iso-8859-2
-    u("febru\u00e1ri") => u("02"),  # e1 in iso-8859-2
-    u("m\u00e1rcius") =>  u("03"),  # e1 in iso-8859-2
-    u("\u00e1prilis") =>  u("04"),  # e1 in iso-8859-2
-    u("m\u00e1ujus") =>   u("05"),  # e1 in iso-8859-2
-    u("j\u00fanius") =>   u("06"),  # fa in iso-8859-2
-    u("j\u00falius") =>   u("07"),  # fa in iso-8859-2
-    u("augusztus") =>     u("08"),
-    u("szeptember") =>    u("09"),
-    u("okt\u00f3ber") =>  u("10"),  # f3 in iso-8859-2
-    u("november") =>      u("11"),
-    u("december") =>      u("12"),
-  }
-  _hungarian_date_format_re = /(\d{4})-([^-]+)-(\d{0,2})T(\d{0,2}):(\d{2})((\+|-)(\d{0,2}:\d{2}))/
 
   def _parse_date_hungarian(dateString)
     # Parse a string according to a Hungarian 8-bit date format.
+    hungarian_date_format_re = /(\d{4})-([^-]+)-(\d{0,2})T(\d{0,2}):(\d{2})((\+|-)(\d{0,2}:\d{2}))/
+    m = hungarian_date_format_re.match(dateString)
     return unless m
+
+    # Unicode strings for Hungarian date strings
+    hungarian_months = { 
+      u("január") =>   u("01"),  # e1 in iso-8859-2
+      u("februári") => u("02"),  # e1 in iso-8859-2
+      u("március") =>  u("03"),  # e1 in iso-8859-2
+      u("április") =>  u("04"),  # e1 in iso-8859-2
+      u("máujus") =>   u("05"),  # e1 in iso-8859-2
+      u("június") =>   u("06"),  # fa in iso-8859-2
+      u("július") =>   u("07"),  # fa in iso-8859-2
+      u("augusztus") =>     u("08"),
+      u("szeptember") =>    u("09"),
+      u("október") =>  u("10"),  # f3 in iso-8859-2
+      u("november") =>      u("11"),
+      u("december") =>      u("12"),
+    }
     begin
-      month = _hungarian_months[m[2]]
-      day = m[3]
-      day = day.rjust(2,'0')
-      hour = hour.rjust(2,'0')
+      month = hungarian_months[m[2]]
+      day = m[3].rjust(2,'0')
+      hour = m[4].rjust(2,'0')
     rescue
       return
     end
 
-    w3dtfdate = '%(year)s-%(month)s-%(day)sT%(hour)s =>%(minute)s%(zonediff)s' % \
-      {'year' => m[1], 'month' => month, 'day' => day,\
-                 'hour' => hour, 'minute' => m[5],\
-                 'zonediff' => m[6]}
-    $stderr << "Hungarian date parsed as: %s\n" % w3dtfdate
+    w3dtfdate = "#{m[1]}-#{month}-#{day}T#{hour}:#{m[5]}:00#{m[6]}"
+    $stderr << "Hungarian date parsed as: #{w3dtfdate}\n" if $debug
     return _parse_date_w3dtf(w3dtfdate)
   end
 
   # W3DTF-style date parsing
   # FIXME shouldn't it be "W3CDTF"?
   def _parse_date_w3dtf(dateString)
-    # Ruby's Time docs claim w3dtf is an alias for iso8601 which is an alias fro xmlschema
-    Time.xmlschema(dateString)
+    # Ruby's Time docs claim w3dtf is an alias for iso8601 which is an alias for xmlschema
+    # Whatever it is, it doesn't work.  This has been fixed in Ruby 1.9 and 
+    # in Ruby on Rails, but not really. They don't fix the 25 hour or 61 minute or 61 second rollover and fail in other ways.
+    # FIXME This code *still* doesn't work on the rollover tests, but it does pass the rest. Also, it needs a serious clean-up
+    w3m = dateString.match(/^(\d{4})-?(?:(?:([01]\d)-?(?:([0123]\d)(?:T(\d\d):(\d\d):(\d\d)([+-]\d\d:\d\d|Z))?)?)?)?/)
+    w3 = w3m[1..-2].map{|s| s.to_i unless s.nil?} << w3m[-1]
+    unless w3[6].class != String
+      if /^-/ =~ w3[6] # Zone offset goes backwards
+        w3[6][0] = '+'
+      elsif /^\+/ =~ w3[6]
+        w3[6][0] = '-'
+      end
+    end
+    return Time.utc(w3[0] || 1,w3[1] || 1,w3[2] || 1 ,w3[3] || 0,w3[4] || 0,w3[5] || 0)+Time.zone_offset(w3[6] || "UTC")
   end
 
   def _parse_date_rfc822(dateString)
     # Parse an RFC822, RFC1123, RFC2822 or asctime-style date 
-    Time.rfc822(dateString)
+    # These first few lines are to fix up the stupid proprietary format from Disney
+    unknown_timezones = { 'AT' => 'EDT', 'ET' => 'EST', 
+                          'CT' => 'CST', 'MT' => 'MST', 
+                          'PT' => 'PST' 
+    }
+    mon = dateString.split[2]
+    if mon.length > 3 and Time::RFC2822_MONTH_NAME.include?mon[0..2]
+      dateString.sub!(mon,mon[0..2])
+    end
+    if dateString[-3..-1] != "GMT" and unknown_timezones[dateString[-2..-1]]
+      dateString[-2..-1] = unknown_timezones[dateString[-2..-1]]
+    end
+    # Okay, the Disney date format should be fixed up now.
+    rfc = dateString.match(/([A-Za-z]{3}), ([0123]\d) ([A-Za-z]{3}) (\d{4})( (\d\d):(\d\d)(?::(\d\d))? ([A-Za-z]{3}))?/)
+    if rfc.to_a.length > 1 and rfc.to_a.include? nil
+      dow, day, mon, year, hour, min, sec, tz = rfc[1..-1]
+      hour,min,sec = [hour,min,sec].map{|e| e.to_s.rjust(2,'0') }
+      tz ||= "GMT"
+    end
+    asctime_match = dateString.match(/([A-Za-z]{3}) ([A-Za-z]{3})  (\d?\d) (\d\d):(\d\d):(\d\d) ([A-Za-z]{3}) (\d\d\d\d)/).to_a
+    if asctime_match.to_a.length > 1
+      # Month-abbr dayofmonth hour:minute:second year
+      dow, mon, day, hour, min, sec, tz, year = asctime_match[1..-1]
+      day.to_s.rjust(2,'0')
+    end
+    if (rfc.to_a.length > 1 and rfc.to_a.include? nil) or asctime_match.to_a.length > 1
+      ds = "#{dow}, #{day} #{mon} #{year} #{hour}:#{min}:#{sec} #{tz}"
+    else
+      ds = dateString
+    end
+    t = Time.rfc2822(ds).utc
+    return t
   end
 
-  def _parse_date_perfoce(aDateString)
+  def _parse_date_perforce(aDateString) # FIXME not in 4.1?
     # Parse a date in yyyy/mm/dd hh:mm:ss TTT format
     # Note that there is a day of the week at the beginning 
     # Ex. Fri, 2006/09/15 08:19:53 EDT
-    Time.parse(aDateString)
+    return Time.parse(aDateString).utc
   end
 
-  def _parse_date(dateString)
-    # Parses a variety of date formats into a Time object in UTC/GMT.
-    # FIXME No, this doesn't match up with the tests. Why? Because I haven't 
-    # figured out why Mark went the 9-tuple path. Is Python's time module so 
-    # screwed up? Or was there another reason?
-    for handler in @_date_handlers
+  def extract_tuple(atime)
+    # NOTE leave the error handling to parse_date
+    t = [atime.year, atime.month, atime.mday, atime.hour,
+      atime.min, atime.sec, (atime.wday-1) % 7, atime.yday,
+      atime.isdst
+    ]
+    # yay for modulus! yaaaaaay!  its 530 am and i should be sleeping! yaay!
+    t[0..-2].map!{|s| s.to_i}
+    t[-1] = t[-1] ? 1 : 0
+    return t
+  end
+
+  def parse_date(dateString)
+    @date_handlers.each do |handler|
       begin 
-        datething = send(handler,dateString)
+        $stderr << "Trying date_handler #{handler}\n" if $debug
+        datething = extract_tuple(send(handler,dateString))
         return datething
       rescue Exception => e
-        $stderr << "%s raised %s\n" % [handler.to_s, e]
+        $stderr << "#{handler} raised #{e}\n" if $debug
       end
     end
     return nil
   end
 
-  def self._getCharacterEncoding(feed, xml_data)
+  end # End FeedParserMixin
+
+  class StrictFeedListener 
+    include REXML::SAX2Listener
+    include FeedParserMixin
+
+    attr_accessor :bozo, :entries, :feeddata, :exc
+    def initialize(baseuri, baselang, encoding)
+      $stderr << "trying StrictFeedParser\n" if $debug
+      startup(baseuri, baselang, encoding) 
+      @bozo = false
+      @exc = nil
+    end
+
+    def start_document
+    end
+    def end_document
+    end
+
+    def doctype(name, pub_sys, long_name, uri)   
+
+    end
+
+    def start_prefix_mapping(prefix, uri)
+      trackNamespace(prefix, uri)
+    end
+
+    def end_prefix_mapping(prefix)
+    end
+
+    def start_element(namespace, localname, qname, attributes)
+      lowernamespace = (namespace || '').downcase 
+
+      if /backend\.userland\.com\/rss/ =~ lowernamespace
+        # match any backend.userland.com namespace
+        namespace = 'http://backend.userland.com/rss'
+        lowernamespace = namespace
+      end
+      if qname and qname.index(':')
+        givenprefix = qname.split(':')[0] # Not sure if this is appropriate
+      else
+        givenprefix = nil
+      end
+      prefix = @matchnamespaces[lowernamespace] || givenprefix
+      if givenprefix and (prefix.nil? or (prefix.empty? and lowernamespace.empty?)) and not namespacesInUse.has_key?givenprefix
+        raise UndeclaredNamespace, "\'#{givenprefix}\' is not associated with a namespace."
+      end
+      if prefix and not prefix.empty?
+        localname = prefix + ':' + localname
+      end
+      localname = localname.to_s.downcase 
+      unknown_starttag(localname, attributes)
+    end
+
+    def characters(text)
+      handle_data(CGI.unescapeHTML(text))
+      #handle_date(text)
+    end
+    
+    def cdata(content)
+      handle_data(content)
+    end
+
+    def end_element(namespace, localname, qname) # FIXME untranslated, other than this first line
+      lowernamespace = (namespace || '').downcase
+      if qname and qname.index(':')
+        givenprefix = qname.split(':')[0] # NOTE I'm fairly certain that REXML never passes anything like xhtml:div
+      else
+        givenprefix = ''
+      end
+      prefix = @matchnamespaces[lowernamespace] || givenprefix
+      if prefix and not prefix.empty?
+        localname = prefix + ':' + localname
+      end
+      localname.downcase!
+      unknown_endtag(localname)
+    end
+
+    def comment(comment)
+      handle_comment(comment)
+    end
+
+    def entitydecl(*content)
+    end
+
+    def error(exc)
+      @bozo = true 
+      @exc = exc
+    end
+
+    def fatalError(exc)
+      error(exc)
+      raise exc
+    end
+  end
+
+  class LooseFeedListener < Hpricot::Doc
+    def initialize(baseuri, baselang, encoding)
+      super
+      startup(baseuri, baselang, encoding)
+    end
+  end
+
+  def FeedParser.resolveRelativeURIs(htmlSource, baseURI, encoding)
+    $stderr << "entering resolveRelativeURIs\n" if $debug # FIXME write a decent logger
+    relative_uris = [ ['a','href'],
+                    ['applet','codebase'],
+                    ['area','href'],
+                    ['blockquote','cite'],
+                    ['body','background'],
+                    ['del','cite'],
+                    ['form','action'],
+                    ['frame','longdesc'],
+                    ['frame','src'],
+                    ['iframe','longdesc'],
+                    ['iframe','src'],
+                    ['head','profile'],
+                    ['img','longdesc'],
+                    ['img','src'],
+                    ['img','usemap'],
+                    ['input','src'],
+                    ['input','usemap'],
+                    ['ins','cite'],
+                    ['link','href'],
+                    ['object','classid'],
+                    ['object','codebase'],
+                    ['object','data'],
+                    ['object','usemap'],
+                    ['q','cite'],
+                    ['script','src'],
+    ]
+    h = Hpricot(htmlSource)
+    relative_uris.each do |l|
+      ename, eattr = l
+      h.search(ename).each do |elem|
+        euri = elem.attributes[eattr]
+        if euri and not euri.empty? and URI.parse(euri).relative?
+          elem.attributes[eattr] = urljoin(baseURI, euri)
+        end
+      end
+    end
+    return h.to_html
+  end
+
+  class SanitizerDoc < Hpricot::Doc
+    @@acceptable_elements = ['a', 'abbr', 'acronym', 'address', 'area', 'b',
+      'big', 'blockquote', 'br', 'button', 'caption', 'center', 'cite',
+      'code', 'col', 'colgroup', 'dd', 'del', 'dfn', 'dir', 'div', 'dl', 'dt',
+      'em', 'fieldset', 'font', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'hr', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'map',
+      'menu', 'ol', 'optgroup', 'option', 'p', 'pre', 'q', 's', 'samp',
+      'select', 'small', 'span', 'strike', 'strong', 'sub', 'sup', 'table',
+      'tbody', 'td', 'textarea', 'tfoot', 'th', 'thead', 'tr', 'tt', 'u',
+      'ul', 'var']
+
+    @@acceptable_attributes = ['abbr', 'accept', 'accept-charset', 'accesskey',
+      'action', 'align', 'alt', 'axis', 'border', 'cellpadding',
+      'cellspacing', 'char', 'charoff', 'charset', 'checked', 'cite', 'class',
+      'clear', 'cols', 'colspan', 'color', 'compact', 'coords', 'datetime',
+      'dir', 'disabled', 'enctype', 'for', 'frame', 'headers', 'height',
+      'href', 'hreflang', 'hspace', 'id', 'ismap', 'label', 'lang',
+      'longdesc', 'maxlength', 'media', 'method', 'multiple', 'name',
+      'nohref', 'noshade', 'nowrap', 'prompt', 'readonly', 'rel', 'rev',
+      'rows', 'rowspan', 'rules', 'scope', 'selected', 'shape', 'size',
+      'span', 'src', 'start', 'summary', 'tabindex', 'target', 'title', 
+      'type', 'usemap', 'valign', 'value', 'vspace', 'width', 'xml:lang']
+
+    @@unacceptable_elements_with_end_tag = ['script', 'applet']
+
+    @@acceptable_css_properties = ['azimuth', 'background-color',
+      'border-bottom-color', 'border-collapse', 'border-color',
+      'border-left-color', 'border-right-color', 'border-top-color', 'clear',
+      'color', 'cursor', 'direction', 'display', 'elevation', 'float', 'font',
+      'font-family', 'font-size', 'font-style', 'font-variant', 'font-weight',
+      'height', 'letter-spacing', 'line-height', 'overflow', 'pause',
+      'pause-after', 'pause-before', 'pitch', 'pitch-range', 'richness',
+      'speak', 'speak-header', 'speak-numeral', 'speak-punctuation',
+      'speech-rate', 'stress', 'text-align', 'text-decoration', 'text-indent',
+      'unicode-bidi', 'vertical-align', 'voice-family', 'volume',
+      'white-space', 'width']
+
+    # survey of common keywords found in feeds
+    @@acceptable_css_keywords = ['auto', 'aqua', 'black', 'block', 'blue',
+    'bold', 'both', 'bottom', 'brown', 'center', 'collapse', 'dashed',
+    'dotted', 'fuchsia', 'gray', 'green', '!important', 'italic', 'left',
+    'lime', 'maroon', 'medium', 'none', 'navy', 'normal', 'nowrap', 'olive',
+    'pointer', 'purple', 'red', 'right', 'solid', 'silver', 'teal', 'top',
+    'transparent', 'underline', 'white', 'yellow']
+
+    @@mathml_elements = ['maction', 'math', 'merror', 'mfrac', 'mi',
+    'mmultiscripts', 'mn', 'mo', 'mover', 'mpadded', 'mphantom',
+    'mprescripts', 'mroot', 'mrow', 'mspace', 'msqrt', 'mstyle', 'msub',
+    'msubsup', 'msup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder',
+    'munderover', 'none']
+
+    @@mathml_attributes = ['actiontype', 'align', 'columnalign', 'columnalign',
+    'columnalign', 'columnlines', 'columnspacing', 'columnspan', 'depth',
+    'display', 'displaystyle', 'equalcolumns', 'equalrows', 'fence',
+    'fontstyle', 'fontweight', 'frame', 'height', 'linethickness', 'lspace',
+    'mathbackground', 'mathcolor', 'mathvariant', 'mathvariant', 'maxsize',
+    'minsize', 'other', 'rowalign', 'rowalign', 'rowalign', 'rowlines',
+    'rowspacing', 'rowspan', 'rspace', 'scriptlevel', 'selection',
+    'separator', 'stretchy', 'width', 'width', 'xlink:href', 'xlink:show',
+    'xlink:type', 'xmlns', 'xmlns:xlink']
+
+    # svgtiny - foreignObject + linearGradient + radialGradient + stop
+    @@svg_elements = ['a', 'animate', 'animateColor', 'animateMotion',
+    'animateTransform', 'circle', 'defs', 'desc', 'ellipse', 'font-face',
+    'font-face-name', 'font-face-src', 'g', 'glyph', 'hkern', 'image',
+    'linearGradient', 'line', 'metadata', 'missing-glyph', 'mpath', 'path',
+    'polygon', 'polyline', 'radialGradient', 'rect', 'set', 'stop', 'svg',
+    'switch', 'text', 'title', 'use']
+
+    # svgtiny + class + opacity + offset + xmlns + xmlns:xlink
+    @@svg_attributes = ['accent-height', 'accumulate', 'additive', 'alphabetic',
+     'arabic-form', 'ascent', 'attributeName', 'attributeType',
+     'baseProfile', 'bbox', 'begin', 'by', 'calcMode', 'cap-height',
+     'class', 'color', 'color-rendering', 'content', 'cx', 'cy', 'd',
+     'descent', 'display', 'dur', 'end', 'fill', 'fill-rule', 'font-family',
+     'font-size', 'font-stretch', 'font-style', 'font-variant',
+     'font-weight', 'from', 'fx', 'fy', 'g1', 'g2', 'glyph-name', 
+     'gradientUnits', 'hanging', 'height', 'horiz-adv-x', 'horiz-origin-x',
+     'id', 'ideographic', 'k', 'keyPoints', 'keySplines', 'keyTimes',
+     'lang', 'mathematical', 'max', 'min', 'name', 'offset', 'opacity',
+     'origin', 'overline-position', 'overline-thickness', 'panose-1',
+     'path', 'pathLength', 'points', 'preserveAspectRatio', 'r',
+     'repeatCount', 'repeatDur', 'requiredExtensions', 'requiredFeatures',
+     'restart', 'rotate', 'rx', 'ry', 'slope', 'stemh', 'stemv', 
+     'stop-color', 'stop-opacity', 'strikethrough-position',
+     'strikethrough-thickness', 'stroke', 'stroke-dasharray',
+     'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin',
+     'stroke-miterlimit', 'stroke-width', 'systemLanguage', 'target',
+     'text-anchor', 'to', 'transform', 'type', 'u1', 'u2',
+     'underline-position', 'underline-thickness', 'unicode',
+     'unicode-range', 'units-per-em', 'values', 'version', 'viewBox',
+     'visibility', 'width', 'widths', 'x', 'x-height', 'x1', 'x2',
+     'xlink:actuate', 'xlink:arcrole', 'xlink:href', 'xlink:role',
+     'xlink:show', 'xlink:title', 'xlink:type', 'xml:base', 'xml:lang',
+     'xml:space', 'xmlns', 'xmlns:xlink', 'y', 'y1', 'y2', 'zoomAndPan']
+
+    @@svg_attr_map = nil
+    @@svg_elem_map = nil
+
+    @@acceptable_svg_properties = [ 'fill', 'fill-opacity', 'fill-rule',
+    'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin',
+    'stroke-opacity']
+
+    @@acceptable_tag_specific_attributes = {}
+    unless $compatible 
+      @@mathml_elements.each{|e| @@acceptable_tag_specific_attributes[e] = @@mathml_attributes }
+      @@svg_elements.each{|e| @@acceptable_tag_specific_attributes[e] = @@svg_attributes }
+    end
+
+    def initialize(children, config=nil)
+      super(children)
+      @config = { :nuke_tags => @@unacceptable_elements_with_end_tag ,
+        :allow_tags => @@acceptable_elements,
+        :allow_attributes => @@acceptable_attributes,
+        :allow_tag_specific_attributes => @@acceptable_tag_specific_attributes
+      }
+      unless $compatible
+        @config.merge!({:allow_css_properties => @@acceptable_css_properties,
+                       :allow_css_keywords => @@acceptable_css_keywords
+        })
+      end
+      @config.merge!(config) unless config.nil?
+    end
+
+    def scrub
+      traverse_all_element do |e| # FIXME there has to be another way
+        if e.elem? and (not @config[:allow_tags].include?e.name)
+          if @config[:nuke_tags].include?e.name
+            e.inner_html = ''
+          end
+          e.cull 
+          # This works because the children swapped in are brought in "after" the current element.
+        elsif e.doctype?
+          e.parent.children.delete(e)
+        elsif e.text?
+          ets = e.to_s
+          #ets.gsub!(/<!((?!DOCTYPE|--|\[))/i, '&lt;\1') # FIXME Why should this be here?
+          ets.gsub!(/&#39;/, "'")
+          ets.gsub!(/&#34;/, '"')
+          ets.gsub!(/\r/,'')
+          e.swap(ets)
+        else
+        end
+      end
+      # yes, that '/' should be there. It's a search method. See the Hpricot docs.
+
+      @config[:allow_tags].each do |tag|
+        (self/tag).strip_attributes(@config[:allow_tag_specific_attributes][tag] || @config[:allow_attributes])
+
+        unless $compatible # FIXME not properly recursive, see comment in recursive_strip
+          (self/tag).strip_style(@config[:allow_css_properties], @config[:allow_css_keywords])
+        end
+      end
+      children.each { |e| e.strip(@config[:allow_tags])}
+      
+      return self
+    end
+  end
+
+  def self.sanitizeHTML(html,encoding)
+    # FIXME Does not do encoding, nor Tidy
+    h = SanitizerDoc.new(Hpricot.make(html))
+    h = h.scrub
+    return h.to_html.strip
+  end
+
+  
+
+  def self.getCharacterEncoding(feed, xml_data)
     # Get the character encoding of the XML document
-    $stderr << "In _getCharacterEncoding\n" if $debug
+    $stderr << "In getCharacterEncoding\n" if $debug
     sniffed_xml_encoding = nil
     xml_encoding = nil
     true_encoding = nil
     begin 
       http_headers = feed.meta
-      http_content_type = feed.content_type
-      http_encoding = feed.charset
+      http_content_type = feed.meta['content-type'].split(';')[0]
+      encoding_scan = feed.meta['content-type'].to_s.scan(/charset\s*=\s*(.*?)(?:"|')*$/)
+      http_encoding = encoding_scan.flatten[0].to_s.gsub(/("|')/,'')
+      http_encoding = nil if http_encoding.empty?
+      # FIXME Open-Uri returns iso8859-1 if there is no charset, but that
+      # doesn't pass the tests. Open-uri claims its following the right RFC.
+      # Are they wrong or do we need to change the tests?
     rescue NoMethodError
       http_headers = {}
-      http_content_type = 
-        http_encoding = nil
+      http_content_type = nil
+      http_encoding = nil
     end
     # Must sniff for non-ASCII-compatible character encodings before
     # searching for XML declaration.  This heuristic is defined in
@@ -2075,7 +2450,7 @@ module FeedParser
       elsif xml_data[0..2] == "\xef\xbb\xbf"
         # UTF-8 with BOM
         sniffed_xml_encoding = 'utf-8'
-        xml_data = uconvert(xml_data[3..-1], 'utf-8', 'utf-8')
+        xml_data = xml_data[3..-1]
       else
         # ASCII-compatible
       end
@@ -2085,7 +2460,7 @@ module FeedParser
     end
     if xml_encoding_match 
       xml_encoding = xml_encoding_match[1].downcase
-      xencodings = ['iso-10646-ucs-2', 'ucs-2', 'csunicode', 'iso-10646-ucs-4', 'ucs-4', 'csucs4', 'utf-16', 'utf-32', 'utf16', 'u16']
+      xencodings = ['iso-10646-ucs-2', 'ucs-2', 'csunicode', 'iso-10646-ucs-4', 'ucs-4', 'csucs4', 'utf-16', 'utf-32', 'utf_16', 'utf_32', 'utf16', 'u16']
       if sniffed_xml_encoding and xencodings.include?xml_encoding
         xml_encoding = sniffed_xml_encoding
       end
@@ -2095,18 +2470,15 @@ module FeedParser
     application_content_types = ['application/xml', 'application/xml-dtd', 'application/xml-external-parsed-entity']
     text_content_types = ['text/xml', 'text/xml-external-parsed-entity']
 
-    if application_content_types.include? http_content_type or 
-      (/^text\// =~ http_content_type and /\+xml$/ =~ http_content_type)
+    if application_content_types.include?(http_content_type) or (/^application\// =~ http_content_type and /\+xml$/ =~ http_content_type)
       acceptable_content_type = true
       true_encoding = http_encoding || xml_encoding || 'utf-8'
-    elsif text_content_types.include? http_content_type or
-    /^text\// =~ http_content_type and /\+xml$/ =~ http_content_type
-    acceptable_content_type = true
-    true_encoding = http_encoding || 'us-ascii'
-    elsif /text\// =~ http_content_type 
+    elsif text_content_types.include?(http_content_type) or (/^text\// =~ http_content_type and /\+xml$/ =~ http_content_type)
+      acceptable_content_type = true
       true_encoding = http_encoding || 'us-ascii'
-    elsif http_headers and not http_headers.empty? and 
-      not http_headers.has_key?'content-type'
+    elsif /^text\// =~ http_content_type 
+      true_encoding = http_encoding || 'us-ascii'
+    elsif http_headers and not http_headers.empty? and not http_headers.has_key?'content-type'
       true_encoding = xml_encoding || 'iso-8859-1'
     else
       true_encoding = xml_encoding || 'utf-8'
@@ -2139,8 +2511,8 @@ module FeedParser
           $stderr << "trying utf-16le instead\n"
         end
       end
-    encoding = 'utf-16le'
-    data = data[2..-1]
+      encoding = 'utf-16le'
+      data = data[2..-1]
     elsif data[0..2] == "\xef\xbb\xbf"
       if $debug
         $stderr << "stripping BOM\n"
@@ -2148,8 +2520,8 @@ module FeedParser
           $stderr << "trying utf-8 instead\n"
         end
       end
-    encoding = 'utf-8'
-    data = data[2..-1]
+      encoding = 'utf-8'
+      data = data[3..-1]
     elsif data[0..3] == "\x00\x00\xfe\xff"
       if $debug
         $stderr << "stripping BOM\n"
@@ -2195,11 +2567,11 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
     doctype_pattern = /<!DOCTYPE([^>]*?)>/m
     doctype_results = data.scan(doctype_pattern)
     if doctype_results and doctype_results[0]
-      doctype = doctype_results[0]
+      doctype = doctype_results[0][0]
     else
       doctype = ''
     end
-    #doctype = doctype_results and doctype_results[0] or '' # I cannot figure out why this doesn't work
+
     if /netscape/ =~ doctype.downcase
       version = 'rss091n'
     else
@@ -2210,31 +2582,35 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
   end
 
   def parse(*args); FeedParser.parse(*args); end
-  def FeedParser.parse(furi, etag=nil, modified=nil, agent=USER_AGENT, referrer=nil, handlers=[], compatible=nil)
+  def FeedParser.parse(furi, options={})
     # Parse a feed from a URL, file, stream or string
-    $compatible = compatible unless compatible.nil? # Use the default compatibility if compatible is nil
+    $compatible = options[:compatible] || $compatible # Use the default compatibility if compatible is nil
     result = FeedParserDict.new
     result['feed'] = FeedParserDict.new
     result['entries'] = []
-    if modified
-      modified = Time.parse(modified).rfc2822 # FIXME this ignores all of our time parsing work. Does this work, or do we need to use our parsing stuff?
+    if options[:modified]
+      options[:modified] = Time.parse(options[:modified]).rfc2822 # FIXME this ignores all of our time parsing work. Does this work, or do we need to use our time parsing tools?
     end
-    if XML_AVAILABLE 
-      result['bozo'] = false
-    end
+    result['bozo'] = false
+    handlers = options[:handlers]
     if handlers.class != Array # FIXME is this right?
       handlers = [handlers]
     end
     begin
       if URI::parse(furi).class == URI::Generic
-        f = open(furi) # OpenURI doesn't behave well when passed HTTP options for a file.
+        f = open(furi) # OpenURI doesn't behave well when passing HTTP options to a file.
       else
-        f = open(furi, 
-                      "If-None-Match" => etag.to_s, 
-                      "If-Modified-Since" => modified.to_s, 
-                      "User-Agent" => agent.to_s, 
-                      "Referer" => referrer.to_s
-                )
+        # And when you do pass them, make sure they aren't just nil (this still true?)
+        newd = {}
+        newd["If-None-Match"] = options[:etag] unless options[:etag].nil?
+        newd["If-Modified-Since"] = options[:modified] unless options[:modified].nil?
+        newd["User-Agent"] = (options[:agent] || USER_AGENT).to_s 
+        newd["Referer"] = options[:referrer] unless options[:referrer].nil?
+        newd["Content-Location"] = options[:content_location] unless options[:content_location].nil?
+        newd["Content-Language"] = options[:content_language] unless options[:content_language].nil?                    
+        newd["Content-type"] = options[:content_type] unless options[:content_type].nil?
+
+        f = open(furi, newd)
       end
 
       data = f.read
@@ -2246,26 +2622,45 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
       data = ''
       f = nil
     end
-    if f.class == StringIO
-      result['etag'] = f.meta['etag']
-      result['modified'] = f.last_modified 
-      result['url'] = f.base_uri.to_s
-      result['status'] = f.status[0]
-      result['headers'] = f.meta
+    begin
+      if f.meta
+        result['etag'] = options[:etag] || f.meta['etag']
+        result['modified'] = options[:modified] || f.last_modified 
+        result['url'] = f.base_uri.to_s
+        result['status'] = f.status[0] || 200
+        result['headers'] = f.meta
+        result['headers']['content-location'] ||= options[:content_location] unless options[:content_location].nil?
+        result['headers']['content-language'] ||= options[:content_language] unless options[:content_language].nil?
+        result['headers']['content-type'] ||= options[:content_type] unless options[:content_type].nil?
+      end
+    rescue NoMethodError
+      result['headers'] = {}
+      result['etag'] = result['headers']['etag'] = options[:etag] unless options[:etag].nil?
+      result['modified'] = result['headers']['last-modified'] = options[:modified] unless options[:modified].nil?
+      unless options[:content_location].nil?
+         result['headers']['content-location'] = options[:content_location]
+      end
+      unless options[:content_language].nil?
+        result['headers']['content-language'] = options[:content_language] 
+      end
+      unless options[:content_type].nil?
+        result['headers']['content-type'] = options[:content_type]     
+      end
     end
+
 
     # there are four encodings to keep track of:
     # - http_encoding is the encoding declared in the Content-Type HTTP header
     # - xml_encoding is the encoding declared in the <?xml declaration
     # - sniffed_encoding is the encoding sniffed from the first 4 bytes of the XML data
     # - result['encoding'] is the actual encoding, as per RFC 3023 and a variety of other conflicting specifications
-    http_headers = result['headers'] || {} 
+    http_headers = result['headers']
     result['encoding'], http_encoding, xml_encoding, sniffed_xml_encoding, acceptable_content_type =
-      self._getCharacterEncoding(f,data)
+      self.getCharacterEncoding(f,data)
 
     if not http_headers.empty? and not acceptable_content_type
       if http_headers.has_key?('content-type')
-        bozo_message = "%s is not an XML media type" % http_headers['content-type']
+        bozo_message = "#{http_headers['content-type']} is not an XML media type"
       else
         bozo_message = 'no Content-type specified'
       end
@@ -2273,8 +2668,7 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
       result['bozo_exception'] = NonXMLContentType.new(bozo_message) # I get to care about this, cuz Mark says I should.
     end
     result['version'], data = self.stripDoctype(data)
-
-    baseuri = http_headers['content-location'] || result['href'] # FIXME Hope this works.
+    baseuri = http_headers['content-location'] || result['href']
     baselang = http_headers['content-language']
 
     # if server sent 304, we're done
@@ -2306,7 +2700,7 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
       rescue
       end
     end
-    # if no luck and we ahve auto-detection library, try that
+    # if no luck and we have auto-detection library, try that
     #if known_encoding and chardet
     # FIXME untranslated
     #end
@@ -2352,15 +2746,15 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
     if use_strict_parser
       # initialize the SAX parser
       feedlistener = StrictFeedListener.new(baseuri, baselang, 'utf-8')
-      saxparser = REXML::Parsers::SAX2Parser.new(REXML::Source.new(data))
+      saxparser = REXML::Parsers::BetterSAXParser.new(REXML::Source.new(data))
       saxparser.listen(feedlistener)
       # FIXME are namespaces being checked?
       begin
         saxparser.parse
-      rescue Exception => e
+      rescue => parseerr # resparse
         if $debug
           $stderr << "xml parsing failed\n"
-          $stderr << e.to_s+"\n" # Hrmph.
+          $stderr << parseerr.to_s+"\n" # Hrmph.
         end
         result['bozo'] = true
         result['bozo_exception'] = feedlistener.exc || e 
@@ -2430,6 +2824,7 @@ require 'optparse'
 require 'ostruct'
 options = OpenStruct.new
 options.etag = options.modified = options.agent = options.referrer = nil
+options.content_language = options.content_location = options.ctype = nil
 options.format = 'pprint'
 options.compatible = $compatible 
 options.verbose = false
@@ -2471,6 +2866,18 @@ opts = OptionParser.new do |opts|
           "strip element attributes like feedparser.py 4.1 (default)") {|comp|
     options.compatible = comp
   }
+  opts.on("-l", "--content-location [LOCATION]",
+          "default Content-Location HTTP header") {|loc|
+    options.content_location = loc
+  }
+  opts.on("-a", "--content-language [LANG]",
+          "default Content-Language HTTP header") {|lang|
+    options.content_language = lang
+  }
+  opts.on("-t", "--content-type [TYPE]",
+          "default Content-type HTTP header") {|ctype|
+    options.ctype = ctype
+  }
 end
 
 opts.parse!(ARGV)
@@ -2484,8 +2891,15 @@ else
 end
 args = *ARGV.dup
 unless args.nil?
-args.each do |url| # opts.parse! removes everything but the urls from the command line
-  results = FeedParser.parse(url, etag=options.etag, modified=options.modified, agent=options.agent, referrer=options.referrer)
-  serializer.new(results).write($stdout)
-end
+  args.each do |url| # opts.parse! removes everything but the urls from the command line
+    results = FeedParser.parse(url, :etag => options.etag, 
+                               :modified => options.modified, 
+                               :agent => options.agent, 
+                               :referrer => options.referrer, 
+                               :content_location => options.content_location,
+                               :content_language => options.content_language,
+                               :content_type => options.ctype
+                              )
+    serializer.new(results).write($stdout)
+  end
 end
