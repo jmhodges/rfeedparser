@@ -2562,7 +2562,7 @@ module FeedParser
     end
   end
 
-  class LooseFeedListener < Hpricot::Doc
+  class LooseFeedParser < Hpricot::Doc
     def initialize(baseuri, baselang, encoding)
       super
       startup(baseuri, baselang, encoding)
