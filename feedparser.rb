@@ -16,12 +16,10 @@ require 'uri'
 require 'cgi' # escaping html
 require 'time'
 #XML_AVAILABLE = true
-require 'rexml/parsers/sax2parser'
-require 'rexml/sax2listener'
+require 'xml/saxdriver' # calling expat
 require 'pp'
 require 'rubygems'
 require 'parsedate' # Used in _parse_date_rfc822
-
 require 'base64'
 require 'iconv'
 
@@ -42,6 +40,433 @@ include OpenURI
 $debug = false
 $compatible = true
 
+Encoding_Aliases = { # Adapted from python2.4's encodings/aliases.py
+    # ascii codec
+    '646'                => 'ascii',
+    'ansi_x3.4_1968'     => 'ascii',
+    'ansi_x3_4_1968'     => 'ascii', # some email headers use this non-standard name
+    'ansi_x3.4_1986'     => 'ascii',
+    'cp367'              => 'ascii',
+    'csascii'            => 'ascii',
+    'ibm367'             => 'ascii',
+    'iso646_us'          => 'ascii',
+    'iso_646.irv_1991'   => 'ascii',
+    'iso_ir_6'           => 'ascii',
+    'us'                 => 'ascii',
+    'us_ascii'           => 'ascii',
+
+     # big5 codec
+    'big5_tw'            => 'big5',
+    'csbig5'             => 'big5',
+
+    # big5hkscs codec
+    'big5_hkscs'         => 'big5hkscs',
+    'hkscs'              => 'big5hkscs',
+
+     # cp037 codec
+    '037'                => 'cp037',
+    'csibm037'           => 'cp037',
+    'ebcdic_cp_ca'       => 'cp037',
+    'ebcdic_cp_nl'       => 'cp037',
+    'ebcdic_cp_us'       => 'cp037',
+    'ebcdic_cp_wt'       => 'cp037',
+    'ibm037'             => 'cp037',
+    'ibm039'             => 'cp037',
+
+    # cp1026 codec
+    '1026'               => 'cp1026',
+    'csibm1026'          => 'cp1026',
+    'ibm1026'            => 'cp1026',
+
+    # cp1140 codec
+    '1140'               => 'cp1140',
+    'ibm1140'            => 'cp1140',
+
+    # cp1250 codec
+    '1250'               => 'cp1250',
+    'windows_1250'       => 'cp1250',
+
+    # cp1251 codec
+    '1251'               => 'cp1251',
+    'windows_1251'       => 'cp1251',
+
+    # cp1252 codec
+    '1252'               => 'cp1252',
+    'windows_1252'       => 'cp1252',
+
+    # cp1253 codec
+    '1253'               => 'cp1253',
+    'windows_1253'       => 'cp1253',
+
+    # cp1254 codec
+    '1254'               => 'cp1254',
+    'windows_1254'       => 'cp1254',
+
+    # cp1255 codec
+    '1255'               => 'cp1255',
+    'windows_1255'       => 'cp1255',
+
+    # cp1256 codec
+    '1256'               => 'cp1256',
+    'windows_1256'       => 'cp1256',
+
+    # cp1257 codec
+    '1257'               => 'cp1257',
+    'windows_1257'       => 'cp1257',
+
+    # cp1258 codec
+    '1258'               => 'cp1258',
+    'windows_1258'       => 'cp1258',
+
+    # cp424 codec
+    '424'                => 'cp424',
+    'csibm424'           => 'cp424',
+    'ebcdic_cp_he'       => 'cp424',
+    'ibm424'             => 'cp424',
+
+    # cp437 codec
+    '437'                => 'cp437',
+    'cspc8codepage437'   => 'cp437',
+    'ibm437'             => 'cp437',
+
+    # cp500 codec
+    '500'                => 'cp500',
+    'csibm500'           => 'cp500',
+    'ebcdic_cp_be'       => 'cp500',
+    'ebcdic_cp_ch'       => 'cp500',
+    'ibm500'             => 'cp500',
+
+    # cp775 codec
+    '775'              => 'cp775',
+    'cspc775baltic'      => 'cp775',
+    'ibm775'             => 'cp775',
+
+    # cp850 codec
+    '850'                => 'cp850',
+    'cspc850multilingual' => 'cp850',
+    'ibm850'             => 'cp850',
+
+    # cp852 codec
+    '852'                => 'cp852',
+    'cspcp852'           => 'cp852',
+    'ibm852'             => 'cp852',
+
+    # cp855 codec
+    '855'                => 'cp855',
+    'csibm855'           => 'cp855',
+    'ibm855'             => 'cp855',
+
+    # cp857 codec
+    '857'                => 'cp857',
+    'csibm857'           => 'cp857',
+    'ibm857'             => 'cp857',
+
+    # cp860 codec
+    '860'                => 'cp860',
+    'csibm860'           => 'cp860',
+    'ibm860'             => 'cp860',
+
+    # cp861 codec
+    '861'                => 'cp861',
+    'cp_is'              => 'cp861',
+    'csibm861'           => 'cp861',
+    'ibm861'             => 'cp861',
+
+    # cp862 codec
+    '862'                => 'cp862',
+    'cspc862latinhebrew' => 'cp862',
+    'ibm862'             => 'cp862',
+
+    # cp863 codec
+    '863'                => 'cp863',
+    'csibm863'           => 'cp863',
+    'ibm863'             => 'cp863',
+
+    # cp864 codec
+    '864'                => 'cp864',
+    'csibm864'           => 'cp864',
+    'ibm864'             => 'cp864',
+
+    # cp865 codec
+    '865'                => 'cp865',
+    'csibm865'           => 'cp865',
+    'ibm865'             => 'cp865',
+
+    # cp866 codec
+    '866'                => 'cp866',
+    'csibm866'           => 'cp866',
+    'ibm866'             => 'cp866',
+
+    # cp869 codec
+    '869'                => 'cp869',
+    'cp_gr'              => 'cp869',
+    'csibm869'           => 'cp869',
+    'ibm869'             => 'cp869',
+
+    # cp932 codec
+    '932'                => 'cp932',
+    'ms932'              => 'cp932',
+    'mskanji'            => 'cp932',
+    'ms_kanji'           => 'cp932',
+
+    # cp949 codec
+    '949'                => 'cp949',
+    'ms949'              => 'cp949',
+    'uhc'                => 'cp949',
+
+    # cp950 codec
+    '950'                => 'cp950',
+    'ms950'              => 'cp950',
+
+    # euc_jp codec
+    'euc_jp'             => 'euc-jp',
+    'eucjp'              => 'euc-jp',
+    'ujis'               => 'euc-jp',
+    'u_jis'              => 'euc-jp',
+
+    # euc_kr codec
+    'euc_kr'             => 'euc-kr',
+    'euckr'              => 'euc-kr',
+    'korean'             => 'euc-kr',
+    'ksc5601'            => 'euc-kr',
+    'ks_c_5601'          => 'euc-kr',
+    'ks_c_5601_1987'     => 'euc-kr',
+    'ksx1001'            => 'euc-kr',
+    'ks_x_1001'          => 'euc-kr',
+
+    # gb18030 codec
+    'gb18030_2000'       => 'gb18030',
+    
+    # gb2312 codec
+    'chinese'            => 'gb2312',
+    'csiso58gb231280'    => 'gb2312',
+    'euc_cn'             => 'gb2312',
+    'euccn'              => 'gb2312',
+    'eucgb2312_cn'       => 'gb2312',
+    'gb2312_1980'        => 'gb2312',
+    'gb2312_80'          => 'gb2312',
+    'iso_ir_58'          => 'gb2312',
+
+    # gbk codec
+    '936'                => 'gbk',
+    'cp936'              => 'gbk',
+    'ms936'              => 'gbk',
+
+    # hp-roman8 codec
+    'hp_roman8'          => 'hp-roman8',
+    'roman8'             => 'hp-roman8',
+    'r8'                 => 'hp-roman8',
+    'csHPRoman8'         => 'hp-roman8',
+
+    # iso2022_jp codec
+    'iso2022_jp'         => 'iso-2022-jp',
+    'csiso2022jp'        => 'iso-2022-jp',
+    'iso2022jp'          => 'iso-2022-jp',
+    'iso_2022_jp'        => 'iso-2022-jp',
+
+    # iso2022_jp_1 codec
+    'iso2002_jp_1'       => 'iso-2022-jp-1',
+    'iso2022jp_1'        => 'iso-2022-jp-1',
+    'iso_2022_jp_1'      => 'iso-2022-jp-1',
+
+    # iso2022_jp_2 codec
+    'iso2022_jp_2'       => 'iso-2002-jp-2',
+    'iso2022jp_2'        => 'iso-2022-jp-2',
+    'iso_2022_jp_2'      => 'iso-2022-jp-2',
+
+    # iso2022_jp_3 codec
+    'iso2002_jp_3'       => 'iso-2022-jp-3',
+    'iso2022jp_3'        => 'iso-2022-jp-3',
+    'iso_2022_jp_3'      => 'iso-2022-jp-3',
+
+    # iso2022_kr codec
+    'iso2022_kr'         => 'iso-2022-kr',
+    'csiso2022kr'        => 'iso-2022-kr',
+    'iso2022kr'          => 'iso-2022-kr',
+    'iso_2022_kr'        => 'iso-2022-kr',
+
+    # iso8859_10 codec
+    'iso8859_10'         => 'iso-8859-10',
+    'csisolatin6'        => 'iso-8859-10',
+    'iso_8859_10'        => 'iso-8859-10',
+    'iso_8859_10_1992'   => 'iso-8859-10',
+    'iso_ir_157'         => 'iso-8859-10',
+    'l6'                 => 'iso-8859-10',
+    'latin6'             => 'iso-8859-10',
+
+    # iso8859_13 codec
+    'iso8859_13'         => 'iso-8859-13',
+    'iso_8859_13'        => 'iso-8859-13',
+
+    # iso8859_14 codec
+    'iso8859_14'         => 'iso-8859-14',
+    'iso_8859_14'        => 'iso-8859-14',
+    'iso_8859_14_1998'   => 'iso-8859-14',
+    'iso_celtic'         => 'iso-8859-14',
+    'iso_ir_199'         => 'iso-8859-14',
+    'l8'                 => 'iso-8859-14',
+    'latin8'             => 'iso-8859-14',
+
+    # iso8859_15 codec
+    'iso8859_15'         => 'iso-8859-15',
+    'iso_8859_15'        => 'iso-8859-15',
+
+    # iso8859_1 codec
+    'latin_1'            => 'iso-8859-1',
+    'cp819'              => 'iso-8859-1',
+    'csisolatin1'        => 'iso-8859-1',
+    'ibm819'             => 'iso-8859-1',
+    'iso8859'            => 'iso-8859-1',
+    'iso_8859_1'         => 'iso-8859-1',
+    'iso_8859_1_1987'    => 'iso-8859-1',
+    'iso_ir_100'         => 'iso-8859-1',
+    'l1'                 => 'iso-8859-1',
+    'latin'              => 'iso-8859-1',
+    'latin1'             => 'iso-8859-1',
+
+    # iso8859_2 codec
+    'iso8859_2'          => 'iso-8859-2',
+    'csisolatin2'        => 'iso-8859-2',
+    'iso_8859_2'         => 'iso-8859-2',
+    'iso_8859_2_1987'    => 'iso-8859-2',
+    'iso_ir_101'         => 'iso-8859-2',
+    'l2'                 => 'iso-8859-2',
+    'latin2'             => 'iso-8859-2',
+
+    # iso8859_3 codec
+    'iso8859_3'          => 'iso-8859-3',
+    'csisolatin3'        => 'iso-8859-3',
+    'iso_8859_3'         => 'iso-8859-3',
+    'iso_8859_3_1988'    => 'iso-8859-3',
+    'iso_ir_109'         => 'iso-8859-3',
+    'l3'                 => 'iso-8859-3',
+    'latin3'             => 'iso-8859-3',
+
+    # iso8859_4 codec
+    'iso8849_4'          => 'iso-8859-4',
+    'csisolatin4'        => 'iso-8859-4',
+    'iso_8859_4'         => 'iso-8859-4',
+    'iso_8859_4_1988'    => 'iso-8859-4',
+    'iso_ir_110'         => 'iso-8859-4',
+    'l4'                 => 'iso-8859-4',
+    'latin4'             => 'iso-8859-4',
+
+    # iso8859_5 codec
+    'iso8859_5'          => 'iso-8859-5',
+    'csisolatincyrillic' => 'iso-8859-5',
+    'cyrillic'           => 'iso-8859-5',
+    'iso_8859_5'         => 'iso-8859-5',
+    'iso_8859_5_1988'    => 'iso-8859-5',
+    'iso_ir_144'         => 'iso-8859-5',
+
+    # iso8859_6 codec
+    'iso8859_6'          => 'iso-8859-6',
+    'arabic'             => 'iso-8859-6',
+    'asmo_708'           => 'iso-8859-6',
+    'csisolatinarabic'   => 'iso-8859-6',
+    'ecma_114'           => 'iso-8859-6',
+    'iso_8859_6'         => 'iso-8859-6',
+    'iso_8859_6_1987'    => 'iso-8859-6',
+    'iso_ir_127'         => 'iso-8859-6',
+
+    # iso8859_7 codec
+    'iso8859_7'          => 'iso-8859-7',
+    'csisolatingreek'    => 'iso-8859-7',
+    'ecma_118'           => 'iso-8859-7',
+    'elot_928'           => 'iso-8859-7',
+    'greek'              => 'iso-8859-7',
+    'greek8'             => 'iso-8859-7',
+    'iso_8859_7'         => 'iso-8859-7',
+    'iso_8859_7_1987'    => 'iso-8859-7',
+    'iso_ir_126'         => 'iso-8859-7',
+
+    # iso8859_8 codec
+    'iso8859_9'          => 'iso8859_8',
+    'csisolatinhebrew'   => 'iso-8859-8',
+    'hebrew'             => 'iso-8859-8',
+    'iso_8859_8'         => 'iso-8859-8',
+    'iso_8859_8_1988'    => 'iso-8859-8',
+    'iso_ir_138'         => 'iso-8859-8',
+
+    # iso8859_9 codec
+    'iso8859_9'          => 'iso-8859-9',
+    'csisolatin5'        => 'iso-8859-9',
+    'iso_8859_9'         => 'iso-8859-9',
+    'iso_8859_9_1989'    => 'iso-8859-9',
+    'iso_ir_148'         => 'iso-8859-9',
+    'l5'                 => 'iso-8859-9',
+    'latin5'             => 'iso-8859-9',
+
+    # iso8859_11 codec
+    'iso8859_11'         => 'iso-8859-11',
+    'thai'               => 'iso-8859-11',
+    'iso_8859_11'        => 'iso-8859-11',
+    'iso_8859_11_2001'   => 'iso-8859-11',
+
+    # iso8859_16 codec
+    'iso8859_16'         => 'iso-8859-16',
+    'iso_8859_16'        => 'iso-8859-16',
+    'iso_8859_16_2001'   => 'iso-8859-16',
+    'iso_ir_226'         => 'iso-8859-16',
+    'l10'                => 'iso-8859-16',
+    'latin10'            => 'iso-8859-16',
+
+    # cskoi8r codec 
+    'koi8_r'             => 'cskoi8r',
+   
+    # mac_cyrillic codec
+    'mac_cyrillic'       => 'maccyrillic',
+
+    # shift_jis codec
+    'csshiftjis'         => 'shift_jis',
+    'shiftjis'           => 'shift_jis',
+    'sjis'               => 'shift_jis',
+    's_jis'              => 'shift_jis',
+
+    # shift_jisx0213 codec
+    'shiftjisx0213'      => 'shift_jisx0213',
+    'sjisx0213'          => 'shift_jisx0213',
+    's_jisx0213'         => 'shift_jisx0213',
+
+    # utf_16 codec
+    'utf_16'             => 'utf-16',
+    'u16'                => 'utf-16',
+    'utf16'              => 'utf-16',
+
+    # utf_16_be codec
+    'utf_16_be'          => 'utf-16be',
+    'unicodebigunmarked' => 'utf-16be',
+    'utf_16be'           => 'utf-16be',
+
+    # utf_16_le codec
+    'utf_16_le'          => 'utf-16le',
+    'unicodelittleunmarked' => 'utf-16le',
+    'utf_16le'           => 'utf-16le',
+
+    # utf_7 codec
+    'utf_7'              => 'utf-7',
+    'u7'                 => 'utf-7',
+    'utf7'               => 'utf-7',
+
+    # utf_8 codec
+    'utf_8'              => 'utf-8',
+    'u8'                 => 'utf-8',
+    'utf'                => 'utf-8',
+    'utf8'               => 'utf-8',
+    'utf8_ucs2'          => 'utf-8',
+    'utf8_ucs4'          => 'utf-8',
+
+    'windows_1250'       => 'windows-1250',
+    'windows_1251'       => 'windows-1251',
+    'windows_1252'       => 'windows-1252',
+    'windows_1253'       => 'windows-1253',
+    'windows_1254'       => 'windows-1254',
+    'windows_1255'       => 'windows-1255',
+    'windows_1256'       => 'windows-1256',
+    'windows_1257'       => 'windows-1257',
+    'windows_1258'       => 'windows-1258'
+}
+
 def unicode(data, from_encoding)
   # Takes a single string and converts it from the encoding in 
   # from_encoding to unicode.
@@ -49,6 +474,8 @@ def unicode(data, from_encoding)
 end
 
 def uconvert(data, from_encoding, to_encoding = 'utf-8')
+  from_encoding = Encoding_Aliases[from_encoding] || from_encoding
+  to_encoding = Encoding_Aliases[to_encoding] || to_encoding
   Iconv.iconv(to_encoding, from_encoding, data)[0]
 end
 
@@ -57,45 +484,15 @@ def unichr(i)
 end
 
 def _xmlescape(text) # FIXME unused
-  Text.new(text).to_s
+  text.to_xs # See below
 end
 
 def _ebcdic_to_ascii(s)   
   return Iconv.iconv("iso88591", "ebcdic-cp-be", s)[0]
 end
 
-_cp1252 = {
-  unichr(128) => unichr(8364), # euro sign
-  unichr(130) => unichr(8218), # single low-9 quotation mark
-  unichr(131) => unichr( 402), # latin small letter f with hook
-  unichr(132) => unichr(8222), # double low-9 quotation mark
-  unichr(133) => unichr(8230), # horizontal ellipsis
-  unichr(134) => unichr(8224), # dagger
-  unichr(135) => unichr(8225), # double dagger
-  unichr(136) => unichr( 710), # modifier letter circumflex accent
-  unichr(137) => unichr(8240), # per mille sign
-  unichr(138) => unichr( 352), # latin capital letter s with caron
-  unichr(139) => unichr(8249), # single left-pointing angle quotation mark
-  unichr(140) => unichr( 338), # latin capital ligature oe
-  unichr(142) => unichr( 381), # latin capital letter z with caron
-  unichr(145) => unichr(8216), # left single quotation mark
-  unichr(146) => unichr(8217), # right single quotation mark
-  unichr(147) => unichr(8220), # left double quotation mark
-  unichr(148) => unichr(8221), # right double quotation mark
-  unichr(149) => unichr(8226), # bullet
-  unichr(150) => unichr(8211), # en dash
-  unichr(151) => unichr(8212), # em dash
-  unichr(152) => unichr( 732), # small tilde
-  unichr(153) => unichr(8482), # trade mark sign
-  unichr(154) => unichr( 353), # latin small letter s with caron
-  unichr(155) => unichr(8250), # single right-pointing angle quotation mark
-  unichr(156) => unichr( 339), # latin small ligature oe
-  unichr(158) => unichr( 382), # latin small letter z with caron
-  unichr(159) => unichr( 376) # latin capital letter y with diaeresis
-}
-
 def urljoin(base, uri)
-  urifixer = Regexp.new('^([A-Za-z][A-Za-z0-9+-.]*://)(/*)(.*?)')
+  urifixer = /^([A-Za-z][A-Za-z0-9+-.]*:\/\/)(\/*)(.*?)/u
   uri = uri.sub(urifixer, '\1\3') 
   begin
     return URI.join(base, uri).to_s #FIXME untranslated, error handling from original needed?
@@ -106,6 +503,102 @@ def urljoin(base, uri)
   end
 end
 
+# http://intertwingly.net/stories/2005/09/28/xchar.rb
+module XChar
+  # http://intertwingly.net/stories/2004/04/14/i18n.html#CleaningWindows
+  CP1252 = {
+    128 => 8364, # euro sign
+    130 => 8218, # single low-9 quotation mark
+    131 =>  402, # latin small letter f with hook
+    132 => 8222, # double low-9 quotation mark
+    133 => 8230, # horizontal ellipsis
+    134 => 8224, # dagger
+    135 => 8225, # double dagger
+    136 =>  710, # modifier letter circumflex accent
+    137 => 8240, # per mille sign
+    138 =>  352, # latin capital letter s with caron
+    139 => 8249, # single left-pointing angle quotation mark
+    140 =>  338, # latin capital ligature oe
+    142 =>  381, # latin capital letter z with caron
+    145 => 8216, # left single quotation mark
+    146 => 8217, # right single quotation mark
+    147 => 8220, # left double quotation mark
+    148 => 8221, # right double quotation mark
+    149 => 8226, # bullet
+    150 => 8211, # en dash
+    151 => 8212, # em dash
+    152 =>  732, # small tilde
+    153 => 8482, # trade mark sign
+    154 =>  353, # latin small letter s with caron
+    155 => 8250, # single right-pointing angle quotation mark
+    156 =>  339, # latin small ligature oe
+    158 =>  382, # latin small letter z with caron
+    159 =>  376} # latin capital letter y with diaeresis
+
+  # http://www.w3.org/TR/REC-xml/#dt-chardata
+  PREDEFINED = {
+    38 => '&amp;', # ampersand
+    60 => '&lt;',  # left angle bracket
+    62 => '&gt;'}  # right angle bracket
+
+  # http://www.w3.org/TR/REC-xml/#charsets
+  VALID = [[0x9, 0xA, 0xD], (0x20..0xD7FF), 
+    (0xE000..0xFFFD), (0x10000..0x10FFFF)]
+end
+
+class Fixnum
+  # xml escaped version of chr
+  def xchr
+    n = XChar::CP1252[self] || self
+    n = 42 unless XChar::VALID.find {|range| range.include? n}
+    XChar::PREDEFINED[n] or (n<128 ? n.chr : "&##{n};")
+  end
+end
+
+class String
+  def to_xs 
+    unpack('U*').map {|n| n.xchr}.join # ASCII, UTF-8
+  rescue
+    unpack('C*').map {|n| n.xchr}.join # ISO-8859-1, WIN-1252
+  end
+end
+# Add some helper methods to make AttributeList (all of those damn attrs
+# and attrsD used by StrictFeedParser) act more like a Hash.
+# NOTE AttributeList is still Read-Only (AFAICT).
+# Monkey patching is terrible, and I have an addiction.
+module XML
+  module SAX
+    module AttributeList # in xml/sax.rb
+      def [](key)
+        getValue(key)
+      end
+
+      def each(&blk)
+        (0..getLength-1).each{|pos| yield [getName(pos), getValue(pos)]}
+      end
+
+      def each_key(&blk)
+        (0..getLength-1).each{|pos| yield getName(pos) }
+      end
+
+      def each_value(&blk)
+        (0..getLength-1).each{|pos| yield getValue(pos) }
+      end
+
+      def to_a # Rather use collect? grep for to_a.collect
+        l = []
+        each{|k,v| l << [k,v]}
+        return l
+      end
+
+      def to_s
+        l = []
+        each{|k,v| l << "#{k} => #{v}"}
+        "{ "+l.join(", ")+" }"
+      end
+    end
+  end
+end
 # This adds a nice scrub method to Hpricot, so we don't need a _HTMLSanitizer class
 # http://underpantsgnome.com/2007/01/20/hpricot-scrub
 # I have modified it to check for attributes that are only allowed if they are in a certain tag
@@ -179,7 +672,7 @@ module Hpricot
 
       unless self['style'].nil?
         # disallow urls 
-        style = self['style'].sub(/url\s*\(\s*[^\s)]+?\s*\)\s*'/, ' ')
+        style = self['style'].sub(/url\s*\(\s*[^\s)]+?\s*\)\s*'/u, ' ')
         valid_css_values = /^(#[0-9a-f]+|rgb\(\d+%?,\d*%?,?\d*%?\)?|\d{0,2}\.?\d{0,2}(cm|em|ex|in|mm|pc|pt|px|%|,|\))?)$/
         # gauntlet
         if not style.match(/^([:,;#%.\sa-zA-Z0-9!]|\w-\w|'[\s\w]+'|"[\s\w]+"|\([\d,\s]+\))*$/)
@@ -259,112 +752,6 @@ def unescapeHTML(string) # Stupid hack.
   end
   string.gsub!(/&lt;(?!!)/n,'<') # Avoid unescaping entity refs
   return string
-end
-module REXML
-  module Parsers
-    class BetterSAXParser < SAX2Parser
-      # In REXML::SAX2Parser#parse, the guys at REXML do this stupid entity 
-      # decoding thing, where they do ONLY deocde numeric entities. They also 
-      # do not provide a way to fix this (that @entities Hash you see in 
-      # SAX2Parser's initialize method? Totally unused. Awesome.)  So, we get 
-      # to hack around it. Or rather, copy the original parse but comment out
-      # the stupid code.
-      def parse
-        @procs.each { |sym,match,block| block.call if sym == :start_document }
-        @listeners.each { |sym,match,block| 
-          block.start_document if sym == :start_document or sym.nil?
-        }
-        root = context = []
-        while true
-          event = @parser.pull
-          case event[0]
-          when :end_document
-            handle( :end_document )
-            break
-          when :end_doctype
-            context = context[1]
-          when :start_element
-            @tag_stack.push(event[1])
-            # find the observers for namespaces
-            procs = get_procs( :start_prefix_mapping, event[1] )
-            listeners = get_listeners( :start_prefix_mapping, event[1] )
-            if procs or listeners
-              # break out the namespace declarations
-              # The attributes live in event[2]
-              event[2].each {|n, v| event[2][n] = @parser.normalize(v)}
-              nsdecl = event[2].find_all { |n, value| n =~ /^xmlns(:|$)/ }
-              nsdecl.collect! { |n, value| [ n[6..-1], value ] }
-              @namespace_stack.push({})
-              nsdecl.each do |n,v|
-                @namespace_stack[-1][n] = v
-                # notify observers of namespaces
-                procs.each { |ob| ob.call( n, v ) } if procs
-                listeners.each { |ob| ob.start_prefix_mapping(n, v) } if listeners
-              end
-            end
-            event[1] =~ Namespace::NAMESPLIT
-            prefix = $1
-            local = $2
-            uri = get_namespace(prefix)
-            # find the observers for start_element
-            procs = get_procs( :start_element, event[1] )
-            listeners = get_listeners( :start_element, event[1] )
-            # notify observers
-            procs.each { |ob| ob.call( uri, local, event[1], event[2] ) } if procs
-            listeners.each { |ob| 
-              ob.start_element( uri, local, event[1], event[2] ) 
-            } if listeners
-          when :end_element
-            @tag_stack.pop
-            event[1] =~ Namespace::NAMESPLIT
-            prefix = $1
-            local = $2
-            uri = get_namespace(prefix)
-            # find the observers for start_element
-            procs = get_procs( :end_element, event[1] )
-            listeners = get_listeners( :end_element, event[1] )
-            # notify observers
-            procs.each { |ob| ob.call( uri, local, event[1] ) } if procs
-            listeners.each { |ob| 
-              ob.end_element( uri, local, event[1] ) 
-            } if listeners
-
-            namespace_mapping = @namespace_stack.pop
-            # find the observers for namespaces
-            procs = get_procs( :end_prefix_mapping, event[1] )
-            listeners = get_listeners( :end_prefix_mapping, event[1] )
-            if procs or listeners
-              namespace_mapping.each do |prefix, uri|
-                # notify observers of namespaces
-                procs.each { |ob| ob.call( prefix ) } if procs
-                listeners.each { |ob| ob.end_prefix_mapping(prefix) } if listeners
-              end
-            end
-          when :text
-            #normalized = @parser.normalize( event[1] )
-            #handle( :characters, normalized )
-            #copy = event[1].clone
-            # NOTE This is the part that is stupid. -- Jeff
-            #@entities.each { |key, value| copy = copy.gsub("&#{key};", value) }
-            #copy.gsub!( Text::NUMERICENTITY ) {|m|
-            #  m=$1
-            #  m = "0#{m}" if m[0] == ?x
-            #  [Integer(m)].pack('U*')
-            #}
-            #handle( :characters, copy )
-            handle( :characters, event[1])
-          when :entitydecl
-            @entities[ event[1] ] = event[2] if event.size == 3
-            handle( *event )
-          when :processing_instruction, :comment, :doctype, :attlistdecl, 
-            :elementdecl, :cdata, :notationdecl, :xmldecl
-            handle( *event )
-          end
-          handle( :progress, @parser.source.position )
-        end
-      end
-    end
-  end
 end
 module FeedParser
   @version = "0.1aleph_naught"
@@ -655,10 +1042,10 @@ module FeedParser
       $stderr << "start #{tag} with #{attrs}\n" if $debug
       # normalize attrs
       attrsD = {}
-      attrs.each_key do |old_k| 
+      attrs.each do |old_k,value| 
         k = old_k.downcase # Downcase all keys
-        attrsD[k] = attrs[old_k]
-        if ['rel','type'].include?attrsD[k]
+        attrsD[k] = value
+        if ['rel','type'].include?value
           attrsD[k].downcase!   # Downcase the value if the key is 'rel' or 'type'
         end
       end
@@ -686,8 +1073,7 @@ module FeedParser
       @langstack << lang
 
       # track namespaces
-      attrs.to_a.each do |l|
-        prefix, uri = l 
+      attrs.each do |prefix, uri|
         if /^xmlns:/ =~ prefix # prefix begins with xmlns:
           trackNamespace(prefix[6..-1], uri)
         elsif prefix == 'xmlns':
@@ -698,7 +1084,7 @@ module FeedParser
       # track inline content
       if @incontent != 0 and @contentparams.has_key?('type') and not ( /xml$/ =~ (@contentparams['type'] || 'xml') )
         # element declared itself as escaped markup, but isn't really
-        
+
         @contentparams['type'] = 'application/xhtml+xml'
       end
       if @incontent != 0 and @contentparams['type'] == 'application/xhtml+xml'
@@ -764,7 +1150,7 @@ module FeedParser
       end
 
       # track inline content
-     if @incontent != 0 and @contentparams.has_key?'type' and /xml$/ =~ (@contentparams['type'] || 'xml')
+      if @incontent != 0 and @contentparams.has_key?'type' and /xml$/ =~ (@contentparams['type'] || 'xml')
         # element declared itself as escaped markup, but it isn't really
         @contentparams['type'] = 'application/xhtml+xml'
       end
@@ -795,7 +1181,7 @@ module FeedParser
       # not containing any character or entity references
       return if @elementstack.nil? or @elementstack.empty?
       if escape and @contentparams['type'] == 'application/xhtml+xml'
-        text = REXML::Text.new(text).to_s # FIXME can this be done with CGI.escapeHTML?
+        text = text.to_xs # FIXME this pass all encodings?
       end
       @elementstack[-1][2] << text
     end
@@ -1261,7 +1647,7 @@ module FeedParser
       if detail and not detail.empty?
         name = detail['name']
         email = detail['email']
-        
+
         if name and email and not (name.empty? or name.empty?)
           context[key] = "#{name} (#{email})"
         elsif name and not name.empty?
@@ -1719,23 +2105,23 @@ module FeedParser
     end
 
 
-# ISO-8601 date parsing routines written by Fazal Majid.
-# The ISO 8601 standard is very convoluted and irregular - a full ISO 8601
-# parser is beyond the scope of feedparser and the current Time.iso8601 
-# method does not work.  
-# A single regular expression cannot parse ISO 8601 date formats into groups
-# as the standard is highly irregular (for instance is 030104 2003-01-04 or
-# 0301-04-01), so we use templates instead.
-# Please note the order in templates is significant because we need a
-# greedy match.
-  def _parse_date_iso8601(dateString)
-    # Parse a variety of ISO-8601-compatible formats like 20040105
-    
-    # What I'm about to show you may be the ugliest code in all of 
-    # rfeedparser.
-    # FIXME The century regexp maybe not work ('\d\d$' says "two numbers at 
-    # end of line" but we then attach more of a regexp.  
-    iso8601_regexps = [ '^(\d{4})-?([01]\d)-([0123]\d)',
+    # ISO-8601 date parsing routines written by Fazal Majid.
+    # The ISO 8601 standard is very convoluted and irregular - a full ISO 8601
+    # parser is beyond the scope of feedparser and the current Time.iso8601 
+    # method does not work.  
+    # A single regular expression cannot parse ISO 8601 date formats into groups
+    # as the standard is highly irregular (for instance is 030104 2003-01-04 or
+    # 0301-04-01), so we use templates instead.
+    # Please note the order in templates is significant because we need a
+    # greedy match.
+    def _parse_date_iso8601(dateString)
+      # Parse a variety of ISO-8601-compatible formats like 20040105
+
+      # What I'm about to show you may be the ugliest code in all of 
+      # rfeedparser.
+      # FIXME The century regexp maybe not work ('\d\d$' says "two numbers at 
+      # end of line" but we then attach more of a regexp.  
+      iso8601_regexps = [ '^(\d{4})-?([01]\d)-([0123]\d)',
                         '^(\d{4})-([01]\d)',
                         '^(\d{4})-?([0123]\d\d)',
                         '^(\d\d)-?([01]\d)-?([0123]\d)',
@@ -1749,8 +2135,8 @@ module FeedParser
                         '---([0123]\d)',
                         '(\d\d$)',
                         ''
-    ]
-    iso8601_values = { '^(\d{4})-?([01]\d)-([0123]\d)' => ['year', 'month', 'day'],
+      ]
+      iso8601_values = { '^(\d{4})-?([01]\d)-([0123]\d)' => ['year', 'month', 'day'],
                     '^(\d{4})-([01]\d)' => ['year','month'], 
                     '^(\d{4})-?([0123]\d\d)' => ['year', 'ordinal'],
                     '^(\d\d)-?([01]\d)-?([0123]\d)' => ['year','month','day'], 
@@ -1764,84 +2150,84 @@ module FeedParser
                     '---([0123]\d)' => ['day'],
                     '(\d\d$)' => ['century'], 
                     '' => []
-    }
-    add_to_all = '(T?(\d\d):(\d\d)(?::(\d\d))?([+-](\d\d)(?::(\d\d))?|Z)?)?'
-    add_to_all_fields = ['hour', 'minute', 'second', 'tz', 'tzhour', 'tzmin'] 
-    # NOTE We use '(?:' to prevent grouping of optional matches (ones trailed
-    # by '?'). The second ':' *are* matched.
-    m = nil
-    param_keys = []
-    iso8601_regexps.each do |s|
-      $stderr << "Trying iso8601 regexp: #{s+add_to_all}\n" if $debug
-      param_keys = iso8601_values[s] + add_to_all_fields
-      m = dateString.match(Regexp.new(s+add_to_all))
-      break if m
-    end
-    return if m.nil? or (m.begin(0).zero? and m.end(0).zero?) 
-
-    param_values = m.to_a
-    param_values = param_values[1..-1] 
-    params = {}
-    param_keys.each_with_index do |key,i|
-      params[key] = param_values[i]
-    end
-
-    ordinal = params['ordinal'].to_i unless params['ordinal'].nil?
-    year = params['year'] || '--'
-    if year.nil? or year.empty? or year == '--' # FIXME When could the regexp ever return a year equal to '--'?
-      year = Time.now.utc.year
-    elsif year.length == 2
-      # ISO 8601 assumes current century, i.e. 93 -> 2093, NOT 1993
-      year = 100 * (Time.now.utc.year / 100) + year.to_i
-    else
-      year = year.to_i
-    end
-
-    month = params['month'] || '-'
-    if month.nil? or month.empty? or month == '-'
-      # ordinals are NOT normalized by mktime, we simulate them
-      # by setting month=1, day=ordinal
-      if ordinal
-        month = DateTime.ordinal(year,ordinal).month
-      else
-        month = Time.now.utc.month
+      }
+      add_to_all = '(T?(\d\d):(\d\d)(?::(\d\d))?([+-](\d\d)(?::(\d\d))?|Z)?)?'
+      add_to_all_fields = ['hour', 'minute', 'second', 'tz', 'tzhour', 'tzmin'] 
+      # NOTE We use '(?:' to prevent grouping of optional matches (ones trailed
+      # by '?'). The second ':' *are* matched.
+      m = nil
+      param_keys = []
+      iso8601_regexps.each do |s|
+        $stderr << "Trying iso8601 regexp: #{s+add_to_all}\n" if $debug
+        param_keys = iso8601_values[s] + add_to_all_fields
+        m = dateString.match(Regexp.new(s+add_to_all))
+        break if m
       end
-    end
-    month = month.to_i unless month.nil?
-    day = params['day']
-    if day.nil? or day.empty?
-      # see above
-      if ordinal
-        day = DateTime.ordinal(year,ordinal).day
-      elsif params['century'] or params['year'] or params['month']
-        day = 1
-      else
-        day = Time.now.utc.day
+      return if m.nil? or (m.begin(0).zero? and m.end(0).zero?) 
+
+      param_values = m.to_a
+      param_values = param_values[1..-1] 
+      params = {}
+      param_keys.each_with_index do |key,i|
+        params[key] = param_values[i]
       end
-    else
-      day = day.to_i
-    end
-    # special case of the century - is the first year of the 21st century
-    # 2000 or 2001 ? The debate goes on...
-    if params.has_key? 'century'
-      year = (params['century'].to_i - 1) * 100 + 1
-    end
-    # in ISO 8601 most fields are optional
-    hour = params['hour'].to_i 
-    minute = params['minute'].to_i 
-    second = params['second'].to_i 
-    weekday = nil
-    # daylight savings is complex, but not needed for feedparser's purposes
-    # as time zones, if specified, include mention of whether it is active
-    # (e.g. PST vs. PDT, CET). Using -1 is implementation-dependent and
-    # and most implementations have DST bugs
+
+      ordinal = params['ordinal'].to_i unless params['ordinal'].nil?
+      year = params['year'] || '--'
+      if year.nil? or year.empty? or year == '--' # FIXME When could the regexp ever return a year equal to '--'?
+        year = Time.now.utc.year
+      elsif year.length == 2
+        # ISO 8601 assumes current century, i.e. 93 -> 2093, NOT 1993
+        year = 100 * (Time.now.utc.year / 100) + year.to_i
+      else
+        year = year.to_i
+      end
+
+      month = params['month'] || '-'
+      if month.nil? or month.empty? or month == '-'
+        # ordinals are NOT normalized by mktime, we simulate them
+        # by setting month=1, day=ordinal
+        if ordinal
+          month = DateTime.ordinal(year,ordinal).month
+        else
+          month = Time.now.utc.month
+        end
+      end
+      month = month.to_i unless month.nil?
+      day = params['day']
+      if day.nil? or day.empty?
+        # see above
+        if ordinal
+          day = DateTime.ordinal(year,ordinal).day
+        elsif params['century'] or params['year'] or params['month']
+          day = 1
+        else
+          day = Time.now.utc.day
+        end
+      else
+        day = day.to_i
+      end
+      # special case of the century - is the first year of the 21st century
+      # 2000 or 2001 ? The debate goes on...
+      if params.has_key? 'century'
+        year = (params['century'].to_i - 1) * 100 + 1
+      end
+      # in ISO 8601 most fields are optional
+      hour = params['hour'].to_i 
+      minute = params['minute'].to_i 
+      second = params['second'].to_i 
+      weekday = nil
+      # daylight savings is complex, but not needed for feedparser's purposes
+      # as time zones, if specified, include mention of whether it is active
+      # (e.g. PST vs. PDT, CET). Using -1 is implementation-dependent and
+      # and most implementations have DST bugs
       tm = [second, minute, hour, day, month, year, nil, ordinal, false, nil]
       tz = params['tz']
       if tz and not tz.empty? and tz != 'Z'
         # FIXME does this cross over days?
         if tz[0] == '-'
           tm[3] += params['tzhour'].to_i
-          tm[4] += params['tzmin'].to_i
+        tm[4] += params['tzmin'].to_i
         elsif tz[0] == '+'
           tm[3] -= params['tzhour'].to_i
           tm[4] -= params['tzmin'].to_i
@@ -1850,235 +2236,234 @@ module FeedParser
         end
       end
       return Time.utc(*tm) # Magic!
-    
-  end
 
-  def _parse_date_onblog(dateString)
-    # Parse a string according to the OnBlog 8-bit date format
-    # 8-bit date handling routes written by ytrewq1
-    korean_year  = u("년") # b3e2 in euc-kr
-    korean_month = u("월") # bff9 in euc-kr
-    korean_day   = u("일") # c0cf in euc-kr
-
-
-    korean_onblog_date_re = /(\d{4})#{korean_year}\s+(\d{2})#{korean_month}\s+(\d{2})#{korean_day}\s+(\d{2}):(\d{2}):(\d{2})/
-
-
-    m = korean_onblog_date_re.match(dateString)
-    return unless m
-    w3dtfdate = "#{m[1]}-#{m[2]}-#{m[3]}T#{m[4]}:#{m[5]}:#{m[6]}+09:00"
-
-    $stderr << "OnBlog date parsed as: %s\n" % w3dtfdate if $debug
-    return _parse_date_w3dtf(w3dtfdate)
-  end
-
-  def _parse_date_nate(dateString)
-    # Parse a string according to the Nate 8-bit date format
-    # 8-bit date handling routes written by ytrewq1
-    korean_am    = u("오전") # bfc0 c0fc in euc-kr
-    korean_pm    = u("오후") # bfc0 c8c4 in euc-kr
-
-    korean_nate_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(#{korean_am}|#{korean_pm})\s+(\d{0,2}):(\d{0,2}):(\d{0,2})/
-    m = korean_nate_date_re.match(dateString)
-    return unless m
-    hour = m[5].to_i
-    ampm = m[4]
-    if ampm == korean_pm
-      hour += 12
-    end
-    hour = hour.to_s.rjust(2,'0') 
-    w3dtfdate = "#{m[1]}-#{m[2]}-#{m[3]}T#{hour}:#{m[6]}:#{m[7]}+09:00"
-    $stderr << "Nate date parsed as: %s\n" % w3dtfdate if $debug
-    return _parse_date_w3dtf(w3dtfdate)
-  end
-
-  def _parse_date_mssql(dateString)
-    mssql_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})(\.\d+)?/
-
-    m = mssql_date_re.match(dateString)
-    return unless m
-    w3dtfdate =  "#{m[1]}-#{m[2]}-#{m[3]}T#{m[4]}:#{m[5]}:#{m[6]}+09:00"
-    $stderr << "MS SQL date parsed as: %s\n" % w3dtfdate if $debug
-    return _parse_date_w3dtf(w3dtfdate)
-  end
-
-  # FIXME I'm not sure that Regexp and Encoding play well together
-
-  def _parse_date_greek(dateString)
-    # Parse a string according to a Greek 8-bit date format
-    # Unicode strings for Greek date strings
-    greek_months = { 
-      u("Ιαν") => u("Jan"),       # c9e1ed in iso-8859-7
-      u("Φεβ") => u("Feb"),       # d6e5e2 in iso-8859-7
-      u("Μάώ") => u("Mar"),       # ccdcfe in iso-8859-7
-      u("Μαώ") => u("Mar"),       # cce1fe in iso-8859-7
-      u("Απρ") => u("Apr"),       # c1f0f1 in iso-8859-7
-      u("Μάι") => u("May"),       # ccdce9 in iso-8859-7
-      u("Μαϊ") => u("May"),       # cce1fa in iso-8859-7
-      u("Μαι") => u("May"),       # cce1e9 in iso-8859-7
-      u("Ιούν") => u("Jun"), # c9effded in iso-8859-7
-      u("Ιον") => u("Jun"),       # c9efed in iso-8859-7
-      u("Ιούλ") => u("Jul"), # c9effdeb in iso-8859-7
-      u("Ιολ") => u("Jul"),       # c9f9eb in iso-8859-7
-      u("Αύγ") => u("Aug"),       # c1fde3 in iso-8859-7
-      u("Αυγ") => u("Aug"),       # c1f5e3 in iso-8859-7
-      u("Σεπ") => u("Sep"),       # d3e5f0 in iso-8859-7
-      u("Οκτ") => u("Oct"),       # cfeaf4 in iso-8859-7
-      u("Νοέ") => u("Nov"),       # cdefdd in iso-8859-7
-      u("Νοε") => u("Nov"),       # cdefe5 in iso-8859-7
-      u("Δεκ") => u("Dec"),       # c4e5ea in iso-8859-7
-    }
-
-    greek_wdays =   { 
-      u("Κυρ") => u("Sun"), # caf5f1 in iso-8859-7
-      u("Δευ") => u("Mon"), # c4e5f5 in iso-8859-7
-      u("Τρι") => u("Tue"), # d4f1e9 in iso-8859-7
-      u("Τετ") => u("Wed"), # d4e5f4 in iso-8859-7
-      u("Πεμ") => u("Thu"), # d0e5ec in iso-8859-7
-      u("Παρ") => u("Fri"), # d0e1f1 in iso-8859-7
-      u("Σαβ") => u("Sat"), # d3e1e2 in iso-8859-7   
-    }
-
-    greek_date_format = /([^,]+),\s+(\d{2})\s+([^\s]+)\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+([^\s]+)/
-
-    m = greek_date_format.match(dateString)
-    return unless m
-    begin
-      wday = greek_wdays[m[1]]
-      month = greek_months[m[3]]
-    rescue
-      return nil
-    end
-    rfc822date = "#{wday}, #{m[2]} #{month} #{m[4]} #{m[5]}:#{m[6]}:#{m[7]} #{m[8]}" 
-    $stderr << "Greek date parsed as: #{rfc822date}\n" if $debug
-    return _parse_date_rfc822(rfc822date) 
-  end
-
-  def _parse_date_hungarian(dateString)
-    # Parse a string according to a Hungarian 8-bit date format.
-    hungarian_date_format_re = /(\d{4})-([^-]+)-(\d{0,2})T(\d{0,2}):(\d{2})((\+|-)(\d{0,2}:\d{2}))/
-    m = hungarian_date_format_re.match(dateString)
-    return unless m
-
-    # Unicode strings for Hungarian date strings
-    hungarian_months = { 
-      u("január") =>   u("01"),  # e1 in iso-8859-2
-      u("februári") => u("02"),  # e1 in iso-8859-2
-      u("március") =>  u("03"),  # e1 in iso-8859-2
-      u("április") =>  u("04"),  # e1 in iso-8859-2
-      u("máujus") =>   u("05"),  # e1 in iso-8859-2
-      u("június") =>   u("06"),  # fa in iso-8859-2
-      u("július") =>   u("07"),  # fa in iso-8859-2
-      u("augusztus") =>     u("08"),
-      u("szeptember") =>    u("09"),
-      u("október") =>  u("10"),  # f3 in iso-8859-2
-      u("november") =>      u("11"),
-      u("december") =>      u("12"),
-    }
-    begin
-      month = hungarian_months[m[2]]
-      day = m[3].rjust(2,'0')
-      hour = m[4].rjust(2,'0')
-    rescue
-      return
     end
 
-    w3dtfdate = "#{m[1]}-#{month}-#{day}T#{hour}:#{m[5]}:00#{m[6]}"
-    $stderr << "Hungarian date parsed as: #{w3dtfdate}\n" if $debug
-    return _parse_date_w3dtf(w3dtfdate)
-  end
+    def _parse_date_onblog(dateString)
+      # Parse a string according to the OnBlog 8-bit date format
+      # 8-bit date handling routes written by ytrewq1
+      korean_year  = u("년") # b3e2 in euc-kr
+      korean_month = u("월") # bff9 in euc-kr
+      korean_day   = u("일") # c0cf in euc-kr
 
-  # W3DTF-style date parsing
-  # FIXME shouldn't it be "W3CDTF"?
-  def _parse_date_w3dtf(dateString)
-    # Ruby's Time docs claim w3dtf is an alias for iso8601 which is an alias for xmlschema
-    # Whatever it is, it doesn't work.  This has been fixed in Ruby 1.9 and 
-    # in Ruby on Rails, but not really. They don't fix the 25 hour or 61 minute or 61 second rollover and fail in other ways.
-    # FIXME This code *still* doesn't work on the rollover tests, but it does pass the rest. Also, it needs a serious clean-up
-    w3m = dateString.match(/^(\d{4})-?(?:(?:([01]\d)-?(?:([0123]\d)(?:T(\d\d):(\d\d):(\d\d)([+-]\d\d:\d\d|Z))?)?)?)?/)
-    w3 = w3m[1..-2].map{|s| s.to_i unless s.nil?} << w3m[-1]
-    unless w3[6].class != String
-      if /^-/ =~ w3[6] # Zone offset goes backwards
-        w3[6][0] = '+'
-      elsif /^\+/ =~ w3[6]
-        w3[6][0] = '-'
+
+      korean_onblog_date_re = /(\d{4})#{korean_year}\s+(\d{2})#{korean_month}\s+(\d{2})#{korean_day}\s+(\d{2}):(\d{2}):(\d{2})/
+
+
+      m = korean_onblog_date_re.match(dateString)
+      return unless m
+      w3dtfdate = "#{m[1]}-#{m[2]}-#{m[3]}T#{m[4]}:#{m[5]}:#{m[6]}+09:00"
+
+      $stderr << "OnBlog date parsed as: %s\n" % w3dtfdate if $debug
+      return _parse_date_w3dtf(w3dtfdate)
+    end
+
+    def _parse_date_nate(dateString)
+      # Parse a string according to the Nate 8-bit date format
+      # 8-bit date handling routes written by ytrewq1
+      korean_am    = u("오전") # bfc0 c0fc in euc-kr
+      korean_pm    = u("오후") # bfc0 c8c4 in euc-kr
+
+      korean_nate_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(#{korean_am}|#{korean_pm})\s+(\d{0,2}):(\d{0,2}):(\d{0,2})/
+      m = korean_nate_date_re.match(dateString)
+      return unless m
+      hour = m[5].to_i
+      ampm = m[4]
+      if ampm == korean_pm
+        hour += 12
       end
+      hour = hour.to_s.rjust(2,'0') 
+      w3dtfdate = "#{m[1]}-#{m[2]}-#{m[3]}T#{hour}:#{m[6]}:#{m[7]}+09:00"
+      $stderr << "Nate date parsed as: %s\n" % w3dtfdate if $debug
+      return _parse_date_w3dtf(w3dtfdate)
     end
-    return Time.utc(w3[0] || 1,w3[1] || 1,w3[2] || 1 ,w3[3] || 0,w3[4] || 0,w3[5] || 0)+Time.zone_offset(w3[6] || "UTC")
-  end
 
-  def _parse_date_rfc822(dateString)
-    # Parse an RFC822, RFC1123, RFC2822 or asctime-style date 
-    # These first few lines are to fix up the stupid proprietary format from Disney
-    unknown_timezones = { 'AT' => 'EDT', 'ET' => 'EST', 
+    def _parse_date_mssql(dateString)
+      mssql_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})(\.\d+)?/
+
+      m = mssql_date_re.match(dateString)
+      return unless m
+      w3dtfdate =  "#{m[1]}-#{m[2]}-#{m[3]}T#{m[4]}:#{m[5]}:#{m[6]}+09:00"
+      $stderr << "MS SQL date parsed as: %s\n" % w3dtfdate if $debug
+      return _parse_date_w3dtf(w3dtfdate)
+    end
+
+    # FIXME I'm not sure that Regexp and Encoding play well together
+
+    def _parse_date_greek(dateString)
+      # Parse a string according to a Greek 8-bit date format
+      # Unicode strings for Greek date strings
+      greek_months = { 
+        u("Ιαν") => u("Jan"),       # c9e1ed in iso-8859-7
+        u("Φεβ") => u("Feb"),       # d6e5e2 in iso-8859-7
+        u("Μάώ") => u("Mar"),       # ccdcfe in iso-8859-7
+        u("Μαώ") => u("Mar"),       # cce1fe in iso-8859-7
+        u("Απρ") => u("Apr"),       # c1f0f1 in iso-8859-7
+        u("Μάι") => u("May"),       # ccdce9 in iso-8859-7
+        u("Μαϊ") => u("May"),       # cce1fa in iso-8859-7
+        u("Μαι") => u("May"),       # cce1e9 in iso-8859-7
+        u("Ιούν") => u("Jun"), # c9effded in iso-8859-7
+        u("Ιον") => u("Jun"),       # c9efed in iso-8859-7
+        u("Ιούλ") => u("Jul"), # c9effdeb in iso-8859-7
+        u("Ιολ") => u("Jul"),       # c9f9eb in iso-8859-7
+        u("Αύγ") => u("Aug"),       # c1fde3 in iso-8859-7
+        u("Αυγ") => u("Aug"),       # c1f5e3 in iso-8859-7
+        u("Σεπ") => u("Sep"),       # d3e5f0 in iso-8859-7
+        u("Οκτ") => u("Oct"),       # cfeaf4 in iso-8859-7
+        u("Νοέ") => u("Nov"),       # cdefdd in iso-8859-7
+        u("Νοε") => u("Nov"),       # cdefe5 in iso-8859-7
+        u("Δεκ") => u("Dec"),       # c4e5ea in iso-8859-7
+      }
+
+      greek_wdays =   { 
+        u("Κυρ") => u("Sun"), # caf5f1 in iso-8859-7
+        u("Δευ") => u("Mon"), # c4e5f5 in iso-8859-7
+        u("Τρι") => u("Tue"), # d4f1e9 in iso-8859-7
+        u("Τετ") => u("Wed"), # d4e5f4 in iso-8859-7
+        u("Πεμ") => u("Thu"), # d0e5ec in iso-8859-7
+        u("Παρ") => u("Fri"), # d0e1f1 in iso-8859-7
+        u("Σαβ") => u("Sat"), # d3e1e2 in iso-8859-7   
+      }
+
+      greek_date_format = /([^,]+),\s+(\d{2})\s+([^\s]+)\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+([^\s]+)/
+
+      m = greek_date_format.match(dateString)
+      return unless m
+      begin
+        wday = greek_wdays[m[1]]
+        month = greek_months[m[3]]
+      rescue
+        return nil
+      end
+      rfc822date = "#{wday}, #{m[2]} #{month} #{m[4]} #{m[5]}:#{m[6]}:#{m[7]} #{m[8]}" 
+      $stderr << "Greek date parsed as: #{rfc822date}\n" if $debug
+      return _parse_date_rfc822(rfc822date) 
+    end
+
+    def _parse_date_hungarian(dateString)
+      # Parse a string according to a Hungarian 8-bit date format.
+      hungarian_date_format_re = /(\d{4})-([^-]+)-(\d{0,2})T(\d{0,2}):(\d{2})((\+|-)(\d{0,2}:\d{2}))/
+      m = hungarian_date_format_re.match(dateString)
+      return unless m
+
+      # Unicode strings for Hungarian date strings
+      hungarian_months = { 
+        u("január") =>   u("01"),  # e1 in iso-8859-2
+        u("februári") => u("02"),  # e1 in iso-8859-2
+        u("március") =>  u("03"),  # e1 in iso-8859-2
+        u("április") =>  u("04"),  # e1 in iso-8859-2
+        u("máujus") =>   u("05"),  # e1 in iso-8859-2
+        u("június") =>   u("06"),  # fa in iso-8859-2
+        u("július") =>   u("07"),  # fa in iso-8859-2
+        u("augusztus") =>     u("08"),
+        u("szeptember") =>    u("09"),
+        u("október") =>  u("10"),  # f3 in iso-8859-2
+        u("november") =>      u("11"),
+        u("december") =>      u("12"),
+      }
+      begin
+        month = hungarian_months[m[2]]
+        day = m[3].rjust(2,'0')
+        hour = m[4].rjust(2,'0')
+      rescue
+        return
+      end
+
+      w3dtfdate = "#{m[1]}-#{month}-#{day}T#{hour}:#{m[5]}:00#{m[6]}"
+      $stderr << "Hungarian date parsed as: #{w3dtfdate}\n" if $debug
+      return _parse_date_w3dtf(w3dtfdate)
+    end
+
+    # W3DTF-style date parsing
+    # FIXME shouldn't it be "W3CDTF"?
+    def _parse_date_w3dtf(dateString)
+      # Ruby's Time docs claim w3dtf is an alias for iso8601 which is an alias for xmlschema
+      # Whatever it is, it doesn't work.  This has been fixed in Ruby 1.9 and 
+      # in Ruby on Rails, but not really. They don't fix the 25 hour or 61 minute or 61 second rollover and fail in other ways.
+      # FIXME This code *still* doesn't work on the rollover tests, but it does pass the rest. Also, it needs a serious clean-up
+      w3m = dateString.match(/^(\d{4})-?(?:(?:([01]\d)-?(?:([0123]\d)(?:T(\d\d):(\d\d):(\d\d)([+-]\d\d:\d\d|Z))?)?)?)?/)
+      w3 = w3m[1..-2].map{|s| s.to_i unless s.nil?} << w3m[-1]
+      unless w3[6].class != String
+        if /^-/ =~ w3[6] # Zone offset goes backwards
+          w3[6][0] = '+'
+        elsif /^\+/ =~ w3[6]
+          w3[6][0] = '-'
+        end
+      end
+      return Time.utc(w3[0] || 1,w3[1] || 1,w3[2] || 1 ,w3[3] || 0,w3[4] || 0,w3[5] || 0)+Time.zone_offset(w3[6] || "UTC")
+    end
+
+    def _parse_date_rfc822(dateString)
+      # Parse an RFC822, RFC1123, RFC2822 or asctime-style date 
+      # These first few lines are to fix up the stupid proprietary format from Disney
+      unknown_timezones = { 'AT' => 'EDT', 'ET' => 'EST', 
                           'CT' => 'CST', 'MT' => 'MST', 
                           'PT' => 'PST' 
-    }
-    mon = dateString.split[2]
-    if mon.length > 3 and Time::RFC2822_MONTH_NAME.include?mon[0..2]
-      dateString.sub!(mon,mon[0..2])
-    end
-    if dateString[-3..-1] != "GMT" and unknown_timezones[dateString[-2..-1]]
-      dateString[-2..-1] = unknown_timezones[dateString[-2..-1]]
-    end
-    # Okay, the Disney date format should be fixed up now.
-    rfc = dateString.match(/([A-Za-z]{3}), ([0123]\d) ([A-Za-z]{3}) (\d{4})( (\d\d):(\d\d)(?::(\d\d))? ([A-Za-z]{3}))?/)
-    if rfc.to_a.length > 1 and rfc.to_a.include? nil
-      dow, day, mon, year, hour, min, sec, tz = rfc[1..-1]
-      hour,min,sec = [hour,min,sec].map{|e| e.to_s.rjust(2,'0') }
-      tz ||= "GMT"
-    end
-    asctime_match = dateString.match(/([A-Za-z]{3}) ([A-Za-z]{3})  (\d?\d) (\d\d):(\d\d):(\d\d) ([A-Za-z]{3}) (\d\d\d\d)/).to_a
-    if asctime_match.to_a.length > 1
-      # Month-abbr dayofmonth hour:minute:second year
-      dow, mon, day, hour, min, sec, tz, year = asctime_match[1..-1]
-      day.to_s.rjust(2,'0')
-    end
-    if (rfc.to_a.length > 1 and rfc.to_a.include? nil) or asctime_match.to_a.length > 1
-      ds = "#{dow}, #{day} #{mon} #{year} #{hour}:#{min}:#{sec} #{tz}"
-    else
-      ds = dateString
-    end
-    t = Time.rfc2822(ds).utc
-    return t
-  end
-
-  def _parse_date_perforce(aDateString) # FIXME not in 4.1?
-    # Parse a date in yyyy/mm/dd hh:mm:ss TTT format
-    # Note that there is a day of the week at the beginning 
-    # Ex. Fri, 2006/09/15 08:19:53 EDT
-    return Time.parse(aDateString).utc
-  end
-
-  def extract_tuple(atime)
-    # NOTE leave the error handling to parse_date
-    t = [atime.year, atime.month, atime.mday, atime.hour,
-      atime.min, atime.sec, (atime.wday-1) % 7, atime.yday,
-      atime.isdst
-    ]
-    # yay for modulus! yaaaaaay!  its 530 am and i should be sleeping! yaay!
-    t[0..-2].map!{|s| s.to_i}
-    t[-1] = t[-1] ? 1 : 0
-    return t
-  end
-
-  def parse_date(dateString)
-    @date_handlers.each do |handler|
-      begin 
-        $stderr << "Trying date_handler #{handler}\n" if $debug
-        datething = extract_tuple(send(handler,dateString))
-        return datething
-      rescue Exception => e
-        $stderr << "#{handler} raised #{e}\n" if $debug
+      }
+      mon = dateString.split[2]
+      if mon.length > 3 and Time::RFC2822_MONTH_NAME.include?mon[0..2]
+        dateString.sub!(mon,mon[0..2])
       end
+      if dateString[-3..-1] != "GMT" and unknown_timezones[dateString[-2..-1]]
+        dateString[-2..-1] = unknown_timezones[dateString[-2..-1]]
+      end
+      # Okay, the Disney date format should be fixed up now.
+      rfc = dateString.match(/([A-Za-z]{3}), ([0123]\d) ([A-Za-z]{3}) (\d{4})( (\d\d):(\d\d)(?::(\d\d))? ([A-Za-z]{3}))?/)
+      if rfc.to_a.length > 1 and rfc.to_a.include? nil
+        dow, day, mon, year, hour, min, sec, tz = rfc[1..-1]
+        hour,min,sec = [hour,min,sec].map{|e| e.to_s.rjust(2,'0') }
+        tz ||= "GMT"
+      end
+      asctime_match = dateString.match(/([A-Za-z]{3}) ([A-Za-z]{3})  (\d?\d) (\d\d):(\d\d):(\d\d) ([A-Za-z]{3}) (\d\d\d\d)/).to_a
+      if asctime_match.to_a.length > 1
+        # Month-abbr dayofmonth hour:minute:second year
+        dow, mon, day, hour, min, sec, tz, year = asctime_match[1..-1]
+        day.to_s.rjust(2,'0')
+      end
+      if (rfc.to_a.length > 1 and rfc.to_a.include? nil) or asctime_match.to_a.length > 1
+        ds = "#{dow}, #{day} #{mon} #{year} #{hour}:#{min}:#{sec} #{tz}"
+      else
+        ds = dateString
+      end
+      t = Time.rfc2822(ds).utc
+      return t
     end
-    return nil
-  end
+
+    def _parse_date_perforce(aDateString) # FIXME not in 4.1?
+      # Parse a date in yyyy/mm/dd hh:mm:ss TTT format
+      # Note that there is a day of the week at the beginning 
+      # Ex. Fri, 2006/09/15 08:19:53 EDT
+      return Time.parse(aDateString).utc
+    end
+
+    def extract_tuple(atime)
+      # NOTE leave the error handling to parse_date
+      t = [atime.year, atime.month, atime.mday, atime.hour,
+        atime.min, atime.sec, (atime.wday-1) % 7, atime.yday,
+        atime.isdst
+      ]
+      # yay for modulus! yaaaaaay!  its 530 am and i should be sleeping! yaay!
+      t[0..-2].map!{|s| s.to_i}
+      t[-1] = t[-1] ? 1 : 0
+      return t
+    end
+
+    def parse_date(dateString)
+      @date_handlers.each do |handler|
+        begin 
+          $stderr << "Trying date_handler #{handler}\n" if $debug
+          datething = extract_tuple(send(handler,dateString))
+          return datething
+        rescue Exception => e
+          $stderr << "#{handler} raised #{e}\n" if $debug
+        end
+      end
+      return nil
+    end
 
   end # End FeedParserMixin
 
-  class StrictFeedListener 
-    include REXML::SAX2Listener
+  class StrictFeedParser < XML::SAX::HandlerBase # expat
     include FeedParserMixin
 
     attr_accessor :bozo, :entries, :feeddata, :exc
@@ -2087,79 +2472,85 @@ module FeedParser
       startup(baseuri, baselang, encoding) 
       @bozo = false
       @exc = nil
+      super()
     end
 
-    def start_document
-    end
-    def end_document
-    end
-
-    def doctype(name, pub_sys, long_name, uri)   
-
+    def getPos
+      [@locator.getSystemId, @locator.getLineNumber]
     end
 
-    def start_prefix_mapping(prefix, uri)
+    def getAttrs(attrs)
+      ret = []
+      for i in 0..attrs.getLength
+        ret.push([attrs.getName(i), attrs.getValue(i)])
+      end
+      ret
+    end
+
+    def setDocumentLocator(loc)
+      @locator = loc
+    end
+
+    def startDoctypeDecl(name, pub_sys, long_name, uri)   
+      #Nothing is done here. What could we do that is neat and useful?
+    end
+
+    def startNamespaceDecl(prefix, uri)
       trackNamespace(prefix, uri)
     end
 
-    def end_prefix_mapping(prefix)
+    def endNamespaceDecl(prefix)
     end
 
-    def start_element(namespace, localname, qname, attributes)
-      lowernamespace = (namespace || '').downcase 
-
-      if /backend\.userland\.com\/rss/ =~ lowernamespace
+    def startElement(name, attrs)
+      name =~ /^(([^;]*);)?(.+)$/ # Snag namespaceuri from name
+      namespaceuri = ($2 || '').downcase
+      name = $3
+      if /backend\.userland\.com\/rss/ =~ namespaceuri
         # match any backend.userland.com namespace
-        namespace = 'http://backend.userland.com/rss'
-        lowernamespace = namespace
+        namespaceuri = 'http://backend.userland.com/rss'
       end
-      if qname and qname.index(':')
-        givenprefix = qname.split(':')[0] # Not sure if this is appropriate
-      else
-        givenprefix = nil
-      end
-      prefix = @matchnamespaces[lowernamespace] || givenprefix
-      if givenprefix and (prefix.nil? or (prefix.empty? and lowernamespace.empty?)) and not namespacesInUse.has_key?givenprefix
-        raise UndeclaredNamespace, "\'#{givenprefix}\' is not associated with a namespace."
-      end
+      prefix = @matchnamespaces[namespaceuri] 
+      # No need to raise UndeclaredNamespace, Expat does that for us with
+      "unbound prefix (XMLParserError)"
       if prefix and not prefix.empty?
-        localname = prefix + ':' + localname
+        name = prefix + ':' + name
       end
-      localname = localname.to_s.downcase 
-      unknown_starttag(localname, attributes)
+      name.downcase!
+      unknown_starttag(name, attrs)
     end
 
-    def characters(text)
-      handle_data(CGI.unescapeHTML(text))
-      #handle_date(text)
+    def character(text, start, length)       
+      #handle_data(CGI.unescapeHTML(text))
+      handle_data(text)
     end
-    
-    def cdata(content)
+    # expat provides "character" not "characters"!
+    alias :characters :character # Just in case.
+
+    def startCdata(content)
       handle_data(content)
     end
 
-    def end_element(namespace, localname, qname) # FIXME untranslated, other than this first line
-      lowernamespace = (namespace || '').downcase
-      if qname and qname.index(':')
-        givenprefix = qname.split(':')[0] # NOTE I'm fairly certain that REXML never passes anything like xhtml:div
-      else
-        givenprefix = ''
-      end
-      prefix = @matchnamespaces[lowernamespace] || givenprefix
+    def endElement(name) 
+      name =~ /^(([^;]*);)?(.+)$/ # Snag namespaceuri from name
+      namespaceuri = ($2 || '').downcase
+      prefix = @matchnamespaces[namespaceuri]
       if prefix and not prefix.empty?
-        localname = prefix + ':' + localname
+        localname = prefix + ':' + name
       end
-      localname.downcase!
-      unknown_endtag(localname)
+      name.downcase!
+      unknown_endtag(name)
     end
 
     def comment(comment)
       handle_comment(comment)
     end
 
-    def entitydecl(*content)
+    def entityDecl(*foo)
     end
 
+    def unparsedEntityDecl(*foo)
+    end
     def error(exc)
       @bozo = true 
       @exc = exc
@@ -2181,30 +2572,30 @@ module FeedParser
   def FeedParser.resolveRelativeURIs(htmlSource, baseURI, encoding)
     $stderr << "entering resolveRelativeURIs\n" if $debug # FIXME write a decent logger
     relative_uris = [ ['a','href'],
-                    ['applet','codebase'],
-                    ['area','href'],
-                    ['blockquote','cite'],
-                    ['body','background'],
-                    ['del','cite'],
-                    ['form','action'],
-                    ['frame','longdesc'],
-                    ['frame','src'],
-                    ['iframe','longdesc'],
-                    ['iframe','src'],
-                    ['head','profile'],
-                    ['img','longdesc'],
-                    ['img','src'],
-                    ['img','usemap'],
-                    ['input','src'],
-                    ['input','usemap'],
-                    ['ins','cite'],
-                    ['link','href'],
-                    ['object','classid'],
-                    ['object','codebase'],
-                    ['object','data'],
-                    ['object','usemap'],
-                    ['q','cite'],
-                    ['script','src'],
+      ['applet','codebase'],
+      ['area','href'],
+      ['blockquote','cite'],
+      ['body','background'],
+      ['del','cite'],
+      ['form','action'],
+      ['frame','longdesc'],
+      ['frame','src'],
+      ['iframe','longdesc'],
+      ['iframe','src'],
+      ['head','profile'],
+      ['img','longdesc'],
+      ['img','src'],
+      ['img','usemap'],
+      ['input','src'],
+      ['input','usemap'],
+      ['ins','cite'],
+      ['link','href'],
+      ['object','classid'],
+      ['object','codebase'],
+      ['object','data'],
+      ['object','usemap'],
+      ['q','cite'],
+      ['script','src'],
     ]
     h = Hpricot(htmlSource)
     relative_uris.each do |l|
@@ -2373,19 +2764,20 @@ module FeedParser
         end
       end
       children.each { |e| e.strip(@config[:allow_tags])}
-      
+
       return self
     end
   end
 
   def self.sanitizeHTML(html,encoding)
     # FIXME Does not do encoding, nor Tidy
-    h = SanitizerDoc.new(Hpricot.make(html))
+    html = html.gsub(/<!((?!DOCTYPE|--|\[))/, '&lt;!\1')
+    h = SanitizerDoc.new(Hpricot.make(html),:fixup_tags => false)
     h = h.scrub
     return h.to_html.strip
   end
 
-  
+
 
   def self.getCharacterEncoding(feed, xml_data)
     # Get the character encoding of the XML document
@@ -2443,7 +2835,7 @@ module FeedParser
         # UTF-32BE with BOM
         sniffed_xml_encoding = 'utf-32be'
         xml_data = uconvert(xml_data[4..-1], 'utf-32BE', 'utf-8')
-      elsif xml_data[0..3] == "\xef\xfe\x00\x00"
+      elsif xml_data[0..3] == "\xff\xfe\x00\x00"
         # UTF-32LE with BOM
         sniffed_xml_encoding = 'utf-32le'
         xml_data = uconvert(xml_data[4..-1], 'utf-32le', 'utf-8')
@@ -2495,7 +2887,7 @@ module FeedParser
 =end
     $stderr << "entering self.toUTF8, trying encoding %s\n" % encoding if $debug
     # NOTE we must use double quotes when dealing with \x encodings!
-    if data.size >= 4 and data[0..1] == "\xfe\xff" and data[2..3] != "\x00\x00" 
+    if (data.size >= 4 and data[0..1] == "\xfe\xff" and data[2..3] != "\x00\x00")
       if $debug
         $stderr << "stripping BOM\n"
         if encoding != 'utf-16be'
@@ -2504,49 +2896,49 @@ module FeedParser
       end
       encoding = 'utf-16be'
       data = data[2..-1]
-    elsif data.size >= 4 and data[0..1] == "\xff\xfe" and data[2..3] != "\x00\x00"
+    elsif (data.size >= 4 and data[0..1] == "\xff\xfe" and data[2..3] != "\x00\x00")
       if $debug
         $stderr << "stripping BOM\n"
-        if encoding !- 'utf-16le'
-          $stderr << "trying utf-16le instead\n"
-        end
+        $stderr << "trying utf-16le instead\n" if encoding != 'utf-16le'
       end
       encoding = 'utf-16le'
       data = data[2..-1]
-    elsif data[0..2] == "\xef\xbb\xbf"
+    elsif (data[0..2] == "\xef\xbb\xbf")
       if $debug
         $stderr << "stripping BOM\n"
-        if encoding != 'utf-8'
-          $stderr << "trying utf-8 instead\n"
-        end
+        $stderr << "trying utf-8 instead\n" if encoding != 'utf-8'
       end
       encoding = 'utf-8'
       data = data[3..-1]
-    elsif data[0..3] == "\x00\x00\xfe\xff"
+    elsif (data[0..3] == "\x00\x00\xfe\xff")
       if $debug
         $stderr << "stripping BOM\n"
         if encoding != 'utf-32be'
           $stderr << "trying utf-32be instead\n"
         end
       end
-    encoding = 'utf-32be'
-    data = data[3..-1]
-    elsif data[0..3] == "\xff\xfe\x00\x00"
+      encoding = 'utf-32be'
+      data = data[4..-1]
+    elsif (data[0..3] == "\xff\xfe\x00\x00")
       if $debug
         $stderr << "stripping BOM\n"
-        if encoding != 'utf-3lbe'
+        if encoding != 'utf-32le'
           $stderr << "trying utf-32le instead\n"
         end
       end
-    encoding = 'utf-32le'
-    data = data[3..-1]
+      encoding = 'utf-32le'
+      data = data[4..-1]
     end
-    newdata = uconvert(data, encoding, 'utf-8') # Woohoo! Works!
+    begin
+    newdata = uconvert(data, encoding, 'utf-8') 
+    rescue => details
+      puts details
+    end
     $stderr << "successfully converted #{encoding} data to utf-8\n" if $debug
     declmatch = /^<\?xml[^>]*?>/
     newdecl = "<?xml version=\'1.0\' encoding=\'utf-8\'?>"
     if declmatch =~ newdata
-      newdata.sub!(declmatch, newdecl) #FIXME this was late night coding
+      newdata.sub!(declmatch, newdecl) 
     else
       newdata = newdecl + "\n" + newdata
     end
@@ -2560,11 +2952,10 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
     rss_version may be 'rss091n' or None
     stripped_data is the same XML document, minus the DOCTYPE
 =end
-    entity_pattern = /<!ENTITY([^>]*?)>/m # m is for Regexp::MULTILINE
-    entity_results = data.scan(entity_pattern)
-    data = data.sub(entity_pattern,data)
+    entity_pattern = /<!ENTITY(.*?)>/m # m is for Regexp::MULTILINE
+    data = data.gsub(entity_pattern,'')
 
-    doctype_pattern = /<!DOCTYPE([^>]*?)>/m
+    doctype_pattern = /<!DOCTYPE(.*?)>/m
     doctype_results = data.scan(doctype_pattern)
     if doctype_results and doctype_results[0]
       doctype = doctype_results[0][0]
@@ -2638,7 +3029,7 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
       result['etag'] = result['headers']['etag'] = options[:etag] unless options[:etag].nil?
       result['modified'] = result['headers']['last-modified'] = options[:modified] unless options[:modified].nil?
       unless options[:content_location].nil?
-         result['headers']['content-location'] = options[:content_location]
+        result['headers']['content-location'] = options[:content_location]
       end
       unless options[:content_language].nil?
         result['headers']['content-language'] = options[:content_language] 
@@ -2688,6 +3079,7 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
     use_strict_parser = false
     known_encoding = false
     tried_encodings = []
+    proposed_encoding = nil
     # try: HTTP encoding, declared XML encoding, encoding sniffed from BOM
     [result['encoding'], xml_encoding, sniffed_xml_encoding].each do |proposed_encoding|
       next if proposed_encoding.nil? or proposed_encoding.empty?
@@ -2726,50 +3118,63 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
       rescue
       end
     end
+
+    # NOTE this isn't in FeedParser.py 4.1
     # if still no luck and we haven't tried iso-8859-2 yet, try that.
-    if not known_encoding and not tried_encodings.include?'iso-8859-2'
-      begin
-        proposed_encoding = 'iso-8859-2'
-        tried_encodings << proposed_encoding
-        data = self.toUTF8(data, proposed_encoding)
-        known_encoding = use_strict_parser = true
-      rescue
-      end
-    end
+    #if not known_encoding and not tried_encodings.include?'iso-8859-2'
+    #  begin
+    #    proposed_encoding = 'iso-8859-2'
+    #    tried_encodings << proposed_encoding
+    #    data = self.toUTF8(data, proposed_encoding)
+    #    known_encoding = use_strict_parser = true
+    #  rescue
+    #  end
+    #end
+
+
     # if still no luck, give up
     if not known_encoding
       result['bozo'] = true
-      result['bozo_exception'] = CharacterEncodingUnknown.new("documented declared as %s, but parsed as %s" % [result['encoding'], xml_encoding])
+      result['bozo_exception'] = CharacterEncodingUnknown.new("document encoding unknown, I tried #{result['encoding']}, #{xml_encoding}, utf-8 and windows-1252 but nothing worked")
+      result['encoding'] = ''
+    elsif proposed_encoding != result['encoding']
+      result['bozo'] = true
+      result['bozo_exception'] = CharacterEncodingOverride.new("documented declared as #{result['encoding']}, but parsed as #{proposed_encoding}")
       result['encoding'] = proposed_encoding
     end
-    use_strict_parser = true
+
     if use_strict_parser
       # initialize the SAX parser
-      feedlistener = StrictFeedListener.new(baseuri, baselang, 'utf-8')
-      saxparser = REXML::Parsers::BetterSAXParser.new(REXML::Source.new(data))
-      saxparser.listen(feedlistener)
-      # FIXME are namespaces being checked?
+      saxparser = XML::SAX::Helpers::ParserFactory.makeParser("XML::Parser::SAXDriver")
+      feedparser = StrictFeedParser.new(baseuri, baselang, 'utf-8')
+      saxparser.setDocumentHandler(feedparser)
+      saxparser.setDTDHandler(feedparser)
+      saxparser.setEntityResolver(feedparser)
+      saxparser.setErrorHandler(feedparser)
+
+      inputdata = XML::SAX::InputSource.new('parsedfeed')
+      inputdata.setByteStream(StringIO.new(data))
       begin
-        saxparser.parse
-      rescue => parseerr # resparse
+        saxparser.parse(inputdata)
+      rescue Exception => parseerr # resparse
         if $debug
           $stderr << "xml parsing failed\n"
           $stderr << parseerr.to_s+"\n" # Hrmph.
         end
         result['bozo'] = true
-        result['bozo_exception'] = feedlistener.exc || e 
+        result['bozo_exception'] = feedparser.exc || e 
         use_strict_parser = false
       end
     end
     if not use_strict_parser
-      #feedparser = LooseFeedParser.new(baseuri, baselang, known_encoding && 'utf-8' || '')
-      #feedparser.feed(data)
+      #feedparser = LooseFeedParser.new(baseuri, baselang, (known_encoding.nil? or known_encoding.empty? ? '' : 'utf-8'))
+      #feedparser.parse(data)
       $stderr << "Using LooseFeed" if $debug
     end
-    result['feed'] = feedlistener.feeddata
-    result['entries'] = feedlistener.entries
-    result['version'] = result['version'] || feedlistener.version
-    result['namespaces'] = feedlistener.namespacesInUse
+    result['feed'] = feedparser.feeddata
+    result['entries'] = feedparser.entries
+    result['version'] = result['version'] || feedparser.version
+    result['namespaces'] = feedparser.namespacesInUse
     return result
   end
 end # End FeedParser module
@@ -2900,6 +3305,6 @@ unless args.nil?
                                :content_language => options.content_language,
                                :content_type => options.ctype
                               )
-    serializer.new(results).write($stdout)
+                              serializer.new(results).write($stdout)
   end
 end

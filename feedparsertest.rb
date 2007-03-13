@@ -44,9 +44,9 @@ def translate_data(data)
   elsif data[0..3] == "\x00\x00\xfe\xff"
     # UTF-32BE with BOM
     data = uconvert(data[4..-1], 'utf-32BE', 'utf-8')
-  elsif data[0..3] == "\xef\xfe\x00\x00"
+  elsif data[0..3] == "\xff\xfe\x00\x00"
     # UTF-32LE with BOM
-    data = uconvert(data[4..-1], 'utf-32le', 'utf-8')
+    data = uconvert(data[4..-1], 'utf-32LE', 'utf-8')
   elsif data[0..2] == "\xef\xbb\xbf"
     # UTF-8 with BOM
     data = data[3..-1]
@@ -70,7 +70,6 @@ def scrape_headers(xmlfile)
     type_match = ht_file.read.match(/^\s*<Files\s+#{fn}>\s*\n\s*AddType\s+(.*?)\s+.xml/m)
     the_type = type_match[1].strip.gsub(/^("|')/,'').gsub(/("|')$/,'').strip if type_match and type_match[1]
     if type_match and the_type
-      puts "TYPE #{the_type}"
       #content_type, charset = type_match[1].split(';')
       server_headers["Content-Type"] = the_type
     end
@@ -93,8 +92,20 @@ def scrape_assertion_strings(xmlfile)
   description, evalString = test.first.map{ |s| s.strip }
 
   # Here we translate the expected values in Python to Ruby
-  evalString.gsub! /\bu('.*?')/, '\1'         # u'string' => 'string'
-  evalString.gsub! /\bu(".*?")/, '\1'         # u"string" => "string"
+  evalString.gsub!(/\bu'(.*?)'/) do |m|     
+    esc = $1.to_s.dup
+    esc.gsub!(/\\u([0-9a-fA-F]{4})/){ |m| [$1.hex].pack('U*') }
+    " '"+esc+"'"
+  end 
+  evalString.gsub!(/\bu"(.*?)"/) do |m|
+    esc = $1.to_s.dup
+    esc.gsub!(/\\u([0-9a-fA-F]{4})/){ |m| [$1.hex].pack('U*') }
+    " \""+esc+"\""
+  end
+  # The above does the following:               u'string' => 'string'
+  #                                             u'ba\u20acha' => 'ba€ha' # Same for double quoted strings
+
+  evalString.gsub!(/\\x([0-9a-fA-F]{2})/){ |m| [$1.hex].pack('U*') } # "ba\xa3la" => "ba£la"
   evalString.gsub! /'\s*:\s+/, "' => "        # {'foo': 'bar'} => {'foo' => 'bar'}
   evalString.gsub! /"\s*:\s+/, "\" => "       # {"foo": 'bar'} => {"foo" => 'bar'}
   evalString.gsub! /\=\s*\((.*?)\)/, '= [\1]' # = (2004, 12, 4) => = [2004, 12, 4]
@@ -174,10 +185,8 @@ Dir['tests/wellformed/**/*.xml'].each do |xmlfile| # Test a subset
     # I should point out that the 'compatible' arg is not necessary, 
     # but probably will be in the future if we decide to change the default.
     description, evalString = scrape_assertion_strings(xmlfile)
-    if methname == "tests_wellformed_encoding_http_text_xml_charset"
+    if /xml_charset_2/ =~ methname 
       puts "EVAL #{evalString}"
-      puts "TRUE? #{fp.instance_eval(evalString)}"
-      puts "THINGS ENC: #{fp.encoding} BOZO #{fp.bozo}"
     end
     assert fp.instance_eval(evalString), description.inspect
   }
