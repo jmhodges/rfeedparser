@@ -22,18 +22,23 @@ require 'rubygems'
 require 'parsedate' # Used in _parse_date_rfc822
 require 'base64'
 require 'iconv'
-
+require 'jcode'
 #FIXME need charset detection
 
 #FIXME untranslated, ruby gem
-gem 'character-encodings', ">=0.2.0"
 gem 'hpricot', ">=0.5"
+gem 'character-encodings', ">=0.2.0"
 gem 'tzinfo'
+gem 'htmltools'
+gem 'htmlentities'
+gem 'activesupport'
 
 require 'hpricot'
 require 'encoding/character/utf-8'
-require 'tzinfo'
-include TZInfo
+require 'html/sgml-parser'
+require 'htmlentities'
+require 'active_support'
+
 require 'open-uri'
 include OpenURI
 
@@ -455,16 +460,6 @@ Encoding_Aliases = { # Adapted from python2.4's encodings/aliases.py
     'utf8'               => 'utf-8',
     'utf8_ucs2'          => 'utf-8',
     'utf8_ucs4'          => 'utf-8',
-
-    'windows_1250'       => 'windows-1250',
-    'windows_1251'       => 'windows-1251',
-    'windows_1252'       => 'windows-1252',
-    'windows_1253'       => 'windows-1253',
-    'windows_1254'       => 'windows-1254',
-    'windows_1255'       => 'windows-1255',
-    'windows_1256'       => 'windows-1256',
-    'windows_1257'       => 'windows-1257',
-    'windows_1258'       => 'windows-1258'
 }
 
 def unicode(data, from_encoding)
@@ -481,6 +476,17 @@ end
 
 def unichr(i)
   [i].pack('U*')
+end
+
+def index_match(stri,regexp, offset)
+  if offset == 241
+  end
+  i = stri.index(regexp, offset)
+
+  return nil, nil unless i
+
+  full = stri[i..-1].match(regexp)
+  return i, full
 end
 
 def _xmlescape(text) # FIXME unused
@@ -556,10 +562,323 @@ class Fixnum
 end
 
 class String
+  alias :old_index :index
   def to_xs 
     unpack('U*').map {|n| n.xchr}.join # ASCII, UTF-8
   rescue
     unpack('C*').map {|n| n.xchr}.join # ISO-8859-1, WIN-1252
+  end
+end
+
+class UTF8SafeSGMLParserError < Exception; end;
+class UTF8SafeSGMLParser < HTML::SGMLParser
+  # Replaced Tagfind and Charref Regexps with the ones in feedparser.py
+  # This makes things work. 
+  Interesting = /[&<]/u
+  Incomplete = Regexp.compile('&([a-zA-Z][a-zA-Z0-9]*|#[0-9]*)?|' +
+                                 '<([a-zA-Z][^<>]*|/([a-zA-Z][^<>]*)?|' +
+                                 '![^<>]*)?', 64) # 64 is the unicode flag
+
+  Entityref = /&([a-zA-Z][-.a-zA-Z0-9]*)[^-.a-zA-Z0-9]/u
+  Charref = /&#(x?[0-9A-Fa-f]+)[^0-9A-Fa-f]/u
+
+  Shorttagopen = /'<[a-zA-Z][-.a-zA-Z0-9]*/u
+  Shorttag = /'<([a-zA-Z][-.a-zA-Z0-9]*)\/([^\/]*)\//u
+  Endtagopen = /<\//u # Matching the Python SGMLParser
+  Endbracket = /[<>]/u
+  Declopen = /<!/u
+  Piopenbegin = /^<\?/u
+  Piclose = />/u
+
+  Commentopen = /<!--/u
+  Commentclose = /--\s*>/u
+  Tagfind = /[a-zA-Z][-_.:a-zA-Z0-9]*/u
+  Attrfind = Regexp.compile('\s*([a-zA-Z_][-:.a-zA-Z_0-9]*)(\s*=\s*'+
+                            '(\'[^\']*\'|"[^"]*"|[\]\[\-a-zA-Z0-9./,:;+*%?!&$\(\)_#=~\'"@]*))?',
+                            64)
+  Endtagfind = /\s*\/\s*>/u
+  def initialize(verbose=false)
+    super(verbose)
+  end
+  def feed(*args)
+    super(*args)
+  end
+
+  def goahead(_end)
+    rawdata = @rawdata # woo, utf-8 magic
+    i = 0
+    n = rawdata.length
+    while i < n
+      if @nomoretags
+        # handle_data_range does nothing more than set a "Range" that is never used. wtf?
+        handle_data(rawdata[i...n]) # i...n means "range from i to n not including n" 
+        i = n
+        break
+      end
+      j = rawdata.index(Interesting, i) # FIXME BUGME Encoding::Character::UTF8 has a severly broken #index. But this works like #index is SUPPOSED to. WTF. 
+      j = n unless j
+      handle_data(rawdata[i...j]) if i < j
+      i = j
+      break if (i == n)
+      if rawdata[i..i] == '<' # equivalent to rawdata[i..i] == '<' # Yeah, ugly.
+        if rawdata.index(Starttagopen,i) == i
+          if @literal
+            handle_data(rawdata[i..i])
+            i = i+1
+            next
+          end
+          k = parse_starttag(i)
+          break unless k
+          i = k
+          next
+        end
+        if rawdata.index(Endtagopen,i) == i #Don't use Endtagopen
+          k = parse_endtag(i)
+          break unless k
+          i = k
+          @literal = false
+          next
+        end
+        if @literal
+          if n > (i+1)
+            handle_data("<")
+            i = i+1
+          else
+            #incomplete
+            break
+          end
+          next
+        end
+        if rawdata.index(Commentopen,i) == i 
+          k = parse_comment(i)
+          break unless k
+          i = k
+          next
+        end
+        if rawdata.index(Piopenbegin,i) == i # Like Piopen but must be at beginning of rawdata
+          k = parse_pi(i)
+          break unless k
+          i += k
+          next
+        end
+        if rawdata.index(Declopen,i) == i
+          # This is some sort of declaration; in "HTML as
+                    # deployed," this should only be the document type
+                    # declaration ("<!DOCTYPE html...>").
+          k = parse_declaration(i)
+          break unless k
+          i = k
+          next
+        end
+      elsif rawdata[i..i] == '&'.chars
+        if @literal # FIXME BUGME SGMLParser totally does not check this
+          handle_data(rawdata[i..i])
+          i += 1
+          next
+        end
+
+        # the Char must come first as its #=~ method is the only one that is UTF-8 safe 
+        ni,match = index_match(rawdata, Charref, i)
+        if ni and ni == i # See? Ugly
+          handle_charref(match[1]) # $1 is just the first group we captured (with parentheses)
+          i += match[0].length  # $& is the "all" of the match.. it includes the full match we looked for not just the stuff we put parentheses around to capture. 
+          i -= 1 unless rawdata[i-1..i-1] == ";".chars
+          next
+        end
+        ni,match = index_match(rawdata, Entityref, i)
+        if ni and ni == i
+          handle_entityref(match[1])
+          i += match[0].length
+          i -= 1 unless rawdata[i-1..i-1] == ";".chars
+          next
+        end
+      else
+        error('neither < nor & ??')
+      end
+      # We get here only if incomplete matches but
+      # nothing else
+      ni,match = index_match(rawdata,Incomplete,i)
+      unless ni and ni == 0
+        handle_data(rawdata[i...i+1]) # str[i...i+1] == str[i..i]
+        i += 1
+        next
+      end
+      j = ni + match[0].length # FIXME match cannot be nil, supposedly. Let's make sure of that.
+      break if j == n # Really incomplete
+      handle_data(rawdata[i...j])
+      i = j
+    end
+    # end while
+    if _end and i < n
+      handle_data(rawdata[i...n])
+      i = n
+    end
+    @rawdata = rawdata[i..-1] # this u() is probably unnecessary but I want to be sure before I start testing
+    # @offset += i # FIXME BUGME another unused variable?
+  end
+
+
+  # Internal -- parse processing instr, return length or -1 if not terminated
+  def parse_pi(i)
+    rawdata = @rawdata # again, possibly unnecessary u()
+    if rawdata[i...i+2] != '<?'.chars #Piopen is not being used. This is probably very good.
+      error("unexpected call to parse_pi()")
+    end
+    ni,match = index_match(rawdata,Piclose,i+2)
+    return nil unless match
+    j = ni
+    handle_pi(rawdata[i+2...j])
+    j = (j + match[0].length)
+    return j-i
+  end
+
+  def parse_comment(i)
+    rawdata = @rawdata
+    if rawdata[i...i+4] != "<!--"
+      error("unexpected call to parse_comment()")
+    end
+    ni,match = index_match(rawdata, Commentclose,i)
+    return nil unless match
+    handle_comment(rawdata[i+4..(ni-1)])
+    return ni+match[0].length # Length from i to just past the closing comment tag
+  end
+    
+
+  def parse_starttag(i)
+    @_starttag_text = nil
+    start_pos = i
+    rawdata = @rawdata
+    ni,match = index_match(rawdata,Shorttagopen,i)
+    if ni == i 
+      # SGML shorthand: <tag/data/ == <tag>data</tag>
+      # XXX Can data contain &... (entity or char refs)?
+      # XXX Can data contain < or > (tag characters)?
+      # XXX Can there be whitespace before the first /?
+      k,match = index_match(rawdata,Shorttag,i)
+      return nil unless match
+      tag, data = match[1], match[2]
+      @_starttag_text = "<#{tag}/"
+      tag.downcase!
+      second_end = rawdata.index(Shorttagopen,k)
+      finish_shorttag(tag, data)
+      @_starttag_text = rawdata[start_pos...second_end+1]
+      return k
+    end
+
+    j = rawdata.index(Endbracket, i+1)
+    return nil unless j
+    attrsd = []
+    if rawdata[i...i+2] == '<>'
+      # SGML shorthand: <> == <last open tag seen>
+      k = j
+      tag = @lasttag
+    else
+      ni,match = index_match(rawdata,Tagfind,i+1)
+      unless match
+        error('unexpected call to parse_starttag')
+      end
+      k = ni+match[0].length+1
+      tag = match[0].downcase
+      @lasttag = tag
+    end
+
+    while k < j
+      break if rawdata.index(Endtagfind, k) == k
+      ni,match = index_match(rawdata,Attrfind,k)
+      break unless ni
+      matched_length = match[0].length
+      attrname, rest, attrvalue = match[1],match[2],match[3]
+      if rest.nil? or rest.empty?
+        attrvalue = '' # was: = attrname # Why the change?
+      elsif [?',?'] == [attrvalue[0..0], attrvalue.chars[-1..-1]] or [?",?"] == [attrvalue.chars[0],attrvalue.chars[-1]]
+        attrvalue = attrvalue[1...-1]
+      end
+      attrsd << [attrname.downcase, attrvalue]
+      k += matched_length
+    end
+    if rawdata[j..j] == ">"
+      j += 1
+    end
+    @_starttag_text = rawdata[start_pos...j]
+    finish_starttag(tag, attrsd)
+    return j
+  end
+
+  def parse_endtag(i)
+    rawdata = @rawdata
+    j, match = index_match(rawdata, /[<>]/,i+1)
+    return nil unless j
+    tag = rawdata[i+2...j].strip.downcase
+    if rawdata[j..j] == ">"
+      j += 1
+    end
+    finish_endtag(tag)
+    return j
+  end
+
+  def unknown_starttag(tag, attrs)
+      # Totally unused so far. Only seen by BaseHTMLProcessor in the original code
+      # called for each start tag
+      # attrs is a list of [attr, value] lists
+      # e.g. for <pre class='screen'>, tag='pre', attrs=[['class', 'screen']]
+      $stderr << "unknown_starttag with tag \"#{tag}\" and \"#{attrs}\" in LooseFeedParser\n" if $debug
+      uattrs = []
+      attrs.each do |l|
+        key, value = l
+        if u(value) != value # FIXME how well does this work?
+          value = uconvert(value, @encoding, 'utf-8') 
+        end
+        uattrs << uconvert(key, @encoding, 'utf-8') 
+      end
+
+      strattrs = uattrs(Shorttagopen =~ rawdata[i..-1]).collect{ |l| u(" #{l[0]}=#{l[1]}")}.join
+      if Elements_No_End_Tag.include? tag
+        @pieces << "<#{tag}#{strattrs} />" 
+      else
+        @pieces << "<#{tag}#{strattrs}>"
+      end
+    end
+
+    def unknown_endtag(tag)
+      # called for each end tag, e.g. for </pre>, tag will be 'pre'
+      # Reconstruct the original end tag.
+      $stderr << "unknown_endtag with tag \"#{tag}\" in LooseFeedParser\n" if $debug
+      if not Elements_No_End_Tag.include? tag
+        @pieces << "</#{tag}>"
+      end
+    end
+
+    def handle_charref(ref)
+      # called for each entity reference, e.g. for '&#160;', ref will be '160'
+      # Reconstruct the original character reference.
+      @pieces << "&##{ref};"
+    end
+
+    def handle_entityref(ref)
+      # called for each entity reference, e.g. for '&copy;', ref will be 'copy'
+      # Reconstruct the original entity reference.
+      @pieces << "&#{ref};"
+    end
+
+    def handle_data(text)
+      # called for each block of plain text, i.e. outside of any tag and
+        # not containing any character or entity references
+        # Store the original text verbatim.
+      $stderr << "handle_data in LooseFeedParser with text: #{text}\n"
+      @pieces << text
+    end
+
+    def output
+      # Return processed HTML as a single string
+      return @pieces.map{|p| p.to_s}.join
+    end
+ 
+  def error(message)
+    raise UTF8SafeSGMLParserError.new(message)
+  end
+  def handle_pi(text)
+  end
+  def handle_decl(text)
   end
 end
 # Add some helper methods to make AttributeList (all of those damn attrs
@@ -574,15 +893,15 @@ module XML
       end
 
       def each(&blk)
-        (0..getLength-1).each{|pos| yield [getName(pos), getValue(pos)]}
+        (0...getLength).each{|pos| yield [getName(pos), getValue(pos)]}
       end
 
       def each_key(&blk)
-        (0..getLength-1).each{|pos| yield getName(pos) }
+        (0...getLength).each{|pos| yield getName(pos) }
       end
 
       def each_value(&blk)
-        (0..getLength-1).each{|pos| yield getValue(pos) }
+        (0...getLength).each{|pos| yield getValue(pos) }
       end
 
       def to_a # Rather use collect? grep for to_a.collect
@@ -673,17 +992,17 @@ module Hpricot
       unless self['style'].nil?
         # disallow urls 
         style = self['style'].sub(/url\s*\(\s*[^\s)]+?\s*\)\s*'/u, ' ')
-        valid_css_values = /^(#[0-9a-f]+|rgb\(\d+%?,\d*%?,?\d*%?\)?|\d{0,2}\.?\d{0,2}(cm|em|ex|in|mm|pc|pt|px|%|,|\))?)$/
+        valid_css_values = /^(#[0-9a-f]+|rgb\(\d+%?,\d*%?,?\d*%?\)?|\d{0,2}\.?\d{0,2}(cm|em|ex|in|mm|pc|pt|px|%|,|\))?)$/u
         # gauntlet
-        if not style.match(/^([:,;#%.\sa-zA-Z0-9!]|\w-\w|'[\s\w]+'|"[\s\w]+"|\([\d,\s]+\))*$/)
+        if not style.match(/^([:,;#%.\sa-zA-Z0-9!]|\w-\w|'[\s\w]+'|"[\s\w]+"|\([\d,\s]+\))*$/u)
           return ''
         end
-        if not style.match(/^(\s*[-\w]+\s*:\s*[^:;]*(;|$))*$/)
+        if not style.match(/^(\s*[-\w]+\s*:\s*[^:;]*(;|$))*$/u)
           return ''
         end
 
         clean = []
-        style.scan(/([-\w]+)\s*:\s*([^:;]*)/).each do |l|
+        style.scan(/([-\w]+)\s*:\s*([^:;]*)/u).each do |l|
           prop, value = l
 
           next if value.nil? or value.empty?
@@ -718,41 +1037,6 @@ module Hpricot
   end
 end
 
-def unescapeHTML(string) # Stupid hack.
-  string = string.gsub(/&(.*?);/n) do
-    match = $1.dup
-    case match
-    when /\Aamp\z/ni           then '&'
-    when /\Aquot\z/ni          then '"'
-    when /\Agt\z/ni            then '>'
-      #when /\Alt\z/ni            then '<' # See below
-    when /\A#0*(\d+)\z/n       then
-      if Integer($1) < 256
-        Integer($1).chr
-      else
-        if Integer($1) < 65536 and ($KCODE[0] == ?u or $KCODE[0] == ?U)
-          [Integer($1)].pack("U")
-        else
-            "&##{$1};"
-        end
-      end
-    when /\A#x([0-9a-f]+)\z/ni then
-      if $1.hex < 256
-        $1.hex.chr
-      else
-        if $1.hex < 65536 and ($KCODE[0] == ?u or $KCODE[0] == ?U)
-          [$1.hex].pack("U")
-        else
-            "&#x#{$1};"
-        end
-      end
-    else
-        "&#{match};"
-    end
-  end
-  string.gsub!(/&lt;(?!!)/n,'<') # Avoid unescaping entity refs
-  return string
-end
 module FeedParser
   @version = "0.1aleph_naught"
   # FIXME OVER HERE! Hi. I'm still translating. Grep for "FIXME untranslated" to 
@@ -1038,11 +1322,16 @@ module FeedParser
       $stderr << "Leaving startup\n" if $debug # My addition
     end
 
-    def unknown_starttag(tag, attrs)
-      $stderr << "start #{tag} with #{attrs}\n" if $debug
+    def unknown_starttag(tag, attrsd)
+      $stderr << "start #{tag} with #{attrsd}\n" if $debug
       # normalize attrs
       attrsD = {}
-      attrs.each do |old_k,value| 
+      attrsd = Hash[*attrsd.flatten] if attrsd.class == Array # Magic! Asterisk!
+      # LooseFeedParser needs the above because SGMLParser sends attrs as a 
+      # list of lists (like [['type','text/html'],['mode','escaped']])
+
+      attrsd.each do |old_k,value| 
+        # There has to be a better, non-ugly way of doing this
         k = old_k.downcase # Downcase all keys
         attrsD[k] = value
         if ['rel','type'].include?value
@@ -1068,12 +1357,10 @@ module FeedParser
       end
       @lang = lang
       @basestack << @baseuri 
-      #puts "START TAG is #{tag}\n"
-      #puts "START BASE: #{@baseuri} STACK: #{@basestack}\n"
       @langstack << lang
 
       # track namespaces
-      attrs.each do |prefix, uri|
+      attrsd.each do |prefix, uri|
         if /^xmlns:/ =~ prefix # prefix begins with xmlns:
           trackNamespace(prefix[6..-1], uri)
         elsif prefix == 'xmlns':
@@ -1097,7 +1384,7 @@ module FeedParser
         # This will horribly munge inline content with non-empty qnames,
         # but nobody actually does that, so I'm not fixing it.
         tag = tag.split(':')[-1]
-        attrsA = attrs.to_a.collect{|l| "#{l[0]}=\"#{l[1]}\""}
+        attrsA = attrsd.to_a.collect{|l| "#{l[0]}=\"#{l[1]}\""}
         attrsS = ' '+attrsA.join(' ')
         return handle_data("<#{tag}#{attrsS}>", escape=false) 
       end
@@ -1172,10 +1459,43 @@ module FeedParser
           @lang = @langstack[-1]
         end
       end
-      #puts "END TAG is #{tag}\n"
-      #puts "END BASE: #{@baseuri} STACK: #{@basestack}\n"
     end
 
+    def handle_charref(ref)
+      # LooseParserOnly 
+      # called for each character reference, e.g. for '&#160;', ref will be '160'
+      $stderr << "entering handle_charref with #{ref}\n" if $debug
+      return if @elementstack.nil? or @elementstack.empty? 
+      ref.downcase!
+      chars = ['34', '38', '39', '60', '62', 'x22', 'x26', 'x27', 'x3c', 'x3e']
+      if chars.include?ref
+        text = "&##{ref};"
+      else
+        if ref[0..0] == 'x'
+          c = (ref[1..-1]).to_i(16)
+        else
+          c = ref.to_i
+        end
+        text = uconvert(unichr(c),'unicode')
+      end
+      @elementstack[-1][2] << text
+    end
+
+    def handle_entityref(ref)
+      # LooseParserOnly
+      # called for each entity reference, e.g. for '&copy;', ref will be 'copy'
+
+      return if @elementstack.nil? or @elementstack.empty?
+      $stderr << "entering handle_entityref with #{ref}\n" if $debug
+      ents = ['lt', 'gt', 'quot', 'amp', 'apos']
+      if ents.include?ref
+        text = "&#{ref};"
+      else
+        text = HTMLEntities::decode_entities("&#{ref};")
+      end
+      @elementstack[-1][2] << text
+    end
+      
     def handle_data(text, escape=true)
       # called for each block of plain text, i.e. outside of any tag and
       # not containing any character or entity references
@@ -1190,6 +1510,26 @@ module FeedParser
       # called for each comment, e.g. <!-- insert message here -->
     end
 
+    def handle_pi(text)
+    end
+
+    def handle_decl(text)
+    end
+
+    def parse_declaration(i)
+      # for LooseFeedParser
+      $stderr << "entering parse_declaration\n" if $debug
+      if @rawdata[i...i+9] == '<![CDATA['
+        k = @rawdata.index(/\]\]>/u,i+9)
+        k = @rawdata.length unless k
+        handle_data(@rawdata[i+9...k].to_xs,false)
+        return k+3
+      else
+        k = @rawdata.index(/>/,i).to_i
+        return k+1
+      end
+    end
+        
     def mapContentType(contentType)
       contentType.downcase!
       case contentType
@@ -1251,7 +1591,6 @@ module FeedParser
       end
       return output if not expectingText
 
-
       # decode base64 content
       if @contentparams['base64']
         out64 = Base64::decode64(output) # a.k.a. [output].unpack('m')[0]
@@ -1280,7 +1619,6 @@ module FeedParser
           output = FeedParser.resolveRelativeURIs(output, @baseuri, @encoding)
         end
       end
-
       # sanitize embedded markup
       if @html_types.include?mapContentType(@contentparams['type'] || 'text/html')
         if @can_contain_dangerous_markup.include?element
@@ -2374,6 +2712,16 @@ module FeedParser
       return _parse_date_w3dtf(w3dtfdate)
     end
 
+    def rollover(num, modulus)
+      return num % modulus, num / modulus
+    end
+    def set_self(num, modulus)
+      r = num / modulus
+      if r == 0
+        return num
+      end
+      return r
+    end
     # W3DTF-style date parsing
     # FIXME shouldn't it be "W3CDTF"?
     def _parse_date_w3dtf(dateString)
@@ -2381,8 +2729,39 @@ module FeedParser
       # Whatever it is, it doesn't work.  This has been fixed in Ruby 1.9 and 
       # in Ruby on Rails, but not really. They don't fix the 25 hour or 61 minute or 61 second rollover and fail in other ways.
       # FIXME This code *still* doesn't work on the rollover tests, but it does pass the rest. Also, it needs a serious clean-up
-      w3m = dateString.match(/^(\d{4})-?(?:(?:([01]\d)-?(?:([0123]\d)(?:T(\d\d):(\d\d):(\d\d)([+-]\d\d:\d\d|Z))?)?)?)?/)
-      w3 = w3m[1..-2].map{|s| s.to_i unless s.nil?} << w3m[-1]
+    
+      m = dateString.match(/^(\d{4})-?(?:(?:([01]\d)-?(?:([0123]\d)(?:T(\d\d):(\d\d):(\d\d)([+-]\d\d:\d\d|Z))?)?)?)?/)
+
+      w3 = m[1..3].map{|s| s=s.to_i; s += 1 if s == 0;s}  # Map the year, month and day to integers and, if they were nil, set them to 1
+      w3 += m[4..6].map{|s| s.to_i}                  # Map the hour, minute and second to integers
+      w3 << m[-1]                                     # Leave the timezone as a String
+
+      # Rollover times. 0 minutes and 61 seconds -> 1 minute and 1 second
+      w3[5],r = rollover(w3[5], 60)     # rollover seconds
+      w3[4] += r
+      w3[4],r = rollover(w3[4], 60)      # rollover minutes
+      w3[3] += r
+      w3[3],r = rollover(w3[3], 24)      # rollover hours
+  
+      w3[2] = w3[2] + r
+      if w3[1] > 12
+        w3[1],r = rollover(w3[1],12)
+        w3[1] = 12 if w3[1] == 0
+        w3[0] += r
+      end
+
+      num_days = Time.days_in_month(w3[1], w3[0])
+      while w3[2] > num_days
+        w3[2] -= num_days
+        w3[1] += 1
+        if w3[1] > 12
+          w3[0] += 1
+          w3[1] = set_self(w3[1], 12)
+        end
+        num_days = Time.days_in_month(w3[1], w3[0])
+      end
+
+
       unless w3[6].class != String
         if /^-/ =~ w3[6] # Zone offset goes backwards
           w3[6][0] = '+'
@@ -2390,7 +2769,7 @@ module FeedParser
           w3[6][0] = '-'
         end
       end
-      return Time.utc(w3[0] || 1,w3[1] || 1,w3[2] || 1 ,w3[3] || 0,w3[4] || 0,w3[5] || 0)+Time.zone_offset(w3[6] || "UTC")
+      return Time.utc(w3[0], w3[1], w3[2] , w3[3], w3[4], w3[5])+Time.zone_offset(w3[6] || "UTC")
     end
 
     def _parse_date_rfc822(dateString)
@@ -2562,10 +2941,77 @@ module FeedParser
     end
   end
 
-  class LooseFeedParser < Hpricot::Doc
+  class LooseFeedParser < UTF8SafeSGMLParser 
+    include FeedParserMixin
+    # We write the methods that were in BaseHTMLProcessor in the python code
+    # in here directly. We do this because if we inherited from 
+    # BaseHTMLProcessor but then included from FeedParserMixin, the methods 
+    # of Mixin would overwrite the methods we inherited from 
+    # BaseHTMLProcessor. This is exactly the opposite of what we want to 
+    # happen!
+    
+    attr_accessor :encoding, :bozo, :feeddata, :entries, :namespacesInUse
+    
+    Elements_No_End_Tag = ['area', 'base', 'basefont', 'br', 'col', 'frame', 'hr',
+      'img', 'input', 'isindex', 'link', 'meta', 'param']
+    New_Declname_Re = /[a-zA-Z][-_.a-zA-Z0-9:]*\s*/
+    alias :sgml_feed :feed # feed needs to mapped to feeddata, not the SGMLParser method feed. I think.
+    def feed       
+      @feeddata
+    end
+    def feed=(data)
+      @feeddata = data
+    end
+
     def initialize(baseuri, baselang, encoding)
-      super
       startup(baseuri, baselang, encoding)
+      super() # Keep the parentheses! No touchy.
+    end
+
+    def reset
+      @pieces = []
+      super
+    end
+
+    def parse(data)
+      data.gsub!(/<!((?!DOCTYPE|--|\[))/i,  '&lt;!\1')
+      data.gsub!(/<([^<\s]+?)\s*\/>/) do |tag|
+        clean = tag[1..-3].strip
+        if Elements_No_End_Tag.include?clean
+          tag
+        else
+          '<'+clean+'></'+clean+'>'
+        end
+      end
+
+      data.gsub!(/&#39;/, "'")
+      data.gsub!(/&#34;/, "'")
+      if @encoding and not @encoding.empty? # FIXME unicode check type(u'')
+        data = uconvert(data,'utf-8',@encoding)
+      end
+      sgml_feed(data) # see the alias above
+    end
+
+    
+    def decodeEntities(element, data)
+      data.gsub!('&#60;', '&lt;')
+      data.gsub!('&#x3c;', '&lt;')
+      data.gsub!('&#62;', '&gt;')
+      data.gsub!('&#x3e;', '&gt;')
+      data.gsub!('&#38;', '&amp;')
+      data.gsub!('&#x26;', '&amp;')
+      data.gsub!('&#34;', '&quot;')
+      data.gsub!('&#x22;', '&quot;')
+      data.gsub!('&#39;', '&apos;')
+      data.gsub!('&#x27;', '&apos;')
+      if @contentparams.has_key? 'type' and not ((@contentparams['type'] || 'xml') =~ /xml$/u)
+        data.gsub!('&lt;', '<')
+        data.gsub!('&gt;', '>')
+        data.gsub!('&amp;', '&')
+        data.gsub!('&quot;', '"')
+        data.gsub!('&apos;', "'")
+      end
+      return data
     end
   end
 
@@ -2769,10 +3215,14 @@ module FeedParser
     end
   end
 
+  def SanitizerDoc(html)
+    FeedParser::SanitizerDoc.new(Hpricot.make(html))
+  end
+  module_function(:SanitizerDoc)
   def self.sanitizeHTML(html,encoding)
     # FIXME Does not do encoding, nor Tidy
     html = html.gsub(/<!((?!DOCTYPE|--|\[))/, '&lt;!\1')
-    h = SanitizerDoc.new(Hpricot.make(html),:fixup_tags => false)
+    h = SanitizerDoc(html)
     h = h.scrub
     return h.to_html.strip
   end
@@ -2932,7 +3382,6 @@ module FeedParser
     begin
     newdata = uconvert(data, encoding, 'utf-8') 
     rescue => details
-      puts details
     end
     $stderr << "successfully converted #{encoding} data to utf-8\n" if $debug
     declmatch = /^<\?xml[^>]*?>/
@@ -3167,9 +3616,9 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
       end
     end
     if not use_strict_parser
-      #feedparser = LooseFeedParser.new(baseuri, baselang, (known_encoding.nil? or known_encoding.empty? ? '' : 'utf-8'))
-      #feedparser.parse(data)
-      $stderr << "Using LooseFeed" if $debug
+      feedparser = LooseFeedParser.new(baseuri, baselang, (known_encoding and 'utf-8' or ''))
+      feedparser.parse(data)
+      $stderr << "Using LooseFeed\n\n" if $debug
     end
     result['feed'] = feedparser.feeddata
     result['entries'] = feedparser.entries

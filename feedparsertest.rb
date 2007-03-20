@@ -168,7 +168,7 @@ end
 # default methods to be public
 XMLTests.send(:public)
 # add one unit test for each file
-Dir['tests/wellformed/**/*.xml'].each do |xmlfile| # Test a subset
+Dir['tests/**/*.xml'].each do |xmlfile| # Test a subset
   #Dir['tests/**/*.xml'].each do |xmlfile|
   methname = xmlfile.gsub('/','_').sub('.xml','')
   XMLTests.send(:define_method, methname) {
@@ -185,9 +185,6 @@ Dir['tests/wellformed/**/*.xml'].each do |xmlfile| # Test a subset
     # I should point out that the 'compatible' arg is not necessary, 
     # but probably will be in the future if we decide to change the default.
     description, evalString = scrape_assertion_strings(xmlfile)
-    if /xml_charset_2/ =~ methname 
-      puts "EVAL #{evalString}"
-    end
     assert fp.instance_eval(evalString), description.inspect
   }
 end
