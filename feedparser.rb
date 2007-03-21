@@ -11,25 +11,21 @@ Required: Ruby 1.8
 """
 $KCODE = 'UTF8'
 require 'stringio'
-require 'enumerator' # each_slice among other things
 require 'uri'
 require 'cgi' # escaping html
 require 'time'
 require 'xml/saxdriver' # calling expat
 require 'pp'
 require 'rubygems'
-require 'parsedate' # Used in _parse_date_rfc822
 require 'base64'
 require 'iconv'
-require 'jcode'
 begin 
-  gem 'chardet'
   gem 'hpricot', ">=0.5"
   gem 'character-encodings', ">=0.2.0"
   gem 'htmltools'
   gem 'htmlentities'
   gem 'activesupport'
-rescue Gem::LoadError
+rescue Gem::LoadError,LoadError
 end
 require 'chardet'
 $chardet = true
@@ -39,7 +35,6 @@ require 'encoding/character/utf-8'
 require 'html/sgml-parser'
 require 'htmlentities'
 require 'active_support'
-
 require 'open-uri'
 include OpenURI
 
@@ -571,8 +566,8 @@ class String
   end
 end
 
-class UTF8SafeSGMLParserError < Exception; end;
-class UTF8SafeSGMLParser < HTML::SGMLParser
+class BetterSGMLParserError < Exception; end;
+class BetterSGMLParser < HTML::SGMLParser
   # Replaced Tagfind and Charref Regexps with the ones in feedparser.py
   # This makes things work. 
   Interesting = /[&<]/u
@@ -671,7 +666,7 @@ class UTF8SafeSGMLParser < HTML::SGMLParser
           i = k
           next
         end
-      elsif rawdata[i..i] == '&'.chars
+      elsif rawdata[i..i] == '&'
         if @literal # FIXME BUGME SGMLParser totally does not check this
           handle_data(rawdata[i..i])
           i += 1
@@ -683,14 +678,14 @@ class UTF8SafeSGMLParser < HTML::SGMLParser
         if ni and ni == i # See? Ugly
           handle_charref(match[1]) # $1 is just the first group we captured (with parentheses)
           i += match[0].length  # $& is the "all" of the match.. it includes the full match we looked for not just the stuff we put parentheses around to capture. 
-          i -= 1 unless rawdata[i-1..i-1] == ";".chars
+          i -= 1 unless rawdata[i-1..i-1] == ";"
           next
         end
         ni,match = index_match(rawdata, Entityref, i)
         if ni and ni == i
           handle_entityref(match[1])
           i += match[0].length
-          i -= 1 unless rawdata[i-1..i-1] == ";".chars
+          i -= 1 unless rawdata[i-1..i-1] == ";"
           next
         end
       else
@@ -722,7 +717,7 @@ class UTF8SafeSGMLParser < HTML::SGMLParser
   # Internal -- parse processing instr, return length or -1 if not terminated
   def parse_pi(i)
     rawdata = @rawdata # again, possibly unnecessary u()
-    if rawdata[i...i+2] != '<?'.chars #Piopen is not being used. This is probably very good.
+    if rawdata[i...i+2] != '<?' #Piopen is not being used. This is probably very good.
       error("unexpected call to parse_pi()")
     end
     ni,match = index_match(rawdata,Piclose,i+2)
@@ -791,7 +786,7 @@ class UTF8SafeSGMLParser < HTML::SGMLParser
       attrname, rest, attrvalue = match[1],match[2],match[3]
       if rest.nil? or rest.empty?
         attrvalue = '' # was: = attrname # Why the change?
-      elsif [?',?'] == [attrvalue[0..0], attrvalue.chars[-1..-1]] or [?",?"] == [attrvalue.chars[0],attrvalue.chars[-1]]
+      elsif [?',?'] == [attrvalue[0..0], attrvalue[-1..-1]] or [?",?"] == [attrvalue[0],attrvalue[-1]]
         attrvalue = attrvalue[1...-1]
       end
       attrsd << [attrname.downcase, attrvalue]
@@ -875,7 +870,7 @@ class UTF8SafeSGMLParser < HTML::SGMLParser
     end
  
   def error(message)
-    raise UTF8SafeSGMLParserError.new(message)
+    raise BetterSGMLParserError.new(message)
   end
   def handle_pi(text)
   end
@@ -2942,7 +2937,7 @@ module FeedParser
     end
   end
 
-  class LooseFeedParser < UTF8SafeSGMLParser 
+  class LooseFeedParser < BetterSGMLParser 
     include FeedParserMixin
     # We write the methods that were in BaseHTMLProcessor in the python code
     # in here directly. We do this because if we inherited from 
