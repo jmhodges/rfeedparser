@@ -1,39 +1,13 @@
-= Tests Failed, Sort Of =
+Universal Feed Parser
+Parse RSS and Atom feeds in Python.  3000 unit tests.  Open source.
 
-Problem: 
-    Hpricot adds end tags when it sees an unclosed tag.  This means that
-    certain tests that rely on Pythong's SGMLParser not closing tags will
-    fail.  Many of the tests affected (actually, all the ones affected,
-    AFAICT) would otherwise passed.
+Copyright (c) 2002-5 by Mark Pilgrim
+open source, see LICENSE file for details
 
-Tests Affected:
-    * tests/wellformed/rss/item_description_not_a_doctype.xml  (extraneous trailing </a>)
-    * tests/illformed/rss/item_description_not_a_doctype.xml   (ditto)
+-----
 
-Problem:
-    The Hpricot#scrub method I've written does not remove the dangerous
-    markup in the same way feedparser.py does, but the output is still safe.
+To install:
+$ python setup.py install
 
-Tests Affected:
-    * tests/wellformed/sanitize/entry_content_crazy.xml
-    * tests/wellformed/sanitize/entry_summary_crazy.xml
-    * tests/wellformed/sanitize/entry_title_crazy.xml
-    * tests/wellformed/sanitize/feed_copyright_crazy.xml
-    * tests/wellformed/sanitize/feed_info_crazy.xml
-    * tests/wellformed/sanitize/feed_subtitle_crazy.xml
-    * tests/wellformed/sanitize/feed_tagline_crazy.xml
-    * tests/wellformed/sanitize/feed_title_crazy.xml
-    * tests/wellformed/sanitize/item_content_encoded_crazy.xml
-    * tests/wellformed/sanitize/item_description_crazy.xml
-    * tests/wellformed/sanitize/item_fullitem_crazy.xml
-    * tests/illformed/sanitize/entry_content_crazy.xml
-    * tests/illformed/sanitize/entry_summary_crazy.xml
-    * tests/illformed/sanitize/entry_title_crazy.xml
-    * tests/illformed/sanitize/feed_copyright_crazy.xml
-    * tests/illformed/sanitize/feed_info_crazy.xml
-    * tests/illformed/sanitize/feed_subtitle_crazy.xml
-    * tests/illformed/sanitize/feed_tagline_crazy.xml
-    * tests/illformed/sanitize/feed_title_crazy.xml
-    * tests/illformed/sanitize/item_content_encoded_crazy.xml
-    * tests/illformed/sanitize/item_description_crazy.xml
-    * tests/illformed/sanitize/item_fullitem_crazy.xml
+Full documentation is available in the docs/ directory, or online at
+http://feedparser.org/docs/
