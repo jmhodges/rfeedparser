@@ -42,7 +42,7 @@ $debug = false
 $compatible = true
 
 Encoding_Aliases = { # Adapted from python2.4's encodings/aliases.py
-    # ascii codec
+  # ascii codec
     '646'                => 'ascii',
     'ansi_x3.4_1968'     => 'ascii',
     'ansi_x3_4_1968'     => 'ascii', # some email headers use this non-standard name
@@ -56,7 +56,7 @@ Encoding_Aliases = { # Adapted from python2.4's encodings/aliases.py
     'us'                 => 'ascii',
     'us_ascii'           => 'ascii',
 
-     # big5 codec
+    # big5 codec
     'big5_tw'            => 'big5',
     'csbig5'             => 'big5',
 
@@ -64,7 +64,7 @@ Encoding_Aliases = { # Adapted from python2.4's encodings/aliases.py
     'big5_hkscs'         => 'big5hkscs',
     'hkscs'              => 'big5hkscs',
 
-     # cp037 codec
+    # cp037 codec
     '037'                => 'cp037',
     'csibm037'           => 'cp037',
     'ebcdic_cp_ca'       => 'cp037',
@@ -237,7 +237,7 @@ Encoding_Aliases = { # Adapted from python2.4's encodings/aliases.py
 
     # gb18030 codec
     'gb18030_2000'       => 'gb18030',
-    
+
     # gb2312 codec
     'chinese'            => 'gb2312',
     'csiso58gb231280'    => 'gb2312',
@@ -414,7 +414,7 @@ Encoding_Aliases = { # Adapted from python2.4's encodings/aliases.py
 
     # cskoi8r codec 
     'koi8_r'             => 'cskoi8r',
-   
+
     # mac_cyrillic codec
     'mac_cyrillic'       => 'maccyrillic',
 
@@ -485,10 +485,6 @@ def index_match(stri,regexp, offset)
   return i, full
 end
 
-def _xmlescape(text) # FIXME unused
-  text.to_xs # See below
-end
-
 def _ebcdic_to_ascii(s)   
   return Iconv.iconv("iso88591", "ebcdic-cp-be", s)[0]
 end
@@ -497,7 +493,7 @@ def urljoin(base, uri)
   urifixer = /^([A-Za-z][A-Za-z0-9+-.]*:\/\/)(\/*)(.*?)/u
   uri = uri.sub(urifixer, '\1\3') 
   begin
-    return URI.join(base, uri).to_s #FIXME untranslated, error handling from original needed?
+    return URI.join(base, uri).to_s 
   rescue URI::BadURIError => e
     if URI.parse(base).relative?
       return URI::parse(uri).to_s
@@ -537,15 +533,15 @@ module XChar
     158 =>  382, # latin small letter z with caron
     159 =>  376} # latin capital letter y with diaeresis
 
-  # http://www.w3.org/TR/REC-xml/#dt-chardata
-  PREDEFINED = {
-    38 => '&amp;', # ampersand
-    60 => '&lt;',  # left angle bracket
-    62 => '&gt;'}  # right angle bracket
+    # http://www.w3.org/TR/REC-xml/#dt-chardata
+    PREDEFINED = {
+      38 => '&amp;', # ampersand
+      60 => '&lt;',  # left angle bracket
+      62 => '&gt;'}  # right angle bracket
 
-  # http://www.w3.org/TR/REC-xml/#charsets
-  VALID = [[0x9, 0xA, 0xD], (0x20..0xD7FF), 
-    (0xE000..0xFFFD), (0x10000..0x10FFFF)]
+      # http://www.w3.org/TR/REC-xml/#charsets
+      VALID = [[0x9, 0xA, 0xD], (0x20..0xD7FF), 
+	(0xE000..0xFFFD), (0x10000..0x10FFFF)]
 end
 
 class Fixnum
@@ -572,311 +568,261 @@ class BetterSGMLParser < HTML::SGMLParser
   # This makes things work. 
   Interesting = /[&<]/u
   Incomplete = Regexp.compile('&([a-zA-Z][a-zA-Z0-9]*|#[0-9]*)?|' +
-                                 '<([a-zA-Z][^<>]*|/([a-zA-Z][^<>]*)?|' +
-                                 '![^<>]*)?', 64) # 64 is the unicode flag
+				 '<([a-zA-Z][^<>]*|/([a-zA-Z][^<>]*)?|' +
+				 '![^<>]*)?', 64) # 64 is the unicode flag
 
-  Entityref = /&([a-zA-Z][-.a-zA-Z0-9]*)[^-.a-zA-Z0-9]/u
-  Charref = /&#(x?[0-9A-Fa-f]+)[^0-9A-Fa-f]/u
+				 Entityref = /&([a-zA-Z][-.a-zA-Z0-9]*)[^-.a-zA-Z0-9]/u
+				 Charref = /&#(x?[0-9A-Fa-f]+)[^0-9A-Fa-f]/u
 
-  Shorttagopen = /'<[a-zA-Z][-.a-zA-Z0-9]*/u
-  Shorttag = /'<([a-zA-Z][-.a-zA-Z0-9]*)\/([^\/]*)\//u
-  Endtagopen = /<\//u # Matching the Python SGMLParser
-  Endbracket = /[<>]/u
-  Declopen = /<!/u
-  Piopenbegin = /^<\?/u
-  Piclose = />/u
+				   Shorttagopen = /'<[a-zA-Z][-.a-zA-Z0-9]*/u
+				 Shorttag = /'<([a-zA-Z][-.a-zA-Z0-9]*)\/([^\/]*)\//u
+				 Endtagopen = /<\//u # Matching the Python SGMLParser
+				 Endbracket = /[<>]/u
+				 Declopen = /<!/u
+				 Piopenbegin = /^<\?/u
+				 Piclose = />/u
 
-  Commentopen = /<!--/u
-  Commentclose = /--\s*>/u
-  Tagfind = /[a-zA-Z][-_.:a-zA-Z0-9]*/u
-  Attrfind = Regexp.compile('\s*([a-zA-Z_][-:.a-zA-Z_0-9]*)(\s*=\s*'+
-                            '(\'[^\']*\'|"[^"]*"|[\]\[\-a-zA-Z0-9./,:;+*%?!&$\(\)_#=~\'"@]*))?',
-                            64)
-  Endtagfind = /\s*\/\s*>/u
-  def initialize(verbose=false)
-    super(verbose)
-  end
-  def feed(*args)
-    super(*args)
-  end
+				 Commentopen = /<!--/u
+				 Commentclose = /--\s*>/u
+				 Tagfind = /[a-zA-Z][-_.:a-zA-Z0-9]*/u
+				 Attrfind = Regexp.compile('\s*([a-zA-Z_][-:.a-zA-Z_0-9]*)(\s*=\s*'+
+			    '(\'[^\']*\'|"[^"]*"|[\]\[\-a-zA-Z0-9./,:;+*%?!&$\(\)_#=~\'"@]*))?',
+			    64)
+				 Endtagfind = /\s*\/\s*>/u
+				 def initialize(verbose=false)
+				   super(verbose)
+				 end
+				 def feed(*args)
+				   super(*args)
+				 end
 
-  def goahead(_end)
-    rawdata = @rawdata # woo, utf-8 magic
-    i = 0
-    n = rawdata.length
-    while i < n
-      if @nomoretags
-        # handle_data_range does nothing more than set a "Range" that is never used. wtf?
-        handle_data(rawdata[i...n]) # i...n means "range from i to n not including n" 
-        i = n
-        break
-      end
-      j = rawdata.index(Interesting, i) # FIXME BUGME Encoding::Character::UTF8 has a severly broken #index. But this works like #index is SUPPOSED to. WTF. 
-      j = n unless j
-      handle_data(rawdata[i...j]) if i < j
-      i = j
-      break if (i == n)
-      if rawdata[i..i] == '<' # equivalent to rawdata[i..i] == '<' # Yeah, ugly.
-        if rawdata.index(Starttagopen,i) == i
-          if @literal
-            handle_data(rawdata[i..i])
-            i = i+1
-            next
-          end
-          k = parse_starttag(i)
-          break unless k
-          i = k
-          next
-        end
-        if rawdata.index(Endtagopen,i) == i #Don't use Endtagopen
-          k = parse_endtag(i)
-          break unless k
-          i = k
-          @literal = false
-          next
-        end
-        if @literal
-          if n > (i+1)
-            handle_data("<")
-            i = i+1
-          else
-            #incomplete
-            break
-          end
-          next
-        end
-        if rawdata.index(Commentopen,i) == i 
-          k = parse_comment(i)
-          break unless k
-          i = k
-          next
-        end
-        if rawdata.index(Piopenbegin,i) == i # Like Piopen but must be at beginning of rawdata
-          k = parse_pi(i)
-          break unless k
-          i += k
-          next
-        end
-        if rawdata.index(Declopen,i) == i
-          # This is some sort of declaration; in "HTML as
-                    # deployed," this should only be the document type
-                    # declaration ("<!DOCTYPE html...>").
-          k = parse_declaration(i)
-          break unless k
-          i = k
-          next
-        end
-      elsif rawdata[i..i] == '&'
-        if @literal # FIXME BUGME SGMLParser totally does not check this
-          handle_data(rawdata[i..i])
-          i += 1
-          next
-        end
+				 def goahead(_end)
+				   rawdata = @rawdata # woo, utf-8 magic
+				   i = 0
+				   n = rawdata.length
+				   while i < n
+				     if @nomoretags
+				       # handle_data_range does nothing more than set a "Range" that is never used. wtf?
+				       handle_data(rawdata[i...n]) # i...n means "range from i to n not including n" 
+				       i = n
+				       break
+				     end
+				     j = rawdata.index(Interesting, i) 
+				     j = n unless j
+				     handle_data(rawdata[i...j]) if i < j
+				     i = j
+				     break if (i == n)
+				     if rawdata[i..i] == '<' # equivalent to rawdata[i..i] == '<' # Yeah, ugly.
+				       if rawdata.index(Starttagopen,i) == i
+					 if @literal
+					   handle_data(rawdata[i..i])
+					   i = i+1
+					   next
+					 end
+					 k = parse_starttag(i)
+					 break unless k
+					 i = k
+					 next
+				       end
+				       if rawdata.index(Endtagopen,i) == i #Don't use Endtagopen
+					 k = parse_endtag(i)
+					 break unless k
+					 i = k
+					 @literal = false
+					 next
+				       end
+				       if @literal
+					 if n > (i+1)
+					   handle_data("<")
+					   i = i+1
+					 else
+					   #incomplete
+					   break
+					 end
+					 next
+				       end
+				       if rawdata.index(Commentopen,i) == i 
+					 k = parse_comment(i)
+					 break unless k
+					 i = k
+					 next
+				       end
+				       if rawdata.index(Piopenbegin,i) == i # Like Piopen but must be at beginning of rawdata
+					 k = parse_pi(i)
+					 break unless k
+					 i += k
+					 next
+				       end
+				       if rawdata.index(Declopen,i) == i
+					 # This is some sort of declaration; in "HTML as
+					 # deployed," this should only be the document type
+					 # declaration ("<!DOCTYPE html...>").
+					 k = parse_declaration(i)
+					 break unless k
+					 i = k
+					 next
+				       end
+				     elsif rawdata[i..i] == '&'
+				       if @literal # FIXME BUGME SGMLParser totally does not check this. Bug it.
+					 handle_data(rawdata[i..i])
+					 i += 1
+					 next
+				       end
 
-        # the Char must come first as its #=~ method is the only one that is UTF-8 safe 
-        ni,match = index_match(rawdata, Charref, i)
-        if ni and ni == i # See? Ugly
-          handle_charref(match[1]) # $1 is just the first group we captured (with parentheses)
-          i += match[0].length  # $& is the "all" of the match.. it includes the full match we looked for not just the stuff we put parentheses around to capture. 
-          i -= 1 unless rawdata[i-1..i-1] == ";"
-          next
-        end
-        ni,match = index_match(rawdata, Entityref, i)
-        if ni and ni == i
-          handle_entityref(match[1])
-          i += match[0].length
-          i -= 1 unless rawdata[i-1..i-1] == ";"
-          next
-        end
-      else
-        error('neither < nor & ??')
-      end
-      # We get here only if incomplete matches but
-      # nothing else
-      ni,match = index_match(rawdata,Incomplete,i)
-      unless ni and ni == 0
-        handle_data(rawdata[i...i+1]) # str[i...i+1] == str[i..i]
-        i += 1
-        next
-      end
-      j = ni + match[0].length # FIXME match cannot be nil, supposedly. Let's make sure of that.
-      break if j == n # Really incomplete
-      handle_data(rawdata[i...j])
-      i = j
-    end
-    # end while
-    if _end and i < n
-      handle_data(rawdata[i...n])
-      i = n
-    end
-    @rawdata = rawdata[i..-1] # this u() is probably unnecessary but I want to be sure before I start testing
-    # @offset += i # FIXME BUGME another unused variable?
-  end
+				     # the Char must come first as its #=~ method is the only one that is UTF-8 safe 
+				     ni,match = index_match(rawdata, Charref, i)
+				     if ni and ni == i # See? Ugly
+				       handle_charref(match[1]) # $1 is just the first group we captured (with parentheses)
+				       i += match[0].length  # $& is the "all" of the match.. it includes the full match we looked for not just the stuff we put parentheses around to capture. 
+				       i -= 1 unless rawdata[i-1..i-1] == ";"
+				       next
+				     end
+				     ni,match = index_match(rawdata, Entityref, i)
+				     if ni and ni == i
+				       handle_entityref(match[1])
+				       i += match[0].length
+				       i -= 1 unless rawdata[i-1..i-1] == ";"
+				       next
+				     end
+				     else
+				       error('neither < nor & ??')
+				     end
+				     # We get here only if incomplete matches but
+				     # nothing else
+				     ni,match = index_match(rawdata,Incomplete,i)
+				     unless ni and ni == 0
+				       handle_data(rawdata[i...i+1]) # str[i...i+1] == str[i..i]
+				       i += 1
+				       next
+				     end
+				     j = ni + match[0].length 
+				     break if j == n # Really incomplete
+				     handle_data(rawdata[i...j])
+				     i = j
+				   end # end while
+
+				   if _end and i < n
+				     handle_data(rawdata[i...n])
+				     i = n
+				   end
+
+				   @rawdata = rawdata[i..-1] 
+				   # @offset += i # FIXME BUGME another unused variable in SGMLParser?
+				 end
 
 
-  # Internal -- parse processing instr, return length or -1 if not terminated
-  def parse_pi(i)
-    rawdata = @rawdata # again, possibly unnecessary u()
-    if rawdata[i...i+2] != '<?' #Piopen is not being used. This is probably very good.
-      error("unexpected call to parse_pi()")
-    end
-    ni,match = index_match(rawdata,Piclose,i+2)
-    return nil unless match
-    j = ni
-    handle_pi(rawdata[i+2...j])
-    j = (j + match[0].length)
-    return j-i
-  end
+				 # Internal -- parse processing instr, return length or -1 if not terminated
+				 def parse_pi(i)
+				   rawdata = @rawdata 
+				   if rawdata[i...i+2] != '<?' 
+				     error("unexpected call to parse_pi()")
+				   end
+				   ni,match = index_match(rawdata,Piclose,i+2)
+				   return nil unless match
+				   j = ni
+				   handle_pi(rawdata[i+2...j])
+				   j = (j + match[0].length)
+				   return j-i
+				 end
 
-  def parse_comment(i)
-    rawdata = @rawdata
-    if rawdata[i...i+4] != "<!--"
-      error("unexpected call to parse_comment()")
-    end
-    ni,match = index_match(rawdata, Commentclose,i)
-    return nil unless match
-    handle_comment(rawdata[i+4..(ni-1)])
-    return ni+match[0].length # Length from i to just past the closing comment tag
-  end
-    
+				 def parse_comment(i)
+				   rawdata = @rawdata
+				   if rawdata[i...i+4] != "<!--"
+				     error("unexpected call to parse_comment()")
+				   end
+				   ni,match = index_match(rawdata, Commentclose,i)
+				   return nil unless match
+				   handle_comment(rawdata[i+4..(ni-1)])
+				   return ni+match[0].length # Length from i to just past the closing comment tag
+				 end
 
-  def parse_starttag(i)
-    @_starttag_text = nil
-    start_pos = i
-    rawdata = @rawdata
-    ni,match = index_match(rawdata,Shorttagopen,i)
-    if ni == i 
-      # SGML shorthand: <tag/data/ == <tag>data</tag>
-      # XXX Can data contain &... (entity or char refs)?
-      # XXX Can data contain < or > (tag characters)?
-      # XXX Can there be whitespace before the first /?
-      k,match = index_match(rawdata,Shorttag,i)
-      return nil unless match
-      tag, data = match[1], match[2]
-      @_starttag_text = "<#{tag}/"
-      tag.downcase!
-      second_end = rawdata.index(Shorttagopen,k)
-      finish_shorttag(tag, data)
-      @_starttag_text = rawdata[start_pos...second_end+1]
-      return k
-    end
 
-    j = rawdata.index(Endbracket, i+1)
-    return nil unless j
-    attrsd = []
-    if rawdata[i...i+2] == '<>'
-      # SGML shorthand: <> == <last open tag seen>
-      k = j
-      tag = @lasttag
-    else
-      ni,match = index_match(rawdata,Tagfind,i+1)
-      unless match
-        error('unexpected call to parse_starttag')
-      end
-      k = ni+match[0].length+1
-      tag = match[0].downcase
-      @lasttag = tag
-    end
+				 def parse_starttag(i)
+				   @_starttag_text = nil
+				   start_pos = i
+				   rawdata = @rawdata
+				   ni,match = index_match(rawdata,Shorttagopen,i)
+				   if ni == i 
+				     # SGML shorthand: <tag/data/ == <tag>data</tag>
+				     # XXX Can data contain &... (entity or char refs)?
+				     # XXX Can data contain < or > (tag characters)?
+				     # XXX Can there be whitespace before the first /?
+				     k,match = index_match(rawdata,Shorttag,i)
+				     return nil unless match
+				     tag, data = match[1], match[2]
+				     @_starttag_text = "<#{tag}/"
+				     tag.downcase!
+				     second_end = rawdata.index(Shorttagopen,k)
+				     finish_shorttag(tag, data)
+				     @_starttag_text = rawdata[start_pos...second_end+1]
+				     return k
+				   end
 
-    while k < j
-      break if rawdata.index(Endtagfind, k) == k
-      ni,match = index_match(rawdata,Attrfind,k)
-      break unless ni
-      matched_length = match[0].length
-      attrname, rest, attrvalue = match[1],match[2],match[3]
-      if rest.nil? or rest.empty?
-        attrvalue = '' # was: = attrname # Why the change?
-      elsif [?',?'] == [attrvalue[0..0], attrvalue[-1..-1]] or [?",?"] == [attrvalue[0],attrvalue[-1]]
-        attrvalue = attrvalue[1...-1]
-      end
-      attrsd << [attrname.downcase, attrvalue]
-      k += matched_length
-    end
-    if rawdata[j..j] == ">"
-      j += 1
-    end
-    @_starttag_text = rawdata[start_pos...j]
-    finish_starttag(tag, attrsd)
-    return j
-  end
+				   j = rawdata.index(Endbracket, i+1)
+				   return nil unless j
+				   attrsd = []
+				   if rawdata[i...i+2] == '<>'
+				     # SGML shorthand: <> == <last open tag seen>
+				     k = j
+				     tag = @lasttag
+				   else
+				     ni,match = index_match(rawdata,Tagfind,i+1)
+				     unless match
+				       error('unexpected call to parse_starttag')
+				     end
+				     k = ni+match[0].length+1
+				     tag = match[0].downcase
+				     @lasttag = tag
+				   end
 
-  def parse_endtag(i)
-    rawdata = @rawdata
-    j, match = index_match(rawdata, /[<>]/,i+1)
-    return nil unless j
-    tag = rawdata[i+2...j].strip.downcase
-    if rawdata[j..j] == ">"
-      j += 1
-    end
-    finish_endtag(tag)
-    return j
-  end
+				   while k < j
+				     break if rawdata.index(Endtagfind, k) == k
+				     ni,match = index_match(rawdata,Attrfind,k)
+				     break unless ni
+				     matched_length = match[0].length
+				     attrname, rest, attrvalue = match[1],match[2],match[3]
+				     if rest.nil? or rest.empty?
+				       attrvalue = '' # was: = attrname # Why the change?
+				     elsif [?',?'] == [attrvalue[0..0], attrvalue[-1..-1]] or [?",?"] == [attrvalue[0],attrvalue[-1]]
+				       attrvalue = attrvalue[1...-1]
+				     end
+				     attrsd << [attrname.downcase, attrvalue]
+				     k += matched_length
+				   end
+				   if rawdata[j..j] == ">"
+				     j += 1
+				   end
+				   @_starttag_text = rawdata[start_pos...j]
+				   finish_starttag(tag, attrsd)
+				   return j
+				 end
 
-  def unknown_starttag(tag, attrs)
-      # Totally unused so far. Only seen by BaseHTMLProcessor in the original code
-      # called for each start tag
-      # attrs is a list of [attr, value] lists
-      # e.g. for <pre class='screen'>, tag='pre', attrs=[['class', 'screen']]
-      $stderr << "unknown_starttag with tag \"#{tag}\" and \"#{attrs}\" in LooseFeedParser\n" if $debug
-      uattrs = []
-      attrs.each do |l|
-        key, value = l
-        if u(value) != value # FIXME how well does this work?
-          value = uconvert(value, @encoding, 'utf-8') 
-        end
-        uattrs << uconvert(key, @encoding, 'utf-8') 
-      end
+				 def parse_endtag(i)
+				   rawdata = @rawdata
+				   j, match = index_match(rawdata, /[<>]/,i+1)
+				   return nil unless j
+				   tag = rawdata[i+2...j].strip.downcase
+				   if rawdata[j..j] == ">"
+				     j += 1
+				   end
+				   finish_endtag(tag)
+				   return j
+				 end
 
-      strattrs = uattrs(Shorttagopen =~ rawdata[i..-1]).collect{ |l| u(" #{l[0]}=#{l[1]}")}.join
-      if Elements_No_End_Tag.include? tag
-        @pieces << "<#{tag}#{strattrs} />" 
-      else
-        @pieces << "<#{tag}#{strattrs}>"
-      end
-    end
+				 def output
+				   # Return processed HTML as a single string
+				   return @pieces.map{|p| p.to_s}.join
+				 end
 
-    def unknown_endtag(tag)
-      # called for each end tag, e.g. for </pre>, tag will be 'pre'
-      # Reconstruct the original end tag.
-      $stderr << "unknown_endtag with tag \"#{tag}\" in LooseFeedParser\n" if $debug
-      if not Elements_No_End_Tag.include? tag
-        @pieces << "</#{tag}>"
-      end
-    end
-
-    def handle_charref(ref)
-      # called for each entity reference, e.g. for '&#160;', ref will be '160'
-      # Reconstruct the original character reference.
-      @pieces << "&##{ref};"
-    end
-
-    def handle_entityref(ref)
-      # called for each entity reference, e.g. for '&copy;', ref will be 'copy'
-      # Reconstruct the original entity reference.
-      @pieces << "&#{ref};"
-    end
-
-    def handle_data(text)
-      # called for each block of plain text, i.e. outside of any tag and
-        # not containing any character or entity references
-        # Store the original text verbatim.
-      $stderr << "handle_data in LooseFeedParser with text: #{text}\n"
-      @pieces << text
-    end
-
-    def output
-      # Return processed HTML as a single string
-      return @pieces.map{|p| p.to_s}.join
-    end
- 
-  def error(message)
-    raise BetterSGMLParserError.new(message)
-  end
-  def handle_pi(text)
-  end
-  def handle_decl(text)
-  end
+				 def error(message)
+				   raise BetterSGMLParserError.new(message)
+				 end
+				 def handle_pi(text)
+				 end
+				 def handle_decl(text)
+				 end
 end
+
 # Add some helper methods to make AttributeList (all of those damn attrs
 # and attrsD used by StrictFeedParser) act more like a Hash.
 # NOTE AttributeList is still Read-Only (AFAICT).
@@ -885,31 +831,31 @@ module XML
   module SAX
     module AttributeList # in xml/sax.rb
       def [](key)
-        getValue(key)
+	getValue(key)
       end
 
       def each(&blk)
-        (0...getLength).each{|pos| yield [getName(pos), getValue(pos)]}
+	(0...getLength).each{|pos| yield [getName(pos), getValue(pos)]}
       end
 
       def each_key(&blk)
-        (0...getLength).each{|pos| yield getName(pos) }
+	(0...getLength).each{|pos| yield getName(pos) }
       end
 
       def each_value(&blk)
-        (0...getLength).each{|pos| yield getValue(pos) }
+	(0...getLength).each{|pos| yield getValue(pos) }
       end
 
       def to_a # Rather use collect? grep for to_a.collect
-        l = []
-        each{|k,v| l << [k,v]}
-        return l
+	l = []
+	each{|k,v| l << [k,v]}
+	return l
       end
 
       def to_s
-        l = []
-        each{|k,v| l << "#{k} => #{v}"}
-        "{ "+l.join(", ")+" }"
+	l = []
+	each{|k,v| l << "#{k} => #{v}"}
+	"{ "+l.join(", ")+" }"
       end
     end
   end
@@ -962,7 +908,7 @@ module Hpricot
 
     def strip(allowed_tags=[])
       if strip_removes? or not allowed_tags.include?self.name
-        cull
+	cull
       end
       children.each{ |x| x.strip(allowed_tags) } 
     end
@@ -971,58 +917,58 @@ module Hpricot
       children.each { |x| x.strip_attributes(safe) }
 
       unless attributes.nil?
-        attributes.each do |atr|
-          unless safe.include?atr[0] or (atr[0] == 'style' and not $compatible)
-            remove_attribute(atr[0]) 
-          end
-        end
+	attributes.each do |atr|
+	  unless safe.include?atr[0] or (atr[0] == 'style' and not $compatible)
+	    remove_attribute(atr[0]) 
+	  end
+	end
       end
     end
 
     # Much of this method was translated from Mark Pilgrim's FeedParser, including comments
     def strip_style(ok_props = [], ok_keywords = [])
       children.each do |e| 
-        e.strip_style(ok_props, ok_keywords) unless e.class == Hpricot::Text 
+	e.strip_style(ok_props, ok_keywords) unless e.class == Hpricot::Text 
       end
 
       unless self['style'].nil?
-        # disallow urls 
-        style = self['style'].sub(/url\s*\(\s*[^\s)]+?\s*\)\s*'/u, ' ')
-        valid_css_values = /^(#[0-9a-f]+|rgb\(\d+%?,\d*%?,?\d*%?\)?|\d{0,2}\.?\d{0,2}(cm|em|ex|in|mm|pc|pt|px|%|,|\))?)$/u
-        # gauntlet
-        if not style.match(/^([:,;#%.\sa-zA-Z0-9!]|\w-\w|'[\s\w]+'|"[\s\w]+"|\([\d,\s]+\))*$/u)
-          return ''
-        end
-        if not style.match(/^(\s*[-\w]+\s*:\s*[^:;]*(;|$))*$/u)
-          return ''
-        end
+	# disallow urls 
+	style = self['style'].sub(/url\s*\(\s*[^\s)]+?\s*\)\s*'/u, ' ')
+	valid_css_values = /^(#[0-9a-f]+|rgb\(\d+%?,\d*%?,?\d*%?\)?|\d{0,2}\.?\d{0,2}(cm|em|ex|in|mm|pc|pt|px|%|,|\))?)$/u
+	# gauntlet
+	if not style.match(/^([:,;#%.\sa-zA-Z0-9!]|\w-\w|'[\s\w]+'|"[\s\w]+"|\([\d,\s]+\))*$/u)
+	  return ''
+	end
+	if not style.match(/^(\s*[-\w]+\s*:\s*[^:;]*(;|$))*$/u)
+	  return ''
+	end
 
-        clean = []
-        style.scan(/([-\w]+)\s*:\s*([^:;]*)/u).each do |l|
-          prop, value = l
+	clean = []
+	style.scan(/([-\w]+)\s*:\s*([^:;]*)/u).each do |l|
+	  prop, value = l
 
-          next if value.nil? or value.empty?
+	  next if value.nil? or value.empty?
 
-          if ok_props.include?prop.downcase
-            clean << prop + ': ' + value + ';'
-          elsif ['background','border','margin','padding'].include? prop.split('-')[0].downcase 
+	  if ok_props.include?prop.downcase
+	    clean << prop + ': ' + value + ';'
+	  elsif ['background','border','margin','padding'].include? prop.split('-')[0].downcase 
 
-            # This is a terrible, but working way to mimic Python's for/else
-            did_not_break = true 
+	    # This is a terrible, but working way to mimic Python's for/else
+	    did_not_break = true 
 
-            value.split.each do |keyword|
-              if not ok_keywords.include? keyword and not valid_css_values.match(keyword)
-                break
-              end
-            end
+	    value.split.each do |keyword|
+	      if not ok_keywords.include? keyword and not valid_css_values.match(keyword)
+		break
+	      end
+	    end
 
-            if did_not_break
-              clean << prop + ':' + value + ';'
-            end
-          end
+	    if did_not_break
+	      clean << prop + ':' + value + ';'
+	    end
+	  end
 
-        end
-        self['style'] = clean.join(' ')
+	end
+	self['style'] = clean.join(' ')
       end
     end
 
@@ -1034,12 +980,7 @@ module Hpricot
 end
 
 module FeedParser
-  @version = "0.1aleph_naught"
-  # FIXME OVER HERE! Hi. I'm still translating. Grep for "FIXME untranslated" to 
-  # figure out, roughly, what needs to be done.  I've tried to put it next to 
-  # anything having to do with any unimplemented sections. There are plent of 
-  # other FIXMEs however
-
+  Version = "0.1aleph_naught"
   # HTTP "User-Agent" header to send to servers when downloading feeds.
   # If you are embedding feedparser in a larger application, you should
   # change this to your application name and URL.
@@ -1049,11 +990,6 @@ module FeedParser
   # want to send an Accept header, set this to None.
   ACCEPT_HEADER = "application/atom+xml,application/rdf+xml,application/rss+xml,application/x-netcdf,application/xml;q=0.9,text/xml;q=0.2,*/*;q=0.1"
 
-
-  # List of preferred XML parsers, by SAX driver name.  These will be tried first,
-  # but if they're not installed, Python will keep searching through its own list
-  # of pre-installed parsers until it finds one that supports everything we need.
-  PREFERRED_XML_PARSERS = ["drv_libxml2"] #FIXME untranslated
 
   # If you want feedparser to automatically run HTML markup through HTML Tidy, set
   # this to true.  Requires mxTidy <http://www.egenix.com/files/python/mxTidy.html>
@@ -1081,25 +1017,24 @@ module FeedParser
   class UndeclaredNamespace < Exception
   end
 
-  # FIXME untranslated, the sgmllib, can it be replaced with Hpricot?
 
   SUPPORTED_VERSIONS = {'' => 'unknown',
-                      'rss090' => 'RSS 0.90',
-                      'rss091n' => 'RSS 0.91 (Netscape)',
-                      'rss091u' => 'RSS 0.91 (Userland)',
-                      'rss092' => 'RSS 0.92',
-                      'rss093' => 'RSS 0.93',
-                      'rss094' => 'RSS 0.94',
-                      'rss20' => 'RSS 2.0',
-                      'rss10' => 'RSS 1.0',
-                      'rss' => 'RSS (unknown version)',
-                      'atom01' => 'Atom 0.1',
-                      'atom02' => 'Atom 0.2',
-                      'atom03' => 'Atom 0.3',
-                      'atom10' => 'Atom 1.0',
-                      'atom' => 'Atom (unknown version)',
-                      'cdf' => 'CDF',
-                      'hotrss' => 'Hot RSS'
+		      'rss090' => 'RSS 0.90',
+		      'rss091n' => 'RSS 0.91 (Netscape)',
+		      'rss091u' => 'RSS 0.91 (Userland)',
+		      'rss092' => 'RSS 0.92',
+		      'rss093' => 'RSS 0.93',
+		      'rss094' => 'RSS 0.94',
+		      'rss20' => 'RSS 2.0',
+		      'rss10' => 'RSS 1.0',
+		      'rss' => 'RSS (unknown version)',
+		      'atom01' => 'Atom 0.1',
+		      'atom02' => 'Atom 0.2',
+		      'atom03' => 'Atom 0.3',
+		      'atom10' => 'Atom 1.0',
+		      'atom' => 'Atom (unknown version)',
+		      'cdf' => 'CDF',
+		      'hotrss' => 'Hot RSS'
   }
   class FeedParserDict < Hash 
 =begin
@@ -1117,20 +1052,20 @@ module FeedParser
      means" if they've asked for one which happens to be in @@keymap's keys.
 =end
     @@keymap = {'channel' => 'feed',
-              'items' => 'entries',
-              'guid' => 'id',
-              'date' => 'updated',
-              'date_parsed' => 'updated_parsed',
-              'description' => ['subtitle', 'summary'],
-              'url' => ['href'],
-              'modified' => 'updated',
-              'modified_parsed' => 'updated_parsed',
-              'issued' => 'published',
-              'issued_parsed' => 'published_parsed',
-              'copyright' => 'rights',
-              'copyright_detail' => 'rights_detail',
-              'tagline' => 'subtitle',
-              'tagline_detail' => 'subtitle_detail'}
+	      'items' => 'entries',
+	      'guid' => 'id',
+	      'date' => 'updated',
+	      'date_parsed' => 'updated_parsed',
+	      'description' => ['subtitle', 'summary'],
+	      'url' => ['href'],
+	      'modified' => 'updated',
+	      'modified_parsed' => 'updated_parsed',
+	      'issued' => 'published',
+	      'issued_parsed' => 'published_parsed',
+	      'copyright' => 'rights',
+	      'copyright_detail' => 'rights_detail',
+	      'tagline' => 'subtitle',
+	      'tagline_detail' => 'subtitle_detail'}
 
     def entries # Apparently, Hash has an entries method!  That blew a good 3 hours or more of my time
       return self['entries']
@@ -1140,66 +1075,52 @@ module FeedParser
     # I'm going to make it easy to turn lists of pairs into FeedParserDicts's though.
     def initialize(pairs=nil)
       if pairs.class == Array and pairs[0].class == Array and pairs[0].length == 2
-        pairs.each do |l| 
-          k,v = l
-          self[k] = v
-        end
+	pairs.each do |l| 
+	  k,v = l
+	  self[k] = v
+	end
       elsif pairs.class == Hash
-        self.merge!(pairs) 
+	self.merge!(pairs) 
       end
     end
 
     def [](key)
       if key == 'category'
-        return self['tags'][0]['term']
+	return self['tags'][0]['term']
       end
-      if key == 'categories' #FIXME why does the orignial code use separate if-statements?
-        return self['tags'].collect{|tag| [tag['scheme'],tag['term']]}
+      if key == 'categories'
+	return self['tags'].collect{|tag| [tag['scheme'],tag['term']]}
       end
       realkey = @@keymap[key] || key 
       if realkey.class == Array
-        realkey.each{ |key| return self[key] if has_key?key }
+	realkey.each{ |key| return self[key] if has_key?key }
       end
       # Note that the original key is preferred over the realkey we (might 
       # have) found in @@keymaps
       if has_key?(key)
-        return super(key)
+	return super(key)
       end
       return super(realkey)
     end
 
     def []=(key,value)
       if @@keymap.key?key
-        key = @@keymap[key]
-        if key.class == Array
-          key = key[0]
-        end
+	key = @@keymap[key]
+	if key.class == Array
+	  key = key[0]
+	end
       end
       super(key,value)
     end
 
-    #def fetch(key, default=nil) 
-    # fetch is to Ruby's Hash as get is to Python's Dict
-    #  if self.has_key?key
-    #    return self[key]
-    #  else
-    #    return default
-    #  end
-    #end
-
-    #def get(key, default=nil)
-    # in case people don't get the memo. i'm betting this will be removed soon
-    #  self.fetch(key, default)
-    #end
-
     def method_missing(msym, *args)
       methodname = msym.to_s
       if methodname[-1] == '='
-        return self[methodname[0..-2]] = args[0]
+	return self[methodname[0..-2]] = args[0]
       elsif methodname[-1] != '!' and methodname[-1] != '?' and methodname[0] != "_" # FIXME implement with private
-        return self[methodname]
+	return self[methodname]
       else
-        raise NoMethodError, "whoops, we don't know about the attribute or method called `#{methodname}' for #{self}:#{self.class}"
+	raise NoMethodError, "whoops, we don't know about the attribute or method called `#{methodname}' for #{self}:#{self.class}"
       end
     end 
   end
@@ -1214,69 +1135,69 @@ module FeedParser
       $stderr << "initializing FeedParser\n" if $debug
 
       @namespaces = {'' => '',
-                'http://backend.userland.com/rss' => '',
-                'http://blogs.law.harvard.edu/tech/rss' => '',
-                'http://purl.org/rss/1.0/' => '',
-                'http://my.netscape.com/rdf/simple/0.9/' => '',
-                'http://example.com/newformat#' => '',
-                'http://example.com/necho' => '',
-                'http://purl.org/echo/' => '',
-                'uri/of/echo/namespace#' => '',
-                 'http://purl.org/pie/' => '',
-                  'http://purl.org/atom/ns#' => '',
-                  'http://www.w3.org/2005/Atom' => '',
-                  'http://purl.org/rss/1.0/modules/rss091#' => '',
-                  'http://webns.net/mvcb/' =>                               'admin',
-                  'http://purl.org/rss/1.0/modules/aggregation/' =>         'ag',
-                  'http://purl.org/rss/1.0/modules/annotate/' =>            'annotate',
-                  'http://media.tangent.org/rss/1.0/' =>                    'audio',
-                  'http://backend.userland.com/blogChannelModule' =>        'blogChannel',
-                  'http://web.resource.org/cc/' =>                          'cc',
-                  'http://backend.userland.com/creativeCommonsRssModule' => 'creativeCommons',
-                  'http://purl.org/rss/1.0/modules/company' =>              'co',
-                  'http://purl.org/rss/1.0/modules/content/' =>             'content',
-                  'http://my.theinfo.org/changed/1.0/rss/' =>               'cp',
-                  'http://purl.org/dc/elements/1.1/' =>                     'dc',
-                  'http://purl.org/dc/terms/' =>                            'dcterms',
-                  'http://purl.org/rss/1.0/modules/email/' =>               'email',
-                  'http://purl.org/rss/1.0/modules/event/' =>               'ev',
-                  'http://rssnamespace.org/feedburner/ext/1.0' =>           'feedburner',
-                  'http://freshmeat.net/rss/fm/' =>                         'fm',
-                  'http://xmlns.com/foaf/0.1/' =>                           'foaf',
-                  'http://www.w3.org/2003/01/geo/wgs84_pos#' =>             'geo',
-                  'http://postneo.com/icbm/' =>                             'icbm',
-                  'http://purl.org/rss/1.0/modules/image/' =>               'image',
-                  'http://www.itunes.com/DTDs/PodCast-1.0.dtd' =>           'itunes',
-                  'http://example.com/DTDs/PodCast-1.0.dtd' =>              'itunes',
-                  'http://purl.org/rss/1.0/modules/link/' =>                'l',
-                  'http://search.yahoo.com/mrss' =>                         'media',
-                  'http://madskills.com/public/xml/rss/module/pingback/' => 'pingback',
-                  'http://prismstandard.org/namespaces/1.2/basic/' =>       'prism',
-                  'http://www.w3.org/1999/02/22-rdf-syntax-ns#' =>          'rdf',
-                  'http://www.w3.org/2000/01/rdf-schema#' =>                'rdfs',
-                  'http://purl.org/rss/1.0/modules/reference/' =>           'ref',
-                  'http://purl.org/rss/1.0/modules/richequiv/' =>           'reqv',
-                  'http://purl.org/rss/1.0/modules/search/' =>              'search',
-                  'http://purl.org/rss/1.0/modules/slash/' =>               'slash',
-                  'http://schemas.xmlsoap.org/soap/envelope/' =>            'soap',
-                  'http://purl.org/rss/1.0/modules/servicestatus/' =>       'ss',
-                  'http://hacks.benhammersley.com/rss/streaming/' =>        'str',
-                  'http://purl.org/rss/1.0/modules/subscription/' =>        'sub',
-                  'http://purl.org/rss/1.0/modules/syndication/' =>         'sy',
-                  'http://purl.org/rss/1.0/modules/taxonomy/' =>            'taxo',
-                  'http://purl.org/rss/1.0/modules/threading/' =>           'thr',
-                  'http://purl.org/rss/1.0/modules/textinput/' =>           'ti',
-                  'http://madskills.com/public/xml/rss/module/trackback/' =>'trackback',
-                  'http://wellformedweb.org/commentAPI/' =>                 'wfw',
-                  'http://purl.org/rss/1.0/modules/wiki/' =>                'wiki',
-                  'http://www.w3.org/1999/xhtml' =>                         'xhtml',
-                  'http://www.w3.org/XML/1998/namespace' =>                 'xml',
-                  'http://www.w3.org/1999/xlink' =>                         'xlink',
-                  'http://schemas.pocketsoap.com/rss/myDescModule/' =>      'szf'
+		'http://backend.userland.com/rss' => '',
+		'http://blogs.law.harvard.edu/tech/rss' => '',
+		'http://purl.org/rss/1.0/' => '',
+		'http://my.netscape.com/rdf/simple/0.9/' => '',
+		'http://example.com/newformat#' => '',
+		'http://example.com/necho' => '',
+		'http://purl.org/echo/' => '',
+		'uri/of/echo/namespace#' => '',
+		 'http://purl.org/pie/' => '',
+		  'http://purl.org/atom/ns#' => '',
+		  'http://www.w3.org/2005/Atom' => '',
+		  'http://purl.org/rss/1.0/modules/rss091#' => '',
+		  'http://webns.net/mvcb/' =>                               'admin',
+		  'http://purl.org/rss/1.0/modules/aggregation/' =>         'ag',
+		  'http://purl.org/rss/1.0/modules/annotate/' =>            'annotate',
+		  'http://media.tangent.org/rss/1.0/' =>                    'audio',
+		  'http://backend.userland.com/blogChannelModule' =>        'blogChannel',
+		  'http://web.resource.org/cc/' =>                          'cc',
+		  'http://backend.userland.com/creativeCommonsRssModule' => 'creativeCommons',
+		  'http://purl.org/rss/1.0/modules/company' =>              'co',
+		  'http://purl.org/rss/1.0/modules/content/' =>             'content',
+		  'http://my.theinfo.org/changed/1.0/rss/' =>               'cp',
+		  'http://purl.org/dc/elements/1.1/' =>                     'dc',
+		  'http://purl.org/dc/terms/' =>                            'dcterms',
+		  'http://purl.org/rss/1.0/modules/email/' =>               'email',
+		  'http://purl.org/rss/1.0/modules/event/' =>               'ev',
+		  'http://rssnamespace.org/feedburner/ext/1.0' =>           'feedburner',
+		  'http://freshmeat.net/rss/fm/' =>                         'fm',
+		  'http://xmlns.com/foaf/0.1/' =>                           'foaf',
+		  'http://www.w3.org/2003/01/geo/wgs84_pos#' =>             'geo',
+		  'http://postneo.com/icbm/' =>                             'icbm',
+		  'http://purl.org/rss/1.0/modules/image/' =>               'image',
+		  'http://www.itunes.com/DTDs/PodCast-1.0.dtd' =>           'itunes',
+		  'http://example.com/DTDs/PodCast-1.0.dtd' =>              'itunes',
+		  'http://purl.org/rss/1.0/modules/link/' =>                'l',
+		  'http://search.yahoo.com/mrss' =>                         'media',
+		  'http://madskills.com/public/xml/rss/module/pingback/' => 'pingback',
+		  'http://prismstandard.org/namespaces/1.2/basic/' =>       'prism',
+		  'http://www.w3.org/1999/02/22-rdf-syntax-ns#' =>          'rdf',
+		  'http://www.w3.org/2000/01/rdf-schema#' =>                'rdfs',
+		  'http://purl.org/rss/1.0/modules/reference/' =>           'ref',
+		  'http://purl.org/rss/1.0/modules/richequiv/' =>           'reqv',
+		  'http://purl.org/rss/1.0/modules/search/' =>              'search',
+		  'http://purl.org/rss/1.0/modules/slash/' =>               'slash',
+		  'http://schemas.xmlsoap.org/soap/envelope/' =>            'soap',
+		  'http://purl.org/rss/1.0/modules/servicestatus/' =>       'ss',
+		  'http://hacks.benhammersley.com/rss/streaming/' =>        'str',
+		  'http://purl.org/rss/1.0/modules/subscription/' =>        'sub',
+		  'http://purl.org/rss/1.0/modules/syndication/' =>         'sy',
+		  'http://purl.org/rss/1.0/modules/taxonomy/' =>            'taxo',
+		  'http://purl.org/rss/1.0/modules/threading/' =>           'thr',
+		  'http://purl.org/rss/1.0/modules/textinput/' =>           'ti',
+		  'http://madskills.com/public/xml/rss/module/trackback/' =>'trackback',
+		  'http://wellformedweb.org/commentAPI/' =>                 'wfw',
+		  'http://purl.org/rss/1.0/modules/wiki/' =>                'wiki',
+		  'http://www.w3.org/1999/xhtml' =>                         'xhtml',
+		  'http://www.w3.org/XML/1998/namespace' =>                 'xml',
+		  'http://www.w3.org/1999/xlink' =>                         'xlink',
+		  'http://schemas.pocketsoap.com/rss/myDescModule/' =>      'szf'
       }
       @matchnamespaces = {}
       @namespaces.each do |l|
-        @matchnamespaces[l[0].downcase] = l[1]
+	@matchnamespaces[l[0].downcase] = l[1]
       end
       @can_be_relative_uri = ['link', 'id', 'wfw_comment', 'wfw_commentrss', 'docs', 'url', 'href', 'comments', 'license', 'icon', 'logo']
       @can_contain_relative_uris = ['content', 'title', 'summary', 'info', 'tagline', 'subtitle', 'copyright', 'rights', 'description']
@@ -1309,11 +1230,11 @@ module FeedParser
       @baseuri = baseuri || ''
       @lang = baselang || nil
       if baselang 
-        @feeddata['language'] = baselang.gsub('_','-')
+	@feeddata['language'] = baselang.gsub('_','-')
       end
       @date_handlers = [:_parse_date_rfc822,
-        :_parse_date_hungarian, :_parse_date_greek,:_parse_date_mssql,
-        :_parse_date_nate,:_parse_date_onblog,:_parse_date_w3dtf,:_parse_date_iso8601
+	:_parse_date_hungarian, :_parse_date_greek,:_parse_date_mssql,
+	:_parse_date_nate,:_parse_date_onblog,:_parse_date_w3dtf,:_parse_date_iso8601
       ]
       $stderr << "Leaving startup\n" if $debug # My addition
     end
@@ -1327,12 +1248,12 @@ module FeedParser
       # list of lists (like [['type','text/html'],['mode','escaped']])
 
       attrsd.each do |old_k,value| 
-        # There has to be a better, non-ugly way of doing this
-        k = old_k.downcase # Downcase all keys
-        attrsD[k] = value
-        if ['rel','type'].include?value
-          attrsD[k].downcase!   # Downcase the value if the key is 'rel' or 'type'
-        end
+	# There has to be a better, non-ugly way of doing this
+	k = old_k.downcase # Downcase all keys
+	attrsD[k] = value
+	if ['rel','type'].include?value
+	  attrsD[k].downcase!   # Downcase the value if the key is 'rel' or 'type'
+	end
       end
 
       # track xml:base and xml:lang
@@ -1340,16 +1261,16 @@ module FeedParser
       @baseuri = urljoin(@baseuri, baseuri)
       lang = attrsD['xml:lang'] || attrsD['lang']
       if lang == '' # FIXME This next bit of code is right? Wtf?
-        # xml:lang could be explicitly set to '', we need to capture that
-        lang = nil
+	# xml:lang could be explicitly set to '', we need to capture that
+	lang = nil
       elsif lang.nil?
-        # if no xml:lang is specified, use parent lang
-        lang = @lang
+	# if no xml:lang is specified, use parent lang
+	lang = @lang
       end
       if lang and not lang.empty? # Seriously, this cannot be correct
-        if ['feed', 'rss', 'rdf:RDF'].include?tag
-          @feeddata['language'] = lang.gsub('_','-')
-        end
+	if ['feed', 'rss', 'rdf:RDF'].include?tag
+	  @feeddata['language'] = lang.gsub('_','-')
+	end
       end
       @lang = lang
       @basestack << @baseuri 
@@ -1357,58 +1278,58 @@ module FeedParser
 
       # track namespaces
       attrsd.each do |prefix, uri|
-        if /^xmlns:/ =~ prefix # prefix begins with xmlns:
-          trackNamespace(prefix[6..-1], uri)
-        elsif prefix == 'xmlns':
-          trackNamespace(nil, uri)
-        end
+	if /^xmlns:/ =~ prefix # prefix begins with xmlns:
+	  trackNamespace(prefix[6..-1], uri)
+	elsif prefix == 'xmlns':
+	  trackNamespace(nil, uri)
+	end
       end
 
       # track inline content
       if @incontent != 0 and @contentparams.has_key?('type') and not ( /xml$/ =~ (@contentparams['type'] || 'xml') )
-        # element declared itself as escaped markup, but isn't really
+	# element declared itself as escaped markup, but isn't really
 
-        @contentparams['type'] = 'application/xhtml+xml'
+	@contentparams['type'] = 'application/xhtml+xml'
       end
       if @incontent != 0 and @contentparams['type'] == 'application/xhtml+xml'
-        # Note: probably shouldn't simply recreate localname here, but
-        # our namespace handling isn't actually 100% correct in cases where
-        # the feed redefines the default namespace (which is actually
-        # the usual case for inline content, thanks Sam), so here we
-        # cheat and just reconstruct the element based on localname
-        # because that compensates for the bugs in our namespace handling.
-        # This will horribly munge inline content with non-empty qnames,
-        # but nobody actually does that, so I'm not fixing it.
-        tag = tag.split(':')[-1]
-        attrsA = attrsd.to_a.collect{|l| "#{l[0]}=\"#{l[1]}\""}
-        attrsS = ' '+attrsA.join(' ')
-        return handle_data("<#{tag}#{attrsS}>", escape=false) 
+	# Note: probably shouldn't simply recreate localname here, but
+	# our namespace handling isn't actually 100% correct in cases where
+	# the feed redefines the default namespace (which is actually
+	# the usual case for inline content, thanks Sam), so here we
+	# cheat and just reconstruct the element based on localname
+	# because that compensates for the bugs in our namespace handling.
+	# This will horribly munge inline content with non-empty qnames,
+	# but nobody actually does that, so I'm not fixing it.
+	tag = tag.split(':')[-1]
+	attrsA = attrsd.to_a.collect{|l| "#{l[0]}=\"#{l[1]}\""}
+	attrsS = ' '+attrsA.join(' ')
+	return handle_data("<#{tag}#{attrsS}>", escape=false) 
       end
 
       # match namespaces
       if /:/ =~ tag
-        prefix, suffix = tag.split(':', 2)
+	prefix, suffix = tag.split(':', 2)
       else
-        prefix, suffix = '', tag
+	prefix, suffix = '', tag
       end
       prefix = @namespacemap[prefix] || prefix
       if prefix and not prefix.empty?
-        prefix = prefix + '_'
+	prefix = prefix + '_'
       end
 
       # special hack for better tracking of empty textinput/image elements in illformed feeds
       if (not prefix and not prefix.empty?) and not (['title', 'link', 'description','name'].include?tag)
-        @intextinput = false
+	@intextinput = false
       end
       if (prefix.nil? or prefix.empty?) and not (['title', 'link', 'description', 'url', 'href', 'width', 'height'].include?tag)
-        @inimage = false
+	@inimage = false
       end
 
       # call special handler (if defined) or default handler
       begin
-        return send('_start_'+prefix+suffix, attrsD)
+	return send('_start_'+prefix+suffix, attrsD)
       rescue NoMethodError
-        return push(prefix + suffix, true) 
+	return push(prefix + suffix, true) 
       end  
     end # End unknown_starttag
 
@@ -1416,44 +1337,44 @@ module FeedParser
       $stderr << "end #{tag}\n" if $debug
       # match namespaces
       if tag.index(':')
-        prefix, suffix = tag.split(':',2)
+	prefix, suffix = tag.split(':',2)
       else
-        prefix, suffix = '', tag
+	prefix, suffix = '', tag
       end
       prefix = @namespacemap[prefix] || prefix
       if prefix and not prefix.empty?
-        prefix = prefix + '_'
+	prefix = prefix + '_'
       end
 
       # call special handler (if defined) or default handler
       begin
-        send('_end_' + prefix + suffix) # NOTE no return here! do not add it!
+	send('_end_' + prefix + suffix) # NOTE no return here! do not add it!
       rescue NoMethodError => details
-        pop(prefix + suffix)
+	pop(prefix + suffix)
       end
 
       # track inline content
       if @incontent != 0 and @contentparams.has_key?'type' and /xml$/ =~ (@contentparams['type'] || 'xml')
-        # element declared itself as escaped markup, but it isn't really
-        @contentparams['type'] = 'application/xhtml+xml'
+	# element declared itself as escaped markup, but it isn't really
+	@contentparams['type'] = 'application/xhtml+xml'
       end
       if @incontent != 0 and @contentparams['type'] == 'application/xhtml+xml'
-        tag = tag.split(':')[-1]
-        handle_data("</#{tag}>", escape=false)
+	tag = tag.split(':')[-1]
+	handle_data("</#{tag}>", escape=false)
       end
 
       # track xml:base and xml:lang going out of scope
       if @basestack and not @basestack.empty?
-        @basestack.pop
-        if @basestack and @basestack[-1] and not (@basestack.empty? or @basestack[-1].empty?)
-          @baseuri = @basestack[-1]
-        end
+	@basestack.pop
+	if @basestack and @basestack[-1] and not (@basestack.empty? or @basestack[-1].empty?)
+	  @baseuri = @basestack[-1]
+	end
       end
       if @langstack and not @langstack.empty?
-        @langstack.pop
-        if @langstack and not @langstack.empty? # and @langstack[-1] and not @langstack.empty?
-          @lang = @langstack[-1]
-        end
+	@langstack.pop
+	if @langstack and not @langstack.empty? # and @langstack[-1] and not @langstack.empty?
+	  @lang = @langstack[-1]
+	end
       end
     end
 
@@ -1465,14 +1386,14 @@ module FeedParser
       ref.downcase!
       chars = ['34', '38', '39', '60', '62', 'x22', 'x26', 'x27', 'x3c', 'x3e']
       if chars.include?ref
-        text = "&##{ref};"
+	text = "&##{ref};"
       else
-        if ref[0..0] == 'x'
-          c = (ref[1..-1]).to_i(16)
-        else
-          c = ref.to_i
-        end
-        text = uconvert(unichr(c),'unicode')
+	if ref[0..0] == 'x'
+	  c = (ref[1..-1]).to_i(16)
+	else
+	  c = ref.to_i
+	end
+	text = uconvert(unichr(c),'unicode')
       end
       @elementstack[-1][2] << text
     end
@@ -1485,19 +1406,19 @@ module FeedParser
       $stderr << "entering handle_entityref with #{ref}\n" if $debug
       ents = ['lt', 'gt', 'quot', 'amp', 'apos']
       if ents.include?ref
-        text = "&#{ref};"
+	text = "&#{ref};"
       else
-        text = HTMLEntities::decode_entities("&#{ref};")
+	text = HTMLEntities::decode_entities("&#{ref};")
       end
       @elementstack[-1][2] << text
     end
-      
+
     def handle_data(text, escape=true)
       # called for each block of plain text, i.e. outside of any tag and
       # not containing any character or entity references
       return if @elementstack.nil? or @elementstack.empty?
       if escape and @contentparams['type'] == 'application/xhtml+xml'
-        text = text.to_xs # FIXME this pass all encodings?
+	text = text.to_xs 
       end
       @elementstack[-1][2] << text
     end
@@ -1516,25 +1437,25 @@ module FeedParser
       # for LooseFeedParser
       $stderr << "entering parse_declaration\n" if $debug
       if @rawdata[i...i+9] == '<![CDATA['
-        k = @rawdata.index(/\]\]>/u,i+9)
-        k = @rawdata.length unless k
-        handle_data(@rawdata[i+9...k].to_xs,false)
-        return k+3
+	k = @rawdata.index(/\]\]>/u,i+9)
+	k = @rawdata.length unless k
+	handle_data(@rawdata[i+9...k].to_xs,false)
+	return k+3
       else
-        k = @rawdata.index(/>/,i).to_i
-        return k+1
+	k = @rawdata.index(/>/,i).to_i
+	return k+1
       end
     end
-        
+
     def mapContentType(contentType)
       contentType.downcase!
       case contentType
       when 'text'
-        contentType = 'text/plain'
+	contentType = 'text/plain'
       when 'html'
-        contentType = 'text/html'
+	contentType = 'text/html'
       when 'xhtml'
-        contentType = 'application/xhtml+xml'
+	contentType = 'application/xhtml+xml'
       end
       return contentType
     end
@@ -1543,21 +1464,21 @@ module FeedParser
 
       loweruri = uri.downcase.strip
       if [prefix, loweruri] == [nil, 'http://my.netscape.com/rdf/simple/0.9/'] and (@version.nil? or @version.empty?)
-        @version = 'rss090'
+	@version = 'rss090'
       elsif loweruri == 'http://purl.org/rss/1.0/' and (@version.nil? or @version.empty?)
-        @version = 'rss10'
+	@version = 'rss10'
       elsif loweruri == 'http://www.w3.org/2005/atom' and (@version.nil? or @version.empty?)
-        @version = 'atom10'
+	@version = 'atom10'
       elsif /backend\.userland\.com\/rss/ =~ loweruri
-        # match any backend.userland.com namespace
-        uri = 'http://backend.userland.com/rss'
-        loweruri = uri
+	# match any backend.userland.com namespace
+	uri = 'http://backend.userland.com/rss'
+	loweruri = uri
       end
       if @matchnamespaces.has_key? loweruri
-        @namespacemap[prefix] = @matchnamespaces[loweruri]
-        @namespacesInUse[@matchnamespaces[loweruri]] = uri
+	@namespacemap[prefix] = @matchnamespaces[loweruri]
+	@namespacesInUse[@matchnamespaces[loweruri]] = uri
       else
-        @namespacesInUse[prefix || ''] = uri
+	@namespacesInUse[prefix || ''] = uri
       end
     end
 
@@ -1578,31 +1499,31 @@ module FeedParser
       return if @elementstack[-1][0] != element
       element, expectingText, pieces = @elementstack.pop
       if pieces.class == Array
-        output = pieces.join('')
+	output = pieces.join('')
       else
-        output = pieces
+	output = pieces
       end
       if stripWhitespace
-        output.strip!
+	output.strip!
       end
       return output if not expectingText
 
       # decode base64 content
       if @contentparams['base64']
-        out64 = Base64::decode64(output) # a.k.a. [output].unpack('m')[0]
-        if not output.empty? and not out64.empty?
-          output = out64
-        end
+	out64 = Base64::decode64(output) # a.k.a. [output].unpack('m')[0]
+	if not output.empty? and not out64.empty?
+	  output = out64
+	end
       end
 
       # resolve relative URIs
       if @can_be_relative_uri.include?element and output and not output.empty?
-        output = resolveURI(output)
+	output = resolveURI(output)
       end
 
       # decode entities within embedded markup
       if not @contentparams['base64']
-        output = decodeEntities(element, output)
+	output = decodeEntities(element, output)
       end
 
       # remove temporary cruft from contentparams
@@ -1611,19 +1532,20 @@ module FeedParser
 
       # resolve relative URIs within embedded markup
       if @html_types.include?mapContentType(@contentparams['type'] || 'text/html')
-        if @can_contain_relative_uris.include?element
-          output = FeedParser.resolveRelativeURIs(output, @baseuri, @encoding)
-        end
+	if @can_contain_relative_uris.include?element
+	  output = FeedParser.resolveRelativeURIs(output, @baseuri, @encoding)
+	end
       end
       # sanitize embedded markup
       if @html_types.include?mapContentType(@contentparams['type'] || 'text/html')
-        if @can_contain_dangerous_markup.include?element
-          output = FeedParser.sanitizeHTML(output, @encoding)
-        end
+	if @can_contain_dangerous_markup.include?element
+	  output = FeedParser.sanitizeHTML(output, @encoding)
+	end
       end
 
       if @encoding and not @encoding.empty? and @encoding != 'utf-8'
-        output = uconvert(output, @encoding, 'utf-8') # FIXME we have to turn everything into utf-8, not unicode, because of REXML
+	output = uconvert(output, @encoding, 'utf-8') 
+	# FIXME I turn everything into utf-8, not unicode, originally because REXML was being used but now beause I haven't tested it out yet.
       end
 
       # categories/tags/keywords/whatever are handled in _end_category
@@ -1631,36 +1553,36 @@ module FeedParser
 
       # store output in appropriate place(s)
       if @inentry and not @insource
-        if element == 'content'
-          @entries[-1][element] ||= []
-          contentparams = Marshal.load(Marshal.dump(@contentparams)) # deepcopy
-          contentparams['value'] = output
-          @entries[-1][element] << contentparams
-        elsif element == 'link'
-          @entries[-1][element] = output
-          if output and not output.empty?
-            @entries[-1]['links'][-1]['href'] = output
-          end
-        else
-          element = 'summary' if element == 'description'
-          @entries[-1][element] = output
-          if @incontent != 0
-            contentparams = Marshal.load(Marshal.dump(@contentparams))
-            contentparams['value'] = output
-            @entries[-1][element + '_detail'] = contentparams
-          end
-        end
+	if element == 'content'
+	  @entries[-1][element] ||= []
+	  contentparams = Marshal.load(Marshal.dump(@contentparams)) # deepcopy
+	  contentparams['value'] = output
+	  @entries[-1][element] << contentparams
+	elsif element == 'link'
+	  @entries[-1][element] = output
+	  if output and not output.empty?
+	    @entries[-1]['links'][-1]['href'] = output
+	  end
+	else
+	  element = 'summary' if element == 'description'
+	  @entries[-1][element] = output
+	  if @incontent != 0
+	    contentparams = Marshal.load(Marshal.dump(@contentparams))
+	    contentparams['value'] = output
+	    @entries[-1][element + '_detail'] = contentparams
+	  end
+	end
       elsif (@infeed or @insource) and not @intextinput and not @inimage
-        context = getContext()
-        element = 'subtitle' if element == 'description'
-        context[element] = output
-        if element == 'link'
-          context['links'][-1]['href'] = output
-        elsif @incontent != 0
-          contentparams = Marshal.load(Marshal.dump(@contentparams))
-          contentparams['value'] = output
-          context[element + '_detail'] = contentparams
-        end
+	context = getContext()
+	element = 'subtitle' if element == 'description'
+	context[element] = output
+	if element == 'link'
+	  context['links'][-1]['href'] = output
+	elsif @incontent != 0
+	  contentparams = Marshal.load(Marshal.dump(@contentparams))
+	  contentparams['value'] = output
+	  context[element + '_detail'] = contentparams
+	end
       end
       return output
     end
@@ -1683,10 +1605,10 @@ module FeedParser
     def mapToStandardPrefix(name)
       colonpos = name.index(':')
       if colonpos
-        prefix = name[0..colonpos-1]
-        suffix = name[colonpos+1..-1]
-        prefix = @namespacemap[prefix] || prefix
-        name = prefix + ':' + suffix
+	prefix = name[0..colonpos-1]
+	suffix = name[colonpos+1..-1]
+	prefix = @namespacemap[prefix] || prefix
+	name = prefix + ':' + suffix
       end
       return name
     end
@@ -1698,7 +1620,7 @@ module FeedParser
     def isBase64(attrsD, contentparams)
       return true if (attrsD['mode'] == 'base64')
       if /(^text\/)|(\+xml$)|(\/xml$)/ =~ contentparams['type']
-        return false
+	return false
       end
       return true
     end
@@ -1706,9 +1628,9 @@ module FeedParser
     def itsAnHrefDamnIt(attrsD)
       href= attrsD['url'] || attrsD['uri'] || attrsD['href'] 
       if href
-        attrsD.delete('url')
-        attrsD.delete('uri')
-        attrsD['href'] = href
+	attrsD.delete('url')
+	attrsD.delete('uri')
+	attrsD['href'] = href
       end
       return attrsD
     end
@@ -1721,21 +1643,21 @@ module FeedParser
 
     def _start_rss(attrsD)
       versionmap = {'0.91' => 'rss091u',
-                  '0.92' => 'rss092',
-                  '0.93' => 'rss093',
-                  '0.94' => 'rss094'
+		  '0.92' => 'rss092',
+		  '0.93' => 'rss093',
+		  '0.94' => 'rss094'
       }
 
       if not @version or @version.empty?
-        attr_version = attrsD['version'] || ''
-        version = versionmap[attr_version]
-        if version and not version.empty?
-          @version = version
-        elsif /^2\./ =~ attr_version
-          @version = 'rss20'
-        else
-          @version = 'rss'
-        end
+	attr_version = attrsD['version'] || ''
+	version = versionmap[attr_version]
+	if version and not version.empty?
+	  @version = version
+	elsif /^2\./ =~ attr_version
+	  @version = 'rss20'
+	else
+	  @version = 'rss'
+	end
       end
     end
 
@@ -1751,32 +1673,32 @@ module FeedParser
 
     def _cdf_common(attrsD)
       if attrsD.has_key?'lastmod'
-        _start_modified({})
-        @elementstack[-1][-1] = attrsD['lastmod']
-        _end_modified
+	_start_modified({})
+	@elementstack[-1][-1] = attrsD['lastmod']
+	_end_modified
       end
       if attrsD.has_key?'href'
-        _start_link({})
-        @elementstack[-1][-1] = attrsD['href']
-        _end_link
+	_start_link({})
+	@elementstack[-1][-1] = attrsD['href']
+	_end_link
       end
     end
 
     def _start_feed(attrsD)
       @infeed = true 
       versionmap = {'0.1' => 'atom01',
-                  '0.2' => 'atom02',
-                  '0.3' => 'atom03'
+		  '0.2' => 'atom02',
+		  '0.3' => 'atom03'
       }
 
       if not @version or @version.empty?
-        attr_version = attrsD['version']
-        version = versionmap[attr_version]
-        if @version and not @version.empty?
-          @version = version
-        else
-          @version = 'atom'
-        end
+	attr_version = attrsD['version']
+	version = versionmap[attr_version]
+	if @version and not @version.empty?
+	  @version = version
+	else
+	  @version = 'atom'
+	end
       end
     end
 
@@ -1875,14 +1797,14 @@ module FeedParser
     def _end_name
       value = pop('name')
       if @inpublisher
-        _save_author('name', value, 'publisher')
+	_save_author('name', value, 'publisher')
       elsif @inauthor
-        _save_author('name', value)
+	_save_author('name', value)
       elsif @incontributor
-        _save_contributor('name', value)
+	_save_contributor('name', value)
       elsif @intextinput
-        context = getContext()
-        context['textinput']['name'] = value
+	context = getContext()
+	context['textinput']['name'] = value
       end
     end
     alias :_end_itunes_name :_end_name
@@ -1894,8 +1816,8 @@ module FeedParser
     def _end_width
       value = pop('width').to_i
       if @inimage 
-        context = getContext
-        context['image']['width'] = value
+	context = getContext
+	context['image']['width'] = value
       end
     end
 
@@ -1906,8 +1828,8 @@ module FeedParser
     def _end_height
       value = pop('height').to_i
       if @inimage
-        context = getContext()
-        context['image']['height'] = value
+	context = getContext()
+	context['image']['height'] = value
       end
     end
 
@@ -1920,15 +1842,15 @@ module FeedParser
     def _end_url
       value = pop('href')
       if @inauthor
-        _save_author('href', value)
+	_save_author('href', value)
       elsif @incontributor
-        _save_contributor('href', value)
+	_save_contributor('href', value)
       elsif @inimage
-        context = getContext()
-        context['image']['href'] = value
+	context = getContext()
+	context['image']['href'] = value
       elsif @intextinput
-        context = getContext()
-        context['textinput']['link'] = value
+	context = getContext()
+	context['textinput']['link'] = value
       end
     end
     alias :_end_homepage :_end_url
@@ -1942,22 +1864,22 @@ module FeedParser
     def _end_email
       value = pop('email')
       if @inpublisher
-        _save_author('email', value, 'publisher')
+	_save_author('email', value, 'publisher')
       elsif @inauthor
-        _save_author('email', value)
+	_save_author('email', value)
       elsif @incontributor
-        _save_contributor('email', value)
+	_save_contributor('email', value)
       end
     end
     alias :_end_itunes_email :_end_email
 
     def getContext
       if @insource
-        context = @sourcedata
+	context = @sourcedata
       elsif @inentry
-        context = @entries[-1]
+	context = @entries[-1]
       else
-        context = @feeddata
+	context = @feeddata
       end
       return context
     end
@@ -1979,30 +1901,30 @@ module FeedParser
       context = getContext()
       detail = context["#{key}_detail"]
       if detail and not detail.empty?
-        name = detail['name']
-        email = detail['email']
+	name = detail['name']
+	email = detail['email']
 
-        if name and email and not (name.empty? or name.empty?)
-          context[key] = "#{name} (#{email})"
-        elsif name and not name.empty?
-          context[key] = name
-        elsif email and not email.empty?
-          context[key] = email
-        end
+	if name and email and not (name.empty? or name.empty?)
+	  context[key] = "#{name} (#{email})"
+	elsif name and not name.empty?
+	  context[key] = name
+	elsif email and not email.empty?
+	  context[key] = email
+	end
       else
-        author = context[key].dup unless context[key].nil?
-        return if not author or author.empty?
-        emailmatch = author.match(/(([a-zA-Z0-9\_\-\.\+]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?))/)
-        email = emailmatch[1]
-        author.gsub!(email, '')
-        author.gsub!("\(\)", '')
-        author.strip!
-        author.gsub!(/^\(/,'')
-        author.gsub!(/\)$/,'')
-        author.strip!
-        context["#{key}_detail"] ||= FeedParserDict.new
-        context["#{key}_detail"]['name'] = author
-        context["#{key}_detail"]['email'] = email
+	author = context[key].dup unless context[key].nil?
+	return if not author or author.empty?
+	emailmatch = author.match(/(([a-zA-Z0-9\_\-\.\+]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?))/)
+	email = emailmatch[1]
+	author.gsub!(email, '')
+	author.gsub!("\(\)", '')
+	author.strip!
+	author.gsub!(/^\(/,'')
+		     author.gsub!(/\)$/,'')
+		     author.strip!
+		     context["#{key}_detail"] ||= FeedParserDict.new
+		     context["#{key}_detail"]['name'] = author
+		     context["#{key}_detail"]['email'] = email
       end
     end
 
@@ -2037,8 +1959,8 @@ module FeedParser
       @guidislink = false
       id = getAttribute(attrsD, 'rdf:about')
       if id and not id.empty?
-        context = getContext()
-        context['id'] = id
+	context = getContext()
+	context['id'] = id
       end
       _cdf_common(attrsD)
     end
@@ -2124,8 +2046,8 @@ module FeedParser
       push('license', true)
       value = getAttribute(attrsD, 'rdf:resource')
       if value and not value.empty?
-        elementstack[-1][2] <<  value
-        pop('license')
+	elementstack[-1][2] <<  value
+	pop('license')
       end
     end
 
@@ -2142,11 +2064,11 @@ module FeedParser
       context['tags'] ||= []
       tags = context['tags']
       if (term.nil? or term.empty?) and (scheme.nil? or scheme.empty?) and (label.nil? or label.empty?)
-        return
+	return
       end
       value = FeedParserDict.new({'term' => term, 'scheme' => scheme, 'label' => label})
       if not tags.include?value
-        context['tags'] << FeedParserDict.new({'term' => term, 'scheme' => scheme, 'label' => label})
+	context['tags'] << FeedParserDict.new({'term' => term, 'scheme' => scheme, 'label' => label})
       end
     end
 
@@ -2164,7 +2086,7 @@ module FeedParser
 
     def _end_itunes_keywords
       pop('itunes_keywords').split.each do |term|
-        addTag(term, 'http://www.itunes.com/', nil)
+	addTag(term, 'http://www.itunes.com/', nil)
       end
     end
 
@@ -2179,9 +2101,9 @@ module FeedParser
       context = getContext()
       tags = context['tags']
       if value and not value.empty? and not tags.empty? and not tags[-1]['term']:
-        tags[-1]['term'] = value
+	tags[-1]['term'] = value
       else
-        addTag(value, nil, nil)
+	addTag(value, nil, nil)
       end
     end
     alias :_end_dc_subject :_end_category
@@ -2197,22 +2119,22 @@ module FeedParser
       attrsD['type'] ||= 'text/html'
       attrsD = itsAnHrefDamnIt(attrsD)
       if attrsD.has_key? 'href'
-        attrsD['href'] = resolveURI(attrsD['href'])
+	attrsD['href'] = resolveURI(attrsD['href'])
       end
       expectingText = @infeed || @inentry || @insource
       context = getContext()
       context['links'] ||= []
       context['links'] << FeedParserDict.new(attrsD)
       if attrsD['rel'] == 'enclosure'
-        _start_enclosure(attrsD)
+	_start_enclosure(attrsD)
       end
       if attrsD.has_key? 'href'
-        expectingText = false
-        if (attrsD['rel'] == 'alternate') and @html_types.include?mapContentType(attrsD['type'])
-          context['link'] = attrsD['href']
-        end
+	expectingText = false
+	if (attrsD['rel'] == 'alternate') and @html_types.include?mapContentType(attrsD['type'])
+	  context['link'] = attrsD['href']
+	end
       else
-        push('link', expectingText)
+	push('link', expectingText)
       end
     end
     alias :_start_producturl :_start_link
@@ -2221,10 +2143,10 @@ module FeedParser
       value = pop('link')
       context = getContext()
       if @intextinput
-        context['textinput']['link'] = value
+	context['textinput']['link'] = value
       end
       if @inimage
-        context['image']['link'] = value
+	context['image']['link'] = value
       end
     end
     alias :_end_producturl :_end_link
@@ -2238,9 +2160,9 @@ module FeedParser
       value = pop('id')
       _save('guidislink', (@guidislink and not getContext().has_key?('link')))
       if @guidislink:
-        # guid acts as link, but only if 'ispermalink' is not present or is 'true',
-        # and only if the item doesn't already have a link element
-        _save('link', value)
+	# guid acts as link, but only if 'ispermalink' is not present or is 'true',
+	# and only if the item doesn't already have a link element
+	_save('link', value)
       end
     end
 
@@ -2255,9 +2177,9 @@ module FeedParser
       value = popContent('title')
       context = getContext()
       if @intextinput
-        context['textinput']['title'] = value
+	context['textinput']['title'] = value
       elsif @inimage
-        context['image']['title'] = value
+	context['image']['title'] = value
       end
     end
     alias :_end_dc_title :_end_title
@@ -2266,10 +2188,10 @@ module FeedParser
     def _start_description(attrsD)
       context = getContext()
       if context.has_key?('summary')
-        @summaryKey = 'content'
-        _start_content(attrsD)
+	@summaryKey = 'content'
+	_start_content(attrsD)
       else
-        pushContent('description', attrsD, 'text/html', @infeed || @inentry || @insource)
+	pushContent('description', attrsD, 'text/html', @infeed || @inentry || @insource)
       end
     end
 
@@ -2279,15 +2201,15 @@ module FeedParser
 
     def _end_description
       if @summaryKey == 'content'
-        _end_content()
+	_end_content()
       else
-        value = popContent('description')
-        context = getContext()
-        if @intextinput
-          context['textinput']['description'] = value
-        elsif @inimage:
-          context['image']['description'] = value
-        end
+	value = popContent('description')
+	context = getContext()
+	if @intextinput
+	  context['textinput']['description'] = value
+	elsif @inimage:
+	  context['image']['description'] = value
+	end
       end
       @summaryKey = nil
     end
@@ -2305,10 +2227,10 @@ module FeedParser
 
     def _start_generator(attrsD)
       if attrsD and not attrsD.empty?
-        attrsD = itsAnHrefDamnIt(attrsD)
-        if attrsD.has_key?('href')
-          attrsD['href'] = resolveURI(attrsD['href'])
-        end
+	attrsD = itsAnHrefDamnIt(attrsD)
+	if attrsD.has_key?('href')
+	  attrsD['href'] = resolveURI(attrsD['href'])
+	end
       end
       getContext()['generator_detail'] = FeedParserDict.new(attrsD)
       push('generator', true)
@@ -2318,7 +2240,7 @@ module FeedParser
       value = pop('generator')
       context = getContext()
       if context.has_key?('generator_detail')
-        context['generator_detail']['name'] = value
+	context['generator_detail']['name'] = value
       end
     end
 
@@ -2326,7 +2248,7 @@ module FeedParser
       push('generator', true)
       value = getAttribute(attrsD, 'rdf:resource')
       if value and not value.empty?
-        elementstack[-1][2] << value
+	elementstack[-1][2] << value
       end
       pop('generator')
       getContext()['generator_detail'] = FeedParserDict.new({'href' => value})
@@ -2336,7 +2258,7 @@ module FeedParser
       push('errorreportsto', true)
       value = getAttribute(attrsD, 'rdf:resource')
       if value and not value.empty?
-        @elementstack[-1][2] << value
+	@elementstack[-1][2] << value
       end
       pop('errorreportsto')
     end
@@ -2344,20 +2266,20 @@ module FeedParser
     def _start_summary(attrsD)
       context = getContext()
       if context.has_key?'summary'
-        @summaryKey = 'content'
-        _start_content(attrsD)
+	@summaryKey = 'content'
+	_start_content(attrsD)
       else
-        @summaryKey = 'summary'
-        pushContent(@summaryKey, attrsD, 'text/plain', true)
+	@summaryKey = 'summary'
+	pushContent(@summaryKey, attrsD, 'text/plain', true)
       end
     end
     alias :_start_itunes_summary :_start_summary
 
     def _end_summary
       if @summaryKey == 'content':
-        _end_content()
+	_end_content()
       else
-        popContent(@summaryKey || 'summary')
+	popContent(@summaryKey || 'summary')
       end
       @summaryKey = nil
     end
@@ -2369,10 +2291,10 @@ module FeedParser
       getContext()['enclosures'] << FeedParserDict.new(attrsD)
       href = attrsD['href']
       if href and not href.empty?
-        context = getContext()
-        if not context['id']
-          context['id'] = href
-        end
+	context = getContext()
+	if not context['id']
+	  context['id'] = href
+	end
       end
     end
 
@@ -2390,7 +2312,7 @@ module FeedParser
       pushContent('content', attrsD, 'text/plain', true)
       src = attrsD['src']
       if src and not src.empty?:
-        @contentparams['src'] = src
+	@contentparams['src'] = src
       end
       push('content', true)
     end
@@ -2413,7 +2335,7 @@ module FeedParser
       copyToDescription = (['text/plain'] + @html_types).include? mapContentType(@contentparams['type'])
       value = popContent('content')
       if copyToDescription
-        _save('description', value)
+	_save('description', value)
       end
       alias :_end_body :_end_content
       alias :_end_xhtml_body :_end_content
@@ -2456,34 +2378,34 @@ module FeedParser
       # FIXME The century regexp maybe not work ('\d\d$' says "two numbers at 
       # end of line" but we then attach more of a regexp.  
       iso8601_regexps = [ '^(\d{4})-?([01]\d)-([0123]\d)',
-                        '^(\d{4})-([01]\d)',
-                        '^(\d{4})-?([0123]\d\d)',
-                        '^(\d\d)-?([01]\d)-?([0123]\d)',
-                        '^(\d\d)-?([0123]\d\d)',
-                        '^(\d{4})',
-                        '-(\d\d)-?([01]\d)',
-                        '-([0123]\d\d)',
-                        '-(\d\d)',
-                        '--([01]\d)-?([0123]\d)',
-                        '--([01]\d)',
-                        '---([0123]\d)',
-                        '(\d\d$)',
-                        ''
+		      '^(\d{4})-([01]\d)',
+		      '^(\d{4})-?([0123]\d\d)',
+		      '^(\d\d)-?([01]\d)-?([0123]\d)',
+		      '^(\d\d)-?([0123]\d\d)',
+		      '^(\d{4})',
+		      '-(\d\d)-?([01]\d)',
+		      '-([0123]\d\d)',
+		      '-(\d\d)',
+		      '--([01]\d)-?([0123]\d)',
+		      '--([01]\d)',
+		      '---([0123]\d)',
+		      '(\d\d$)',
+		      ''
       ]
       iso8601_values = { '^(\d{4})-?([01]\d)-([0123]\d)' => ['year', 'month', 'day'],
-                    '^(\d{4})-([01]\d)' => ['year','month'], 
-                    '^(\d{4})-?([0123]\d\d)' => ['year', 'ordinal'],
-                    '^(\d\d)-?([01]\d)-?([0123]\d)' => ['year','month','day'], 
-                    '^(\d\d)-?([0123]\d\d)' => ['year','ordinal'],
-                    '^(\d{4})' => ['year'],
-                    '-(\d\d)-?([01]\d)' => ['year','month'], 
-                    '-([0123]\d\d)' => ['ordinal'], 
-                    '-(\d\d)' => ['year'],
-                    '--([01]\d)-?([0123]\d)' => ['month','day'],
-                    '--([01]\d)' => ['month'],
-                    '---([0123]\d)' => ['day'],
-                    '(\d\d$)' => ['century'], 
-                    '' => []
+		  '^(\d{4})-([01]\d)' => ['year','month'], 
+		  '^(\d{4})-?([0123]\d\d)' => ['year', 'ordinal'],
+		  '^(\d\d)-?([01]\d)-?([0123]\d)' => ['year','month','day'], 
+		  '^(\d\d)-?([0123]\d\d)' => ['year','ordinal'],
+		  '^(\d{4})' => ['year'],
+		  '-(\d\d)-?([01]\d)' => ['year','month'], 
+		  '-([0123]\d\d)' => ['ordinal'], 
+		  '-(\d\d)' => ['year'],
+		  '--([01]\d)-?([0123]\d)' => ['month','day'],
+		  '--([01]\d)' => ['month'],
+		  '---([0123]\d)' => ['day'],
+		  '(\d\d$)' => ['century'], 
+		  '' => []
       }
       add_to_all = '(T?(\d\d):(\d\d)(?::(\d\d))?([+-](\d\d)(?::(\d\d))?|Z)?)?'
       add_to_all_fields = ['hour', 'minute', 'second', 'tz', 'tzhour', 'tzmin'] 
@@ -2492,10 +2414,10 @@ module FeedParser
       m = nil
       param_keys = []
       iso8601_regexps.each do |s|
-        $stderr << "Trying iso8601 regexp: #{s+add_to_all}\n" if $debug
-        param_keys = iso8601_values[s] + add_to_all_fields
-        m = dateString.match(Regexp.new(s+add_to_all))
-        break if m
+	$stderr << "Trying iso8601 regexp: #{s+add_to_all}\n" if $debug
+	param_keys = iso8601_values[s] + add_to_all_fields
+	m = dateString.match(Regexp.new(s+add_to_all))
+	break if m
       end
       return if m.nil? or (m.begin(0).zero? and m.end(0).zero?) 
 
@@ -2503,48 +2425,48 @@ module FeedParser
       param_values = param_values[1..-1] 
       params = {}
       param_keys.each_with_index do |key,i|
-        params[key] = param_values[i]
+	params[key] = param_values[i]
       end
 
       ordinal = params['ordinal'].to_i unless params['ordinal'].nil?
       year = params['year'] || '--'
       if year.nil? or year.empty? or year == '--' # FIXME When could the regexp ever return a year equal to '--'?
-        year = Time.now.utc.year
+	year = Time.now.utc.year
       elsif year.length == 2
-        # ISO 8601 assumes current century, i.e. 93 -> 2093, NOT 1993
-        year = 100 * (Time.now.utc.year / 100) + year.to_i
+	# ISO 8601 assumes current century, i.e. 93 -> 2093, NOT 1993
+	year = 100 * (Time.now.utc.year / 100) + year.to_i
       else
-        year = year.to_i
+	year = year.to_i
       end
 
       month = params['month'] || '-'
       if month.nil? or month.empty? or month == '-'
-        # ordinals are NOT normalized by mktime, we simulate them
-        # by setting month=1, day=ordinal
-        if ordinal
-          month = DateTime.ordinal(year,ordinal).month
-        else
-          month = Time.now.utc.month
-        end
+	# ordinals are NOT normalized by mktime, we simulate them
+	# by setting month=1, day=ordinal
+	if ordinal
+	  month = DateTime.ordinal(year,ordinal).month
+	else
+	  month = Time.now.utc.month
+	end
       end
       month = month.to_i unless month.nil?
       day = params['day']
       if day.nil? or day.empty?
-        # see above
-        if ordinal
-          day = DateTime.ordinal(year,ordinal).day
-        elsif params['century'] or params['year'] or params['month']
-          day = 1
-        else
-          day = Time.now.utc.day
-        end
+	# see above
+	if ordinal
+	  day = DateTime.ordinal(year,ordinal).day
+	elsif params['century'] or params['year'] or params['month']
+	  day = 1
+	else
+	  day = Time.now.utc.day
+	end
       else
-        day = day.to_i
+	day = day.to_i
       end
       # special case of the century - is the first year of the 21st century
       # 2000 or 2001 ? The debate goes on...
       if params.has_key? 'century'
-        year = (params['century'].to_i - 1) * 100 + 1
+	year = (params['century'].to_i - 1) * 100 + 1
       end
       # in ISO 8601 most fields are optional
       hour = params['hour'].to_i 
@@ -2558,16 +2480,16 @@ module FeedParser
       tm = [second, minute, hour, day, month, year, nil, ordinal, false, nil]
       tz = params['tz']
       if tz and not tz.empty? and tz != 'Z'
-        # FIXME does this cross over days?
-        if tz[0] == '-'
-          tm[3] += params['tzhour'].to_i
-        tm[4] += params['tzmin'].to_i
-        elsif tz[0] == '+'
-          tm[3] -= params['tzhour'].to_i
-          tm[4] -= params['tzmin'].to_i
-        else
-          return nil
-        end
+	# FIXME does this cross over days?
+	if tz[0] == '-'
+	  tm[3] += params['tzhour'].to_i
+	tm[4] += params['tzmin'].to_i
+	elsif tz[0] == '+'
+	  tm[3] -= params['tzhour'].to_i
+	  tm[4] -= params['tzmin'].to_i
+	else
+	  return nil
+	end
       end
       return Time.utc(*tm) # Magic!
 
@@ -2584,7 +2506,7 @@ module FeedParser
       korean_onblog_date_re = /(\d{4})#{korean_year}\s+(\d{2})#{korean_month}\s+(\d{2})#{korean_day}\s+(\d{2}):(\d{2}):(\d{2})/
 
 
-      m = korean_onblog_date_re.match(dateString)
+	m = korean_onblog_date_re.match(dateString)
       return unless m
       w3dtfdate = "#{m[1]}-#{m[2]}-#{m[3]}T#{m[4]}:#{m[5]}:#{m[6]}+09:00"
 
@@ -2599,12 +2521,12 @@ module FeedParser
       korean_pm    = u("오후") # bfc0 c8c4 in euc-kr
 
       korean_nate_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(#{korean_am}|#{korean_pm})\s+(\d{0,2}):(\d{0,2}):(\d{0,2})/
-      m = korean_nate_date_re.match(dateString)
+	m = korean_nate_date_re.match(dateString)
       return unless m
       hour = m[5].to_i
       ampm = m[4]
       if ampm == korean_pm
-        hour += 12
+	hour += 12
       end
       hour = hour.to_s.rjust(2,'0') 
       w3dtfdate = "#{m[1]}-#{m[2]}-#{m[3]}T#{hour}:#{m[6]}:#{m[7]}+09:00"
@@ -2615,59 +2537,57 @@ module FeedParser
     def _parse_date_mssql(dateString)
       mssql_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})(\.\d+)?/
 
-      m = mssql_date_re.match(dateString)
+	m = mssql_date_re.match(dateString)
       return unless m
       w3dtfdate =  "#{m[1]}-#{m[2]}-#{m[3]}T#{m[4]}:#{m[5]}:#{m[6]}+09:00"
       $stderr << "MS SQL date parsed as: %s\n" % w3dtfdate if $debug
       return _parse_date_w3dtf(w3dtfdate)
     end
 
-    # FIXME I'm not sure that Regexp and Encoding play well together
-
     def _parse_date_greek(dateString)
       # Parse a string according to a Greek 8-bit date format
       # Unicode strings for Greek date strings
       greek_months = { 
-        u("Ιαν") => u("Jan"),       # c9e1ed in iso-8859-7
-        u("Φεβ") => u("Feb"),       # d6e5e2 in iso-8859-7
-        u("Μάώ") => u("Mar"),       # ccdcfe in iso-8859-7
-        u("Μαώ") => u("Mar"),       # cce1fe in iso-8859-7
-        u("Απρ") => u("Apr"),       # c1f0f1 in iso-8859-7
-        u("Μάι") => u("May"),       # ccdce9 in iso-8859-7
-        u("Μαϊ") => u("May"),       # cce1fa in iso-8859-7
-        u("Μαι") => u("May"),       # cce1e9 in iso-8859-7
-        u("Ιούν") => u("Jun"), # c9effded in iso-8859-7
-        u("Ιον") => u("Jun"),       # c9efed in iso-8859-7
-        u("Ιούλ") => u("Jul"), # c9effdeb in iso-8859-7
-        u("Ιολ") => u("Jul"),       # c9f9eb in iso-8859-7
-        u("Αύγ") => u("Aug"),       # c1fde3 in iso-8859-7
-        u("Αυγ") => u("Aug"),       # c1f5e3 in iso-8859-7
-        u("Σεπ") => u("Sep"),       # d3e5f0 in iso-8859-7
-        u("Οκτ") => u("Oct"),       # cfeaf4 in iso-8859-7
-        u("Νοέ") => u("Nov"),       # cdefdd in iso-8859-7
-        u("Νοε") => u("Nov"),       # cdefe5 in iso-8859-7
-        u("Δεκ") => u("Dec"),       # c4e5ea in iso-8859-7
+	u("Ιαν") => u("Jan"),       # c9e1ed in iso-8859-7
+	u("Φεβ") => u("Feb"),       # d6e5e2 in iso-8859-7
+	u("Μάώ") => u("Mar"),       # ccdcfe in iso-8859-7
+	u("Μαώ") => u("Mar"),       # cce1fe in iso-8859-7
+	u("Απρ") => u("Apr"),       # c1f0f1 in iso-8859-7
+	u("Μάι") => u("May"),       # ccdce9 in iso-8859-7
+	u("Μαϊ") => u("May"),       # cce1fa in iso-8859-7
+	u("Μαι") => u("May"),       # cce1e9 in iso-8859-7
+	u("Ιούν") => u("Jun"), # c9effded in iso-8859-7
+	u("Ιον") => u("Jun"),       # c9efed in iso-8859-7
+	u("Ιούλ") => u("Jul"), # c9effdeb in iso-8859-7
+	u("Ιολ") => u("Jul"),       # c9f9eb in iso-8859-7
+	u("Αύγ") => u("Aug"),       # c1fde3 in iso-8859-7
+	u("Αυγ") => u("Aug"),       # c1f5e3 in iso-8859-7
+	u("Σεπ") => u("Sep"),       # d3e5f0 in iso-8859-7
+	u("Οκτ") => u("Oct"),       # cfeaf4 in iso-8859-7
+	u("Νοέ") => u("Nov"),       # cdefdd in iso-8859-7
+	u("Νοε") => u("Nov"),       # cdefe5 in iso-8859-7
+	u("Δεκ") => u("Dec"),       # c4e5ea in iso-8859-7
       }
 
       greek_wdays =   { 
-        u("Κυρ") => u("Sun"), # caf5f1 in iso-8859-7
-        u("Δευ") => u("Mon"), # c4e5f5 in iso-8859-7
-        u("Τρι") => u("Tue"), # d4f1e9 in iso-8859-7
-        u("Τετ") => u("Wed"), # d4e5f4 in iso-8859-7
-        u("Πεμ") => u("Thu"), # d0e5ec in iso-8859-7
-        u("Παρ") => u("Fri"), # d0e1f1 in iso-8859-7
-        u("Σαβ") => u("Sat"), # d3e1e2 in iso-8859-7   
+	u("Κυρ") => u("Sun"), # caf5f1 in iso-8859-7
+	u("Δευ") => u("Mon"), # c4e5f5 in iso-8859-7
+	u("Τρι") => u("Tue"), # d4f1e9 in iso-8859-7
+	u("Τετ") => u("Wed"), # d4e5f4 in iso-8859-7
+	u("Πεμ") => u("Thu"), # d0e5ec in iso-8859-7
+	u("Παρ") => u("Fri"), # d0e1f1 in iso-8859-7
+	u("Σαβ") => u("Sat"), # d3e1e2 in iso-8859-7   
       }
 
       greek_date_format = /([^,]+),\s+(\d{2})\s+([^\s]+)\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+([^\s]+)/
 
-      m = greek_date_format.match(dateString)
+	m = greek_date_format.match(dateString)
       return unless m
       begin
-        wday = greek_wdays[m[1]]
-        month = greek_months[m[3]]
+	wday = greek_wdays[m[1]]
+	month = greek_months[m[3]]
       rescue
-        return nil
+	return nil
       end
       rfc822date = "#{wday}, #{m[2]} #{month} #{m[4]} #{m[5]}:#{m[6]}:#{m[7]} #{m[8]}" 
       $stderr << "Greek date parsed as: #{rfc822date}\n" if $debug
@@ -2677,30 +2597,30 @@ module FeedParser
     def _parse_date_hungarian(dateString)
       # Parse a string according to a Hungarian 8-bit date format.
       hungarian_date_format_re = /(\d{4})-([^-]+)-(\d{0,2})T(\d{0,2}):(\d{2})((\+|-)(\d{0,2}:\d{2}))/
-      m = hungarian_date_format_re.match(dateString)
+	m = hungarian_date_format_re.match(dateString)
       return unless m
 
       # Unicode strings for Hungarian date strings
       hungarian_months = { 
-        u("január") =>   u("01"),  # e1 in iso-8859-2
-        u("februári") => u("02"),  # e1 in iso-8859-2
-        u("március") =>  u("03"),  # e1 in iso-8859-2
-        u("április") =>  u("04"),  # e1 in iso-8859-2
-        u("máujus") =>   u("05"),  # e1 in iso-8859-2
-        u("június") =>   u("06"),  # fa in iso-8859-2
-        u("július") =>   u("07"),  # fa in iso-8859-2
-        u("augusztus") =>     u("08"),
-        u("szeptember") =>    u("09"),
-        u("október") =>  u("10"),  # f3 in iso-8859-2
-        u("november") =>      u("11"),
-        u("december") =>      u("12"),
+	u("január") =>   u("01"),  # e1 in iso-8859-2
+	u("februári") => u("02"),  # e1 in iso-8859-2
+	u("március") =>  u("03"),  # e1 in iso-8859-2
+	u("április") =>  u("04"),  # e1 in iso-8859-2
+	u("máujus") =>   u("05"),  # e1 in iso-8859-2
+	u("június") =>   u("06"),  # fa in iso-8859-2
+	u("július") =>   u("07"),  # fa in iso-8859-2
+	u("augusztus") =>     u("08"),
+	u("szeptember") =>    u("09"),
+	u("október") =>  u("10"),  # f3 in iso-8859-2
+	u("november") =>      u("11"),
+	u("december") =>      u("12"),
       }
       begin
-        month = hungarian_months[m[2]]
-        day = m[3].rjust(2,'0')
-        hour = m[4].rjust(2,'0')
+	month = hungarian_months[m[2]]
+	day = m[3].rjust(2,'0')
+	hour = m[4].rjust(2,'0')
       rescue
-        return
+	return
       end
 
       w3dtfdate = "#{m[1]}-#{month}-#{day}T#{hour}:#{m[5]}:00#{m[6]}"
@@ -2711,59 +2631,60 @@ module FeedParser
     def rollover(num, modulus)
       return num % modulus, num / modulus
     end
+
     def set_self(num, modulus)
       r = num / modulus
       if r == 0
-        return num
+	return num
       end
       return r
     end
     # W3DTF-style date parsing
     # FIXME shouldn't it be "W3CDTF"?
     def _parse_date_w3dtf(dateString)
-      # Ruby's Time docs claim w3dtf is an alias for iso8601 which is an alias for xmlschema
+      # Ruby's Time docs claim w3cdtf is an alias for iso8601 which is an alias for xmlschema
       # Whatever it is, it doesn't work.  This has been fixed in Ruby 1.9 and 
       # in Ruby on Rails, but not really. They don't fix the 25 hour or 61 minute or 61 second rollover and fail in other ways.
-      # FIXME This code *still* doesn't work on the rollover tests, but it does pass the rest. Also, it needs a serious clean-up
-    
+
       m = dateString.match(/^(\d{4})-?(?:(?:([01]\d)-?(?:([0123]\d)(?:T(\d\d):(\d\d):(\d\d)([+-]\d\d:\d\d|Z))?)?)?)?/)
 
       w3 = m[1..3].map{|s| s=s.to_i; s += 1 if s == 0;s}  # Map the year, month and day to integers and, if they were nil, set them to 1
-      w3 += m[4..6].map{|s| s.to_i}                  # Map the hour, minute and second to integers
-      w3 << m[-1]                                     # Leave the timezone as a String
+      w3 += m[4..6].map{|s| s.to_i}			  # Map the hour, minute and second to integers
+      w3 << m[-1]					  # Leave the timezone as a String
 
+      # FIXME this next bit needs some serious refactoring
       # Rollover times. 0 minutes and 61 seconds -> 1 minute and 1 second
       w3[5],r = rollover(w3[5], 60)     # rollover seconds
       w3[4] += r
       w3[4],r = rollover(w3[4], 60)      # rollover minutes
       w3[3] += r
       w3[3],r = rollover(w3[3], 24)      # rollover hours
-  
+
       w3[2] = w3[2] + r
       if w3[1] > 12
-        w3[1],r = rollover(w3[1],12)
-        w3[1] = 12 if w3[1] == 0
-        w3[0] += r
+	w3[1],r = rollover(w3[1],12)
+	w3[1] = 12 if w3[1] == 0
+	w3[0] += r
       end
 
       num_days = Time.days_in_month(w3[1], w3[0])
       while w3[2] > num_days
-        w3[2] -= num_days
-        w3[1] += 1
-        if w3[1] > 12
-          w3[0] += 1
-          w3[1] = set_self(w3[1], 12)
-        end
-        num_days = Time.days_in_month(w3[1], w3[0])
+	w3[2] -= num_days
+	w3[1] += 1
+	if w3[1] > 12
+	  w3[0] += 1
+	  w3[1] = set_self(w3[1], 12)
+	end
+	num_days = Time.days_in_month(w3[1], w3[0])
       end
 
 
       unless w3[6].class != String
-        if /^-/ =~ w3[6] # Zone offset goes backwards
-          w3[6][0] = '+'
-        elsif /^\+/ =~ w3[6]
-          w3[6][0] = '-'
-        end
+	if /^-/ =~ w3[6] # Zone offset goes backwards
+	  w3[6][0] = '+'
+	elsif /^\+/ =~ w3[6]
+	  w3[6][0] = '-'
+	end
       end
       return Time.utc(w3[0], w3[1], w3[2] , w3[3], w3[4], w3[5])+Time.zone_offset(w3[6] || "UTC")
     end
@@ -2772,33 +2693,34 @@ module FeedParser
       # Parse an RFC822, RFC1123, RFC2822 or asctime-style date 
       # These first few lines are to fix up the stupid proprietary format from Disney
       unknown_timezones = { 'AT' => 'EDT', 'ET' => 'EST', 
-                          'CT' => 'CST', 'MT' => 'MST', 
-                          'PT' => 'PST' 
+			'CT' => 'CST', 'MT' => 'MST', 
+			'PT' => 'PST' 
       }
+
       mon = dateString.split[2]
       if mon.length > 3 and Time::RFC2822_MONTH_NAME.include?mon[0..2]
-        dateString.sub!(mon,mon[0..2])
+	dateString.sub!(mon,mon[0..2])
       end
       if dateString[-3..-1] != "GMT" and unknown_timezones[dateString[-2..-1]]
-        dateString[-2..-1] = unknown_timezones[dateString[-2..-1]]
+	dateString[-2..-1] = unknown_timezones[dateString[-2..-1]]
       end
       # Okay, the Disney date format should be fixed up now.
       rfc = dateString.match(/([A-Za-z]{3}), ([0123]\d) ([A-Za-z]{3}) (\d{4})( (\d\d):(\d\d)(?::(\d\d))? ([A-Za-z]{3}))?/)
       if rfc.to_a.length > 1 and rfc.to_a.include? nil
-        dow, day, mon, year, hour, min, sec, tz = rfc[1..-1]
-        hour,min,sec = [hour,min,sec].map{|e| e.to_s.rjust(2,'0') }
-        tz ||= "GMT"
+	dow, day, mon, year, hour, min, sec, tz = rfc[1..-1]
+	hour,min,sec = [hour,min,sec].map{|e| e.to_s.rjust(2,'0') }
+	tz ||= "GMT"
       end
       asctime_match = dateString.match(/([A-Za-z]{3}) ([A-Za-z]{3})  (\d?\d) (\d\d):(\d\d):(\d\d) ([A-Za-z]{3}) (\d\d\d\d)/).to_a
       if asctime_match.to_a.length > 1
-        # Month-abbr dayofmonth hour:minute:second year
-        dow, mon, day, hour, min, sec, tz, year = asctime_match[1..-1]
-        day.to_s.rjust(2,'0')
+	# Month-abbr dayofmonth hour:minute:second year
+	dow, mon, day, hour, min, sec, tz, year = asctime_match[1..-1]
+	day.to_s.rjust(2,'0')
       end
       if (rfc.to_a.length > 1 and rfc.to_a.include? nil) or asctime_match.to_a.length > 1
-        ds = "#{dow}, #{day} #{mon} #{year} #{hour}:#{min}:#{sec} #{tz}"
+	ds = "#{dow}, #{day} #{mon} #{year} #{hour}:#{min}:#{sec} #{tz}"
       else
-        ds = dateString
+	ds = dateString
       end
       t = Time.rfc2822(ds).utc
       return t
@@ -2814,8 +2736,8 @@ module FeedParser
     def extract_tuple(atime)
       # NOTE leave the error handling to parse_date
       t = [atime.year, atime.month, atime.mday, atime.hour,
-        atime.min, atime.sec, (atime.wday-1) % 7, atime.yday,
-        atime.isdst
+	atime.min, atime.sec, (atime.wday-1) % 7, atime.yday,
+	atime.isdst
       ]
       # yay for modulus! yaaaaaay!  its 530 am and i should be sleeping! yaay!
       t[0..-2].map!{|s| s.to_i}
@@ -2825,13 +2747,13 @@ module FeedParser
 
     def parse_date(dateString)
       @date_handlers.each do |handler|
-        begin 
-          $stderr << "Trying date_handler #{handler}\n" if $debug
-          datething = extract_tuple(send(handler,dateString))
-          return datething
-        rescue Exception => e
-          $stderr << "#{handler} raised #{e}\n" if $debug
-        end
+	begin 
+	  $stderr << "Trying date_handler #{handler}\n" if $debug
+	  datething = extract_tuple(send(handler,dateString))
+	  return datething
+	rescue Exception => e
+	  $stderr << "#{handler} raised #{e}\n" if $debug
+	end
       end
       return nil
     end
@@ -2857,7 +2779,7 @@ module FeedParser
     def getAttrs(attrs)
       ret = []
       for i in 0..attrs.getLength
-        ret.push([attrs.getName(i), attrs.getValue(i)])
+	ret.push([attrs.getName(i), attrs.getValue(i)])
       end
       ret
     end
@@ -2879,17 +2801,17 @@ module FeedParser
 
     def startElement(name, attrs)
       name =~ /^(([^;]*);)?(.+)$/ # Snag namespaceuri from name
-      namespaceuri = ($2 || '').downcase
+	namespaceuri = ($2 || '').downcase
       name = $3
       if /backend\.userland\.com\/rss/ =~ namespaceuri
-        # match any backend.userland.com namespace
-        namespaceuri = 'http://backend.userland.com/rss'
+	# match any backend.userland.com namespace
+	namespaceuri = 'http://backend.userland.com/rss'
       end
       prefix = @matchnamespaces[namespaceuri] 
       # No need to raise UndeclaredNamespace, Expat does that for us with
       "unbound prefix (XMLParserError)"
       if prefix and not prefix.empty?
-        name = prefix + ':' + name
+	name = prefix + ':' + name
       end
       name.downcase!
       unknown_starttag(name, attrs)
@@ -2908,10 +2830,10 @@ module FeedParser
 
     def endElement(name) 
       name =~ /^(([^;]*);)?(.+)$/ # Snag namespaceuri from name
-      namespaceuri = ($2 || '').downcase
+	namespaceuri = ($2 || '').downcase
       prefix = @matchnamespaces[namespaceuri]
       if prefix and not prefix.empty?
-        localname = prefix + ':' + name
+	localname = prefix + ':' + name
       end
       name.downcase!
       unknown_endtag(name)
@@ -2945,13 +2867,13 @@ module FeedParser
     # of Mixin would overwrite the methods we inherited from 
     # BaseHTMLProcessor. This is exactly the opposite of what we want to 
     # happen!
-    
+
     attr_accessor :encoding, :bozo, :feeddata, :entries, :namespacesInUse
-    
+
     Elements_No_End_Tag = ['area', 'base', 'basefont', 'br', 'col', 'frame', 'hr',
       'img', 'input', 'isindex', 'link', 'meta', 'param']
     New_Declname_Re = /[a-zA-Z][-_.a-zA-Z0-9:]*\s*/
-    alias :sgml_feed :feed # feed needs to mapped to feeddata, not the SGMLParser method feed. I think.
+      alias :sgml_feed :feed # feed needs to mapped to feeddata, not the SGMLParser method feed. I think.
     def feed       
       @feeddata
     end
@@ -2971,24 +2893,24 @@ module FeedParser
 
     def parse(data)
       data.gsub!(/<!((?!DOCTYPE|--|\[))/i,  '&lt;!\1')
-      data.gsub!(/<([^<\s]+?)\s*\/>/) do |tag|
-        clean = tag[1..-3].strip
-        if Elements_No_End_Tag.include?clean
-          tag
-        else
-          '<'+clean+'></'+clean+'>'
-        end
-      end
+	data.gsub!(/<([^<\s]+?)\s*\/>/) do |tag|
+	  clean = tag[1..-3].strip
+	  if Elements_No_End_Tag.include?clean
+	    tag
+	  else
+	  '<'+clean+'></'+clean+'>'
+	  end
+	end
 
-      data.gsub!(/&#39;/, "'")
-      data.gsub!(/&#34;/, "'")
-      if @encoding and not @encoding.empty? # FIXME unicode check type(u'')
-        data = uconvert(data,'utf-8',@encoding)
-      end
-      sgml_feed(data) # see the alias above
+	data.gsub!(/&#39;/, "'")
+	  data.gsub!(/&#34;/, "'")
+	  if @encoding and not @encoding.empty? # FIXME unicode check type(u'')
+	    data = uconvert(data,'utf-8',@encoding)
+	  end
+	sgml_feed(data) # see the alias above
     end
 
-    
+
     def decodeEntities(element, data)
       data.gsub!('&#60;', '&lt;')
       data.gsub!('&#x3c;', '&lt;')
@@ -3001,11 +2923,11 @@ module FeedParser
       data.gsub!('&#39;', '&apos;')
       data.gsub!('&#x27;', '&apos;')
       if @contentparams.has_key? 'type' and not ((@contentparams['type'] || 'xml') =~ /xml$/u)
-        data.gsub!('&lt;', '<')
-        data.gsub!('&gt;', '>')
-        data.gsub!('&amp;', '&')
-        data.gsub!('&quot;', '"')
-        data.gsub!('&apos;', "'")
+	data.gsub!('&lt;', '<')
+	data.gsub!('&gt;', '>')
+	data.gsub!('&amp;', '&')
+	data.gsub!('&quot;', '"')
+	data.gsub!('&apos;', "'")
       end
       return data
     end
@@ -3043,10 +2965,10 @@ module FeedParser
     relative_uris.each do |l|
       ename, eattr = l
       h.search(ename).each do |elem|
-        euri = elem.attributes[eattr]
-        if euri and not euri.empty? and URI.parse(euri).relative?
-          elem.attributes[eattr] = urljoin(baseURI, euri)
-        end
+	euri = elem.attributes[eattr]
+	if euri and not euri.empty? and URI.parse(euri).relative?
+	  elem.attributes[eattr] = urljoin(baseURI, euri)
+	end
       end
     end
     return h.to_html
@@ -3164,46 +3086,45 @@ module FeedParser
     def initialize(children, config=nil)
       super(children)
       @config = { :nuke_tags => @@unacceptable_elements_with_end_tag ,
-        :allow_tags => @@acceptable_elements,
-        :allow_attributes => @@acceptable_attributes,
-        :allow_tag_specific_attributes => @@acceptable_tag_specific_attributes
+	:allow_tags => @@acceptable_elements,
+	:allow_attributes => @@acceptable_attributes,
+	:allow_tag_specific_attributes => @@acceptable_tag_specific_attributes
       }
       unless $compatible
-        @config.merge!({:allow_css_properties => @@acceptable_css_properties,
-                       :allow_css_keywords => @@acceptable_css_keywords
-        })
+	@config.merge!({:allow_css_properties => @@acceptable_css_properties,
+		       :allow_css_keywords => @@acceptable_css_keywords
+	})
       end
       @config.merge!(config) unless config.nil?
     end
 
     def scrub
-      traverse_all_element do |e| # FIXME there has to be another way
-        if e.elem? and (not @config[:allow_tags].include?e.name)
-          if @config[:nuke_tags].include?e.name
-            e.inner_html = ''
-          end
-          e.cull 
-          # This works because the children swapped in are brought in "after" the current element.
-        elsif e.doctype?
-          e.parent.children.delete(e)
-        elsif e.text?
-          ets = e.to_s
-          #ets.gsub!(/<!((?!DOCTYPE|--|\[))/i, '&lt;\1') # FIXME Why should this be here?
-          ets.gsub!(/&#39;/, "'")
-          ets.gsub!(/&#34;/, '"')
-          ets.gsub!(/\r/,'')
-          e.swap(ets)
-        else
-        end
+      traverse_all_element do |e| 
+	if e.elem? and (not @config[:allow_tags].include?e.name)
+	  if @config[:nuke_tags].include?e.name
+	    e.inner_html = ''
+	  end
+	  e.cull 
+	  # This works because the children swapped in are brought in "after" the current element.
+	elsif e.doctype?
+	  e.parent.children.delete(e)
+	elsif e.text?
+	  ets = e.to_s
+	  ets.gsub!(/&#39;/, "'")
+	    ets.gsub!(/&#34;/, '"')
+	    ets.gsub!(/\r/,'')
+	  e.swap(ets)
+	else
+	end
       end
       # yes, that '/' should be there. It's a search method. See the Hpricot docs.
 
       @config[:allow_tags].each do |tag|
-        (self/tag).strip_attributes(@config[:allow_tag_specific_attributes][tag] || @config[:allow_attributes])
+	(self/tag).strip_attributes(@config[:allow_tag_specific_attributes][tag] || @config[:allow_attributes])
 
-        unless $compatible # FIXME not properly recursive, see comment in recursive_strip
-          (self/tag).strip_style(@config[:allow_css_properties], @config[:allow_css_keywords])
-        end
+	unless $compatible # FIXME not properly recursive, see comment in recursive_strip
+	  (self/tag).strip_style(@config[:allow_css_properties], @config[:allow_css_keywords])
+	end
       end
       children.each { |e| e.strip(@config[:allow_tags])}
 
@@ -3216,11 +3137,11 @@ module FeedParser
   end
   module_function(:SanitizerDoc)
   def self.sanitizeHTML(html,encoding)
-    # FIXME Does not do encoding, nor Tidy
+    # FIXME Tidy not yet supported
     html = html.gsub(/<!((?!DOCTYPE|--|\[))/, '&lt;!\1')
-    h = SanitizerDoc(html)
-    h = h.scrub
-    return h.to_html.strip
+      h = SanitizerDoc(html)
+      h = h.scrub
+      return h.to_html.strip
   end
 
 
@@ -3237,9 +3158,9 @@ module FeedParser
       encoding_scan = feed.meta['content-type'].to_s.scan(/charset\s*=\s*(.*?)(?:"|')*$/)
       http_encoding = encoding_scan.flatten[0].to_s.gsub(/("|')/,'')
       http_encoding = nil if http_encoding.empty?
-      # FIXME Open-Uri returns iso8859-1 if there is no charset, but that
-      # doesn't pass the tests. Open-uri claims its following the right RFC.
-      # Are they wrong or do we need to change the tests?
+      # FIXME Open-Uri returns iso8859-1 if there is no charset header,
+      # but that doesn't pass the tests. Open-Uri claims its following
+      # the right RFC. Are they wrong or do we need to change the tests?
     rescue NoMethodError
       http_headers = {}
       http_content_type = nil
@@ -3251,46 +3172,46 @@ module FeedParser
     # http://www.w3.org/TR/REC-xml/#sec-guessing-no-ext-info
     begin 
       if xml_data[0..3] == "\x4c\x6f\xa7\x94"
-        # EBCDIC
-        xml_data = _ebcdic_to_ascii(xml_data)
+	# EBCDIC
+	xml_data = _ebcdic_to_ascii(xml_data)
       elsif xml_data[0..3] == "\x00\x3c\x00\x3f"
-        # UTF-16BE
-        sniffed_xml_encoding = 'utf-16be'
-        xml_data = uconvert(xml_data, 'utf-16be', 'utf-8')
+	# UTF-16BE
+	sniffed_xml_encoding = 'utf-16be'
+	xml_data = uconvert(xml_data, 'utf-16be', 'utf-8')
       elsif xml_data.size >= 4 and xml_data[0..1] == "\xfe\xff" and xml_data[2..3] != "\x00\x00"
-        # UTF-16BE with BOM
-        sniffed_xml_encoding = 'utf-16be'
-        xml_data = uconvert(xml_data[2..-1], 'utf-16be', 'utf-8')
+	# UTF-16BE with BOM
+	sniffed_xml_encoding = 'utf-16be'
+	xml_data = uconvert(xml_data[2..-1], 'utf-16be', 'utf-8')
       elsif xml_data[0..3] == "\x3c\x00\x3f\x00"
-        # UTF-16LE
-        sniffed_xml_encoding = 'utf-16le'
-        xml_data = uconvert(xml_data, 'utf-16le', 'utf-8')
+	# UTF-16LE
+	sniffed_xml_encoding = 'utf-16le'
+	xml_data = uconvert(xml_data, 'utf-16le', 'utf-8')
       elsif xml_data.size >=4 and xml_data[0..1] == "\xff\xfe" and xml_data[2..3] != "\x00\x00"
-        # UTF-16LE with BOM
-        sniffed_xml_encoding = 'utf-16le'
-        xml_data = uconvert(xml_data[2..-1], 'utf-16le', 'utf-8')
+	# UTF-16LE with BOM
+	sniffed_xml_encoding = 'utf-16le'
+	xml_data = uconvert(xml_data[2..-1], 'utf-16le', 'utf-8')
       elsif xml_data[0..3] == "\x00\x00\x00\x3c"
-        # UTF-32BE
-        sniffed_xml_encoding = 'utf-32be'
-        xml_data = uconvert(xml_data, 'utf-32be', 'utf-8')
+	# UTF-32BE
+	sniffed_xml_encoding = 'utf-32be'
+	xml_data = uconvert(xml_data, 'utf-32be', 'utf-8')
       elsif xml_data[0..3] == "\x3c\x00\x00\x00"
-        # UTF-32LE
-        sniffed_xml_encoding = 'utf-32le'
-        xml_data = uconvert(xml_data, 'utf-32le', 'utf-8')
+	# UTF-32LE
+	sniffed_xml_encoding = 'utf-32le'
+	xml_data = uconvert(xml_data, 'utf-32le', 'utf-8')
       elsif xml_data[0..3] == "\x00\x00\xfe\xff"
-        # UTF-32BE with BOM
-        sniffed_xml_encoding = 'utf-32be'
-        xml_data = uconvert(xml_data[4..-1], 'utf-32BE', 'utf-8')
+	# UTF-32BE with BOM
+	sniffed_xml_encoding = 'utf-32be'
+	xml_data = uconvert(xml_data[4..-1], 'utf-32BE', 'utf-8')
       elsif xml_data[0..3] == "\xff\xfe\x00\x00"
-        # UTF-32LE with BOM
-        sniffed_xml_encoding = 'utf-32le'
-        xml_data = uconvert(xml_data[4..-1], 'utf-32le', 'utf-8')
+	# UTF-32LE with BOM
+	sniffed_xml_encoding = 'utf-32le'
+	xml_data = uconvert(xml_data[4..-1], 'utf-32le', 'utf-8')
       elsif xml_data[0..2] == "\xef\xbb\xbf"
-        # UTF-8 with BOM
-        sniffed_xml_encoding = 'utf-8'
-        xml_data = xml_data[3..-1]
+	# UTF-8 with BOM
+	sniffed_xml_encoding = 'utf-8'
+	xml_data = xml_data[3..-1]
       else
-        # ASCII-compatible
+	# ASCII-compatible
       end
       xml_encoding_match = /^<\?.*encoding=[\'"](.*?)[\'"].*\?>/.match(xml_data)
     rescue
@@ -3300,7 +3221,7 @@ module FeedParser
       xml_encoding = xml_encoding_match[1].downcase
       xencodings = ['iso-10646-ucs-2', 'ucs-2', 'csunicode', 'iso-10646-ucs-4', 'ucs-4', 'csucs4', 'utf-16', 'utf-32', 'utf_16', 'utf_32', 'utf16', 'u16']
       if sniffed_xml_encoding and xencodings.include?xml_encoding
-        xml_encoding = sniffed_xml_encoding
+	xml_encoding = sniffed_xml_encoding
       end
     end
 
@@ -3335,42 +3256,42 @@ module FeedParser
     # NOTE we must use double quotes when dealing with \x encodings!
     if (data.size >= 4 and data[0..1] == "\xfe\xff" and data[2..3] != "\x00\x00")
       if $debug
-        $stderr << "stripping BOM\n"
-        if encoding != 'utf-16be'
-          $stderr << "string utf-16be instead\n"
-        end
+	$stderr << "stripping BOM\n"
+	if encoding != 'utf-16be'
+	  $stderr << "string utf-16be instead\n"
+	end
       end
       encoding = 'utf-16be'
       data = data[2..-1]
     elsif (data.size >= 4 and data[0..1] == "\xff\xfe" and data[2..3] != "\x00\x00")
       if $debug
-        $stderr << "stripping BOM\n"
-        $stderr << "trying utf-16le instead\n" if encoding != 'utf-16le'
+	$stderr << "stripping BOM\n"
+	$stderr << "trying utf-16le instead\n" if encoding != 'utf-16le'
       end
       encoding = 'utf-16le'
       data = data[2..-1]
     elsif (data[0..2] == "\xef\xbb\xbf")
       if $debug
-        $stderr << "stripping BOM\n"
-        $stderr << "trying utf-8 instead\n" if encoding != 'utf-8'
+	$stderr << "stripping BOM\n"
+	$stderr << "trying utf-8 instead\n" if encoding != 'utf-8'
       end
       encoding = 'utf-8'
       data = data[3..-1]
     elsif (data[0..3] == "\x00\x00\xfe\xff")
       if $debug
-        $stderr << "stripping BOM\n"
-        if encoding != 'utf-32be'
-          $stderr << "trying utf-32be instead\n"
-        end
+	$stderr << "stripping BOM\n"
+	if encoding != 'utf-32be'
+	  $stderr << "trying utf-32be instead\n"
+	end
       end
       encoding = 'utf-32be'
       data = data[4..-1]
     elsif (data[0..3] == "\xff\xfe\x00\x00")
       if $debug
-        $stderr << "stripping BOM\n"
-        if encoding != 'utf-32le'
-          $stderr << "trying utf-32le instead\n"
-        end
+	$stderr << "stripping BOM\n"
+	if encoding != 'utf-32le'
+	  $stderr << "trying utf-32le instead\n"
+	end
       end
       encoding = 'utf-32le'
       data = data[4..-1]
@@ -3381,12 +3302,12 @@ module FeedParser
     end
     $stderr << "successfully converted #{encoding} data to utf-8\n" if $debug
     declmatch = /^<\?xml[^>]*?>/
-    newdecl = "<?xml version=\'1.0\' encoding=\'utf-8\'?>"
-    if declmatch =~ newdata
-      newdata.sub!(declmatch, newdecl) 
-    else
-      newdata = newdecl + "\n" + newdata
-    end
+      newdecl = "<?xml version=\'1.0\' encoding=\'utf-8\'?>"
+      if declmatch =~ newdata
+	newdata.sub!(declmatch, newdecl) 
+      else
+	newdata = newdecl + "\n" + newdata
+      end
     return newdata
   end
 
@@ -3425,28 +3346,31 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
     result['feed'] = FeedParserDict.new
     result['entries'] = []
     if options[:modified]
-      options[:modified] = Time.parse(options[:modified]).rfc2822 # FIXME this ignores all of our time parsing work. Does this work, or do we need to use our time parsing tools?
+      options[:modified] = Time.parse(options[:modified]).rfc2822 
+      # FIXME this ignores all of our time parsing work.  Does it matter?
     end
     result['bozo'] = false
     handlers = options[:handlers]
-    if handlers.class != Array # FIXME is this right?
+
+    if handlers.class != Array # FIXME why does this happen?
       handlers = [handlers]
     end
+
     begin
       if URI::parse(furi).class == URI::Generic
-        f = open(furi) # OpenURI doesn't behave well when passing HTTP options to a file.
+	f = open(furi) # OpenURI doesn't behave well when passing HTTP options to a file.
       else
-        # And when you do pass them, make sure they aren't just nil (this still true?)
-        newd = {}
-        newd["If-None-Match"] = options[:etag] unless options[:etag].nil?
-        newd["If-Modified-Since"] = options[:modified] unless options[:modified].nil?
-        newd["User-Agent"] = (options[:agent] || USER_AGENT).to_s 
-        newd["Referer"] = options[:referrer] unless options[:referrer].nil?
-        newd["Content-Location"] = options[:content_location] unless options[:content_location].nil?
-        newd["Content-Language"] = options[:content_language] unless options[:content_language].nil?                    
-        newd["Content-type"] = options[:content_type] unless options[:content_type].nil?
+	# And when you do pass them, make sure they aren't just nil (this still true?)
+	newd = {}
+	newd["If-None-Match"] = options[:etag] unless options[:etag].nil?
+	newd["If-Modified-Since"] = options[:modified] unless options[:modified].nil?
+	newd["User-Agent"] = (options[:agent] || USER_AGENT).to_s 
+	newd["Referer"] = options[:referrer] unless options[:referrer].nil?
+	newd["Content-Location"] = options[:content_location] unless options[:content_location].nil?
+	newd["Content-Language"] = options[:content_language] unless options[:content_language].nil?                    
+	newd["Content-type"] = options[:content_type] unless options[:content_type].nil?
 
-        f = open(furi, newd)
+	f = open(furi, newd)
       end
 
       data = f.read
@@ -3460,27 +3384,27 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
     end
     begin
       if f.meta
-        result['etag'] = options[:etag] || f.meta['etag']
-        result['modified'] = options[:modified] || f.last_modified 
-        result['url'] = f.base_uri.to_s
-        result['status'] = f.status[0] || 200
-        result['headers'] = f.meta
-        result['headers']['content-location'] ||= options[:content_location] unless options[:content_location].nil?
-        result['headers']['content-language'] ||= options[:content_language] unless options[:content_language].nil?
-        result['headers']['content-type'] ||= options[:content_type] unless options[:content_type].nil?
+	result['etag'] = options[:etag] || f.meta['etag']
+	result['modified'] = options[:modified] || f.last_modified 
+	result['url'] = f.base_uri.to_s
+	result['status'] = f.status[0] || 200
+	result['headers'] = f.meta
+	result['headers']['content-location'] ||= options[:content_location] unless options[:content_location].nil?
+	result['headers']['content-language'] ||= options[:content_language] unless options[:content_language].nil?
+	result['headers']['content-type'] ||= options[:content_type] unless options[:content_type].nil?
       end
     rescue NoMethodError
       result['headers'] = {}
       result['etag'] = result['headers']['etag'] = options[:etag] unless options[:etag].nil?
       result['modified'] = result['headers']['last-modified'] = options[:modified] unless options[:modified].nil?
       unless options[:content_location].nil?
-        result['headers']['content-location'] = options[:content_location]
+	result['headers']['content-location'] = options[:content_location]
       end
       unless options[:content_language].nil?
-        result['headers']['content-language'] = options[:content_language] 
+	result['headers']['content-language'] = options[:content_language] 
       end
       unless options[:content_type].nil?
-        result['headers']['content-type'] = options[:content_type]     
+	result['headers']['content-type'] = options[:content_type]     
       end
     end
 
@@ -3496,9 +3420,9 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
 
     if not http_headers.empty? and not acceptable_content_type
       if http_headers.has_key?('content-type')
-        bozo_message = "#{http_headers['content-type']} is not an XML media type"
+	bozo_message = "#{http_headers['content-type']} is not an XML media type"
       else
-        bozo_message = 'no Content-type specified'
+	bozo_message = 'no Content-type specified'
       end
       result['bozo'] = true
       result['bozo_exception'] = NonXMLContentType.new(bozo_message) # I get to care about this, cuz Mark says I should.
@@ -3531,9 +3455,9 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
       next if tried_encodings.include? proposed_encoding
       tried_encodings << proposed_encoding
       begin
-        data = self.toUTF8(data, proposed_encoding)
-        known_encoding = use_strict_parser = true
-        break
+	data = self.toUTF8(data, proposed_encoding)
+	known_encoding = use_strict_parser = true
+	break
       rescue
       end
     end
@@ -3549,26 +3473,26 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
       rescue
       end
     end
-    
-    
+
+
 
     # if still no luck and we haven't tried utf-8 yet, try that
     if not known_encoding and not tried_encodings.include?'utf-8'
       begin
-        proposed_encoding = 'utf-8'
-        tried_encodings << proposed_encoding
-        data = self.toUTF8(data, proposed_encoding)
-        known_encoding = use_strict_parser = true
+	proposed_encoding = 'utf-8'
+	tried_encodings << proposed_encoding
+	data = self.toUTF8(data, proposed_encoding)
+	known_encoding = use_strict_parser = true
       rescue
       end
     end
     # if still no luck and we haven't tried windows-1252 yet, try that
     if not known_encoding and not tried_encodings.include?'windows-1252'
       begin
-        proposed_encdoing = 'windows-1252'
-        tried_encodings << proposed_encoding
-        data = self.toUTF8(data, proposed_encoding)
-        known_encoding = use_strict_parser = true
+	proposed_encdoing = 'windows-1252'
+	tried_encodings << proposed_encoding
+	data = self.toUTF8(data, proposed_encoding)
+	known_encoding = use_strict_parser = true
       rescue
       end
     end
@@ -3609,15 +3533,15 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
       inputdata = XML::SAX::InputSource.new('parsedfeed')
       inputdata.setByteStream(StringIO.new(data))
       begin
-        saxparser.parse(inputdata)
+	saxparser.parse(inputdata)
       rescue Exception => parseerr # resparse
-        if $debug
-          $stderr << "xml parsing failed\n"
-          $stderr << parseerr.to_s+"\n" # Hrmph.
-        end
-        result['bozo'] = true
-        result['bozo_exception'] = feedparser.exc || e 
-        use_strict_parser = false
+	if $debug
+	  $stderr << "xml parsing failed\n"
+	  $stderr << parseerr.to_s+"\n" # Hrmph.
+	end
+	result['bozo'] = true
+	result['bozo_exception'] = feedparser.exc || e 
+	use_strict_parser = false
       end
     end
     if not use_strict_parser
@@ -3655,15 +3579,15 @@ class TextSerializer < Serializer
       end
     elsif node.class == Array
       node.each_with_index do |thing, index|
-        writer(stream, thing, prefix[0..-2] + '[' + index.to_s + '].')
+	writer(stream, thing, prefix[0..-2] + '[' + index.to_s + '].')
       end
     else
       begin
-        s = u(node.to_s)
-        stream << prefix[0..-2]
-        stream << '='
-        stream << s
-        stream << "\n"
+	s = u(node.to_s)
+	stream << prefix[0..-2]
+	stream << '='
+	stream << s
+	stream << "\n"
       rescue
       end
     end
@@ -3692,49 +3616,49 @@ opts = OptionParser.new do |opts|
   opts.banner 
   opts.separator ""
   opts.on("-A", "--user-agent [AGENT]",
-          "User-Agent for HTTP URLs") {|agent|
+	  "User-Agent for HTTP URLs") {|agent|
     options.agent = agent
   }
 
   opts.on("-e", "--referrer [URL]", 
-          "Referrer for HTTP URLs") {|referrer|
+	  "Referrer for HTTP URLs") {|referrer|
     options.referrer = referrer
   }
 
   opts.on("-t", "--etag [TAG]",
-          "ETag/If-None-Match for HTTP URLs") {|etag|
+	  "ETag/If-None-Match for HTTP URLs") {|etag|
     options.etag = etag
   }
 
   opts.on("-m", "--last-modified [DATE]",
-          "Last-modified/If-Modified-Since for HTTP URLs (any supported date format)") {|modified|
+	  "Last-modified/If-Modified-Since for HTTP URLs (any supported date format)") {|modified|
     options.modified = modified
   }
 
   opts.on("-f", "--format [FORMAT]", [:text, :pprint],
-          "output resutls in FORMAT (text, pprint)") {|format|
+	  "output resutls in FORMAT (text, pprint)") {|format|
     options.format = format
   }
 
   opts.on("-v", "--[no-]verbose",
-          "write debugging information to stderr") {|v|
+	  "write debugging information to stderr") {|v|
     options.verbose = v
   }
 
   opts.on("-c", "--[no-]compatible",
-          "strip element attributes like feedparser.py 4.1 (default)") {|comp|
+	  "strip element attributes like feedparser.py 4.1 (default)") {|comp|
     options.compatible = comp
   }
   opts.on("-l", "--content-location [LOCATION]",
-          "default Content-Location HTTP header") {|loc|
+	  "default Content-Location HTTP header") {|loc|
     options.content_location = loc
   }
   opts.on("-a", "--content-language [LANG]",
-          "default Content-Language HTTP header") {|lang|
+	  "default Content-Language HTTP header") {|lang|
     options.content_language = lang
   }
   opts.on("-t", "--content-type [TYPE]",
-          "default Content-type HTTP header") {|ctype|
+	  "default Content-type HTTP header") {|ctype|
     options.ctype = ctype
   }
 end
@@ -3752,13 +3676,13 @@ args = *ARGV.dup
 unless args.nil?
   args.each do |url| # opts.parse! removes everything but the urls from the command line
     results = FeedParser.parse(url, :etag => options.etag, 
-                               :modified => options.modified, 
-                               :agent => options.agent, 
-                               :referrer => options.referrer, 
-                               :content_location => options.content_location,
-                               :content_language => options.content_language,
-                               :content_type => options.ctype
-                              )
-                              serializer.new(results).write($stdout)
+			       :modified => options.modified, 
+			       :agent => options.agent, 
+			       :referrer => options.referrer, 
+			       :content_location => options.content_location,
+			       :content_language => options.content_language,
+			       :content_type => options.ctype
+			      )
+			      serializer.new(results).write($stdout)
   end
 end
