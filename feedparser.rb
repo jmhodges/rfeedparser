@@ -15,7 +15,6 @@ require 'enumerator' # each_slice among other things
 require 'uri'
 require 'cgi' # escaping html
 require 'time'
-#XML_AVAILABLE = true
 require 'xml/saxdriver' # calling expat
 require 'pp'
 require 'rubygems'
@@ -23,15 +22,17 @@ require 'parsedate' # Used in _parse_date_rfc822
 require 'base64'
 require 'iconv'
 require 'jcode'
-#FIXME need charset detection
-
-#FIXME untranslated, ruby gem
-gem 'hpricot', ">=0.5"
-gem 'character-encodings', ">=0.2.0"
-gem 'tzinfo'
-gem 'htmltools'
-gem 'htmlentities'
-gem 'activesupport'
+begin 
+  gem 'chardet'
+  gem 'hpricot', ">=0.5"
+  gem 'character-encodings', ">=0.2.0"
+  gem 'htmltools'
+  gem 'htmlentities'
+  gem 'activesupport'
+rescue Gem::LoadError
+end
+require 'chardet'
+$chardet = true
 
 require 'hpricot'
 require 'encoding/character/utf-8'
@@ -3380,7 +3381,7 @@ module FeedParser
       data = data[4..-1]
     end
     begin
-    newdata = uconvert(data, encoding, 'utf-8') 
+      newdata = uconvert(data, encoding, 'utf-8') 
     rescue => details
     end
     $stderr << "successfully converted #{encoding} data to utf-8\n" if $debug
@@ -3542,10 +3543,19 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
       end
     end
     # if no luck and we have auto-detection library, try that
-    #if known_encoding and chardet
-    # FIXME untranslated
-    #end
-    #
+    if not known_encoding and $chardet
+      begin 
+	proposed_encoding = CharDet.detect(data)['encoding']
+	if proposed_encoding and not tried_encodings.include?proposed_encoding
+	  tried_encodings << proposed_encoding
+	  data = self.toUTF8(data, proposed_encoding)
+	  known_encoding = use_strict_parser = true
+	end
+      rescue
+      end
+    end
+    
+    
 
     # if still no luck and we haven't tried utf-8 yet, try that
     if not known_encoding and not tried_encodings.include?'utf-8'
