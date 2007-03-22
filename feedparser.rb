@@ -864,6 +864,123 @@ end
 # http://underpantsgnome.com/2007/01/20/hpricot-scrub
 # I have modified it to check for attributes that are only allowed if they are in a certain tag
 module Hpricot
+  Acceptable_Elements = ['a', 'abbr', 'acronym', 'address', 'area', 'b',
+      'big', 'blockquote', 'br', 'button', 'caption', 'center', 'cite',
+      'code', 'col', 'colgroup', 'dd', 'del', 'dfn', 'dir', 'div', 'dl', 'dt',
+      'em', 'fieldset', 'font', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+      'hr', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'map',
+      'menu', 'ol', 'optgroup', 'option', 'p', 'pre', 'q', 's', 'samp',
+      'select', 'small', 'span', 'strike', 'strong', 'sub', 'sup', 'table',
+      'tbody', 'td', 'textarea', 'tfoot', 'th', 'thead', 'tr', 'tt', 'u',
+      'ul', 'var'
+    ]
+
+    Acceptable_Attributes = ['abbr', 'accept', 'accept-charset', 'accesskey',
+      'action', 'align', 'alt', 'axis', 'border', 'cellpadding',
+      'cellspacing', 'char', 'charoff', 'charset', 'checked', 'cite', 'class',
+      'clear', 'cols', 'colspan', 'color', 'compact', 'coords', 'datetime',
+      'dir', 'disabled', 'enctype', 'for', 'frame', 'headers', 'height',
+      'href', 'hreflang', 'hspace', 'id', 'ismap', 'label', 'lang',
+      'longdesc', 'maxlength', 'media', 'method', 'multiple', 'name',
+      'nohref', 'noshade', 'nowrap', 'prompt', 'readonly', 'rel', 'rev',
+      'rows', 'rowspan', 'rules', 'scope', 'selected', 'shape', 'size',
+      'span', 'src', 'start', 'summary', 'tabindex', 'target', 'title', 
+      'type', 'usemap', 'valign', 'value', 'vspace', 'width', 'xml:lang'
+    ]
+
+    Unacceptable_Elements_With_End_Tag = ['script', 'applet']
+
+    Acceptable_Css_Properties = ['azimuth', 'background-color',
+      'border-bottom-color', 'border-collapse', 'border-color',
+      'border-left-color', 'border-right-color', 'border-top-color', 'clear',
+      'color', 'cursor', 'direction', 'display', 'elevation', 'float', 'font',
+      'font-family', 'font-size', 'font-style', 'font-variant', 'font-weight',
+      'height', 'letter-spacing', 'line-height', 'overflow', 'pause',
+      'pause-after', 'pause-before', 'pitch', 'pitch-range', 'richness',
+      'speak', 'speak-header', 'speak-numeral', 'speak-punctuation',
+      'speech-rate', 'stress', 'text-align', 'text-decoration', 'text-indent',
+      'unicode-bidi', 'vertical-align', 'voice-family', 'volume',
+      'white-space', 'width'
+    ]
+
+    # survey of common keywords found in feeds
+    Acceptable_Css_Keywords = ['auto', 'aqua', 'black', 'block', 'blue',
+    'bold', 'both', 'bottom', 'brown', 'center', 'collapse', 'dashed',
+    'dotted', 'fuchsia', 'gray', 'green', '!important', 'italic', 'left',
+    'lime', 'maroon', 'medium', 'none', 'navy', 'normal', 'nowrap', 'olive',
+    'pointer', 'purple', 'red', 'right', 'solid', 'silver', 'teal', 'top',
+    'transparent', 'underline', 'white', 'yellow'
+    ]
+
+    Mathml_Elements = ['maction', 'math', 'merror', 'mfrac', 'mi',
+    'mmultiscripts', 'mn', 'mo', 'mover', 'mpadded', 'mphantom',
+    'mprescripts', 'mroot', 'mrow', 'mspace', 'msqrt', 'mstyle', 'msub',
+    'msubsup', 'msup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder',
+    'munderover', 'none'
+    ]
+
+    Mathml_Attributes = ['actiontype', 'align', 'columnalign', 'columnalign',
+    'columnalign', 'columnlines', 'columnspacing', 'columnspan', 'depth',
+    'display', 'displaystyle', 'equalcolumns', 'equalrows', 'fence',
+    'fontstyle', 'fontweight', 'frame', 'height', 'linethickness', 'lspace',
+    'mathbackground', 'mathcolor', 'mathvariant', 'mathvariant', 'maxsize',
+    'minsize', 'other', 'rowalign', 'rowalign', 'rowalign', 'rowlines',
+    'rowspacing', 'rowspan', 'rspace', 'scriptlevel', 'selection',
+    'separator', 'stretchy', 'width', 'width', 'xlink:href', 'xlink:show',
+    'xlink:type', 'xmlns', 'xmlns:xlink'
+    ]
+
+    # svgtiny - foreignObject + linearGradient + radialGradient + stop
+    Svg_Elements = ['a', 'animate', 'animateColor', 'animateMotion',
+    'animateTransform', 'circle', 'defs', 'desc', 'ellipse', 'font-face',
+    'font-face-name', 'font-face-src', 'g', 'glyph', 'hkern', 'image',
+    'linearGradient', 'line', 'metadata', 'missing-glyph', 'mpath', 'path',
+    'polygon', 'polyline', 'radialGradient', 'rect', 'set', 'stop', 'svg',
+    'switch', 'text', 'title', 'use'
+    ]
+
+    # svgtiny + class + opacity + offset + xmlns + xmlns:xlink
+    Svg_Attributes = ['accent-height', 'accumulate', 'additive', 'alphabetic',
+     'arabic-form', 'ascent', 'attributeName', 'attributeType',
+     'baseProfile', 'bbox', 'begin', 'by', 'calcMode', 'cap-height',
+     'class', 'color', 'color-rendering', 'content', 'cx', 'cy', 'd',
+     'descent', 'display', 'dur', 'end', 'fill', 'fill-rule', 'font-family',
+     'font-size', 'font-stretch', 'font-style', 'font-variant',
+     'font-weight', 'from', 'fx', 'fy', 'g1', 'g2', 'glyph-name', 
+     'gradientUnits', 'hanging', 'height', 'horiz-adv-x', 'horiz-origin-x',
+     'id', 'ideographic', 'k', 'keyPoints', 'keySplines', 'keyTimes',
+     'lang', 'mathematical', 'max', 'min', 'name', 'offset', 'opacity',
+     'origin', 'overline-position', 'overline-thickness', 'panose-1',
+     'path', 'pathLength', 'points', 'preserveAspectRatio', 'r',
+     'repeatCount', 'repeatDur', 'requiredExtensions', 'requiredFeatures',
+     'restart', 'rotate', 'rx', 'ry', 'slope', 'stemh', 'stemv', 
+     'stop-color', 'stop-opacity', 'strikethrough-position',
+     'strikethrough-thickness', 'stroke', 'stroke-dasharray',
+     'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin',
+     'stroke-miterlimit', 'stroke-width', 'systemLanguage', 'target',
+     'text-anchor', 'to', 'transform', 'type', 'u1', 'u2',
+     'underline-position', 'underline-thickness', 'unicode',
+     'unicode-range', 'units-per-em', 'values', 'version', 'viewBox',
+     'visibility', 'width', 'widths', 'x', 'x-height', 'x1', 'x2',
+     'xlink:actuate', 'xlink:arcrole', 'xlink:href', 'xlink:role',
+     'xlink:show', 'xlink:title', 'xlink:type', 'xml:base', 'xml:lang',
+     'xml:space', 'xmlns', 'xmlns:xlink', 'y', 'y1', 'y2', 'zoomAndPan'
+    ]
+
+    Svg_Attr_Map = nil
+    Svg_Elem_Map = nil
+
+    Acceptable_Svg_Properties = [ 'fill', 'fill-opacity', 'fill-rule',
+      'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin',
+      'stroke-opacity'
+    ]
+
+    unless $compatible 
+      @@acceptable_tag_specific_attributes = {}
+      @@mathml_elements.each{|e| @@acceptable_tag_specific_attributes[e] = @@mathml_attributes }
+      @@svg_elements.each{|e| @@acceptable_tag_specific_attributes[e] = @@svg_attributes }
+    end
+
   class Elements 
     def strip(allowed_tags=[]) # I completely route around this with the recursive_strip in Doc
       each { |x| x.strip(allowed_tags) }
@@ -903,72 +1020,24 @@ module Hpricot
     end
 
     def cull
-      swap(children.to_s)
+      if children
+	swap(children.to_s)
+      end
     end
 
-    def strip(allowed_tags=[])
-      if strip_removes? or not allowed_tags.include?self.name
+    def strip
+      if strip_removes?
 	cull
       end
-      children.each{ |x| x.strip(allowed_tags) } 
     end
 
-    def strip_attributes(safe=[])
-      children.each { |x| x.strip_attributes(safe) }
-
+    def strip_attributes
       unless attributes.nil?
 	attributes.each do |atr|
-	  unless safe.include?atr[0] or (atr[0] == 'style' and not $compatible)
+	  unless Acceptable_Attributes.include?atr[0] 
 	    remove_attribute(atr[0]) 
 	  end
 	end
-      end
-    end
-
-    # Much of this method was translated from Mark Pilgrim's FeedParser, including comments
-    def strip_style(ok_props = [], ok_keywords = [])
-      children.each do |e| 
-	e.strip_style(ok_props, ok_keywords) unless e.class == Hpricot::Text 
-      end
-
-      unless self['style'].nil?
-	# disallow urls 
-	style = self['style'].sub(/url\s*\(\s*[^\s)]+?\s*\)\s*'/u, ' ')
-	valid_css_values = /^(#[0-9a-f]+|rgb\(\d+%?,\d*%?,?\d*%?\)?|\d{0,2}\.?\d{0,2}(cm|em|ex|in|mm|pc|pt|px|%|,|\))?)$/u
-	# gauntlet
-	if not style.match(/^([:,;#%.\sa-zA-Z0-9!]|\w-\w|'[\s\w]+'|"[\s\w]+"|\([\d,\s]+\))*$/u)
-	  return ''
-	end
-	if not style.match(/^(\s*[-\w]+\s*:\s*[^:;]*(;|$))*$/u)
-	  return ''
-	end
-
-	clean = []
-	style.scan(/([-\w]+)\s*:\s*([^:;]*)/u).each do |l|
-	  prop, value = l
-
-	  next if value.nil? or value.empty?
-
-	  if ok_props.include?prop.downcase
-	    clean << prop + ': ' + value + ';'
-	  elsif ['background','border','margin','padding'].include? prop.split('-')[0].downcase 
-
-	    # This is a terrible, but working way to mimic Python's for/else
-	    did_not_break = true 
-
-	    value.split.each do |keyword|
-	      if not ok_keywords.include? keyword and not valid_css_values.match(keyword)
-		break
-	      end
-	    end
-
-	    if did_not_break
-	      clean << prop + ':' + value + ';'
-	    end
-	  end
-
-	end
-	self['style'] = clean.join(' ')
       end
     end
 
@@ -2975,159 +3044,35 @@ module FeedParser
   end
 
   class SanitizerDoc < Hpricot::Doc
-    @@acceptable_elements = ['a', 'abbr', 'acronym', 'address', 'area', 'b',
-      'big', 'blockquote', 'br', 'button', 'caption', 'center', 'cite',
-      'code', 'col', 'colgroup', 'dd', 'del', 'dfn', 'dir', 'div', 'dl', 'dt',
-      'em', 'fieldset', 'font', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-      'hr', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'map',
-      'menu', 'ol', 'optgroup', 'option', 'p', 'pre', 'q', 's', 'samp',
-      'select', 'small', 'span', 'strike', 'strong', 'sub', 'sup', 'table',
-      'tbody', 'td', 'textarea', 'tfoot', 'th', 'thead', 'tr', 'tt', 'u',
-      'ul', 'var']
-
-    @@acceptable_attributes = ['abbr', 'accept', 'accept-charset', 'accesskey',
-      'action', 'align', 'alt', 'axis', 'border', 'cellpadding',
-      'cellspacing', 'char', 'charoff', 'charset', 'checked', 'cite', 'class',
-      'clear', 'cols', 'colspan', 'color', 'compact', 'coords', 'datetime',
-      'dir', 'disabled', 'enctype', 'for', 'frame', 'headers', 'height',
-      'href', 'hreflang', 'hspace', 'id', 'ismap', 'label', 'lang',
-      'longdesc', 'maxlength', 'media', 'method', 'multiple', 'name',
-      'nohref', 'noshade', 'nowrap', 'prompt', 'readonly', 'rel', 'rev',
-      'rows', 'rowspan', 'rules', 'scope', 'selected', 'shape', 'size',
-      'span', 'src', 'start', 'summary', 'tabindex', 'target', 'title', 
-      'type', 'usemap', 'valign', 'value', 'vspace', 'width', 'xml:lang']
-
-    @@unacceptable_elements_with_end_tag = ['script', 'applet']
-
-    @@acceptable_css_properties = ['azimuth', 'background-color',
-      'border-bottom-color', 'border-collapse', 'border-color',
-      'border-left-color', 'border-right-color', 'border-top-color', 'clear',
-      'color', 'cursor', 'direction', 'display', 'elevation', 'float', 'font',
-      'font-family', 'font-size', 'font-style', 'font-variant', 'font-weight',
-      'height', 'letter-spacing', 'line-height', 'overflow', 'pause',
-      'pause-after', 'pause-before', 'pitch', 'pitch-range', 'richness',
-      'speak', 'speak-header', 'speak-numeral', 'speak-punctuation',
-      'speech-rate', 'stress', 'text-align', 'text-decoration', 'text-indent',
-      'unicode-bidi', 'vertical-align', 'voice-family', 'volume',
-      'white-space', 'width']
-
-    # survey of common keywords found in feeds
-    @@acceptable_css_keywords = ['auto', 'aqua', 'black', 'block', 'blue',
-    'bold', 'both', 'bottom', 'brown', 'center', 'collapse', 'dashed',
-    'dotted', 'fuchsia', 'gray', 'green', '!important', 'italic', 'left',
-    'lime', 'maroon', 'medium', 'none', 'navy', 'normal', 'nowrap', 'olive',
-    'pointer', 'purple', 'red', 'right', 'solid', 'silver', 'teal', 'top',
-    'transparent', 'underline', 'white', 'yellow']
-
-    @@mathml_elements = ['maction', 'math', 'merror', 'mfrac', 'mi',
-    'mmultiscripts', 'mn', 'mo', 'mover', 'mpadded', 'mphantom',
-    'mprescripts', 'mroot', 'mrow', 'mspace', 'msqrt', 'mstyle', 'msub',
-    'msubsup', 'msup', 'mtable', 'mtd', 'mtext', 'mtr', 'munder',
-    'munderover', 'none']
-
-    @@mathml_attributes = ['actiontype', 'align', 'columnalign', 'columnalign',
-    'columnalign', 'columnlines', 'columnspacing', 'columnspan', 'depth',
-    'display', 'displaystyle', 'equalcolumns', 'equalrows', 'fence',
-    'fontstyle', 'fontweight', 'frame', 'height', 'linethickness', 'lspace',
-    'mathbackground', 'mathcolor', 'mathvariant', 'mathvariant', 'maxsize',
-    'minsize', 'other', 'rowalign', 'rowalign', 'rowalign', 'rowlines',
-    'rowspacing', 'rowspan', 'rspace', 'scriptlevel', 'selection',
-    'separator', 'stretchy', 'width', 'width', 'xlink:href', 'xlink:show',
-    'xlink:type', 'xmlns', 'xmlns:xlink']
-
-    # svgtiny - foreignObject + linearGradient + radialGradient + stop
-    @@svg_elements = ['a', 'animate', 'animateColor', 'animateMotion',
-    'animateTransform', 'circle', 'defs', 'desc', 'ellipse', 'font-face',
-    'font-face-name', 'font-face-src', 'g', 'glyph', 'hkern', 'image',
-    'linearGradient', 'line', 'metadata', 'missing-glyph', 'mpath', 'path',
-    'polygon', 'polyline', 'radialGradient', 'rect', 'set', 'stop', 'svg',
-    'switch', 'text', 'title', 'use']
-
-    # svgtiny + class + opacity + offset + xmlns + xmlns:xlink
-    @@svg_attributes = ['accent-height', 'accumulate', 'additive', 'alphabetic',
-     'arabic-form', 'ascent', 'attributeName', 'attributeType',
-     'baseProfile', 'bbox', 'begin', 'by', 'calcMode', 'cap-height',
-     'class', 'color', 'color-rendering', 'content', 'cx', 'cy', 'd',
-     'descent', 'display', 'dur', 'end', 'fill', 'fill-rule', 'font-family',
-     'font-size', 'font-stretch', 'font-style', 'font-variant',
-     'font-weight', 'from', 'fx', 'fy', 'g1', 'g2', 'glyph-name', 
-     'gradientUnits', 'hanging', 'height', 'horiz-adv-x', 'horiz-origin-x',
-     'id', 'ideographic', 'k', 'keyPoints', 'keySplines', 'keyTimes',
-     'lang', 'mathematical', 'max', 'min', 'name', 'offset', 'opacity',
-     'origin', 'overline-position', 'overline-thickness', 'panose-1',
-     'path', 'pathLength', 'points', 'preserveAspectRatio', 'r',
-     'repeatCount', 'repeatDur', 'requiredExtensions', 'requiredFeatures',
-     'restart', 'rotate', 'rx', 'ry', 'slope', 'stemh', 'stemv', 
-     'stop-color', 'stop-opacity', 'strikethrough-position',
-     'strikethrough-thickness', 'stroke', 'stroke-dasharray',
-     'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin',
-     'stroke-miterlimit', 'stroke-width', 'systemLanguage', 'target',
-     'text-anchor', 'to', 'transform', 'type', 'u1', 'u2',
-     'underline-position', 'underline-thickness', 'unicode',
-     'unicode-range', 'units-per-em', 'values', 'version', 'viewBox',
-     'visibility', 'width', 'widths', 'x', 'x-height', 'x1', 'x2',
-     'xlink:actuate', 'xlink:arcrole', 'xlink:href', 'xlink:role',
-     'xlink:show', 'xlink:title', 'xlink:type', 'xml:base', 'xml:lang',
-     'xml:space', 'xmlns', 'xmlns:xlink', 'y', 'y1', 'y2', 'zoomAndPan']
-
-    @@svg_attr_map = nil
-    @@svg_elem_map = nil
-
-    @@acceptable_svg_properties = [ 'fill', 'fill-opacity', 'fill-rule',
-    'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin',
-    'stroke-opacity']
-
-    @@acceptable_tag_specific_attributes = {}
-    unless $compatible 
-      @@mathml_elements.each{|e| @@acceptable_tag_specific_attributes[e] = @@mathml_attributes }
-      @@svg_elements.each{|e| @@acceptable_tag_specific_attributes[e] = @@svg_attributes }
-    end
-
-    def initialize(children, config=nil)
-      super(children)
-      @config = { :nuke_tags => @@unacceptable_elements_with_end_tag ,
-	:allow_tags => @@acceptable_elements,
-	:allow_attributes => @@acceptable_attributes,
-	:allow_tag_specific_attributes => @@acceptable_tag_specific_attributes
-      }
-      unless $compatible
-	@config.merge!({:allow_css_properties => @@acceptable_css_properties,
-		       :allow_css_keywords => @@acceptable_css_keywords
-	})
-      end
-      @config.merge!(config) unless config.nil?
-    end
-
+    
     def scrub
       traverse_all_element do |e| 
-	if e.elem? and (not @config[:allow_tags].include?e.name)
-	  if @config[:nuke_tags].include?e.name
-	    e.inner_html = ''
+	if e.elem? 
+	  if Acceptable_Elements.include?e.name
+	    e.strip_attributes
+	  else
+	    if Unacceptable_Elements_With_End_Tag.include?e.name
+	      e.inner_html = ''
+	    end
+	    e.swap(SanitizerDoc.new(e.children).scrub.to_html)
+	    # This works because the children swapped in are brought in "after" the current element.
 	  end
-	  e.cull 
-	  # This works because the children swapped in are brought in "after" the current element.
 	elsif e.doctype?
 	  e.parent.children.delete(e)
 	elsif e.text?
 	  ets = e.to_s
-	  ets.gsub!(/&#39;/, "'")
-	    ets.gsub!(/&#34;/, '"')
-	    ets.gsub!(/\r/,'')
+	  ets.gsub!(/&#39;/, "'") 
+	  ets.gsub!(/&#34;/, '"')
+	  ets.gsub!(/\r/,'')
 	  e.swap(ets)
 	else
 	end
       end
       # yes, that '/' should be there. It's a search method. See the Hpricot docs.
 
-      @config[:allow_tags].each do |tag|
-	(self/tag).strip_attributes(@config[:allow_tag_specific_attributes][tag] || @config[:allow_attributes])
-
-	unless $compatible # FIXME not properly recursive, see comment in recursive_strip
-	  (self/tag).strip_style(@config[:allow_css_properties], @config[:allow_css_keywords])
-	end
+      unless $compatible # FIXME not properly recursive, see comment in recursive_strip
+	(self/tag).strip_style(@config[:allow_css_properties], @config[:allow_css_keywords])
       end
-      children.each { |e| e.strip(@config[:allow_tags])}
-
       return self
     end
   end
