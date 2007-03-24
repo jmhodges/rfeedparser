@@ -25,9 +25,10 @@ begin
   gem 'htmltools'
   gem 'htmlentities'
   gem 'activesupport'
+  gem 'chardet'
 rescue Gem::LoadError,LoadError
 end
-$: << "../lib"
+
 require 'chardet'
 $chardet = true
 

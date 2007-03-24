@@ -7,7 +7,7 @@ spec = Gem::Specification.new do |s|
     s.version    = "0.9.7"
     s.author     = "Jeff Hodges"
     s.email      = "jeff at somethingsimilar dot com"
-    s.homepage   = "http://rubyforge.org/projects/rfeedparser"
+    s.homepage   = "http://rfeedparser.rubyforge.org/"
     s.platform   = Gem::Platform::RUBY
     s.summary    = "Parse RSS and Atom feeds in Ruby"
     s.files      = FileList["{lib,tests}/**/*"].exclude("rdoc").to_a
@@ -19,6 +19,7 @@ spec = Gem::Specification.new do |s|
     s.rubyforge_project = 'rfeedparser'
 
     # Dependencies
+    s.add_dependency('rchardet')
     s.add_dependency('activesupport', '>= 1.0')
     s.add_dependency('hpricot', '>= 0.5')
     s.add_dependency('character-encodings', '>= 0.2')
