@@ -1,3 +1,6 @@
+I include this license in good faith effort, and it should be considered the license for the code herein.  
+    - Jeff Hodges < jeff at somethingsimilar.com >
+--
 Universal Feed Parser (feedparser.py), its testing harness (feedparsertest.py),
 and its unit tests (everything in the tests/ directory) are released under the
 following license:
