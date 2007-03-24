@@ -5,7 +5,7 @@
 require 'rubygems'
 gem 'mongrel'
 require 'mongrel'
-require 'feedparser'
+require '../lib/feedparser'
 $PORT = 8097
 def translate_data(data)
   if data[0..3] == "\x4c\x6f\xa7\x94"
@@ -111,5 +111,5 @@ end
 # Start up the mongrel server and tell it how to send the tests
 server = Mongrel::HttpServer.new("0.0.0.0", $PORT)
 Mongrel::DirHandler::add_mime_type('.xml','application/xml')
-server.register("/tests", FeedParserTestRequestHandler.new('./tests'))
+server.register("/", FeedParserTestRequestHandler.new('.'))
 server.run.join

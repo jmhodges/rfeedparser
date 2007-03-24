@@ -27,6 +27,7 @@ begin
   gem 'activesupport'
 rescue Gem::LoadError,LoadError
 end
+$: << "../lib"
 require 'chardet'
 $chardet = true
 

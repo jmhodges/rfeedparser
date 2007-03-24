@@ -6,8 +6,8 @@
 # NOTE FIXME Mongrel doesn't like many of the encoding/x80*.xml tests. I don't know why
 # I haven't figured out yet how to make the Time methods "rollover" on 25 hours, 61 minutes, etc.
 require 'test/unit'
-require 'feedparser'
-require 'jcode'
+require '../lib/feedparser'
+
 begin 
   require 'rubygems'
   gem 'mongrel'
@@ -168,9 +168,9 @@ end
 # default methods to be public
 XMLTests.send(:public)
 # add one unit test for each file
-Dir['tests/**/*.xml'].each do |xmlfile| # Test a subset
+Dir['**/*.xml'].each do |xmlfile| # Test a subset
   #Dir['tests/**/*.xml'].each do |xmlfile|
-  methname = xmlfile.gsub('/','_').sub('.xml','')
+  methname = "tests_"+xmlfile.gsub('/','_').sub('.xml','')
   XMLTests.send(:define_method, methname) {
 
     options = {}
@@ -191,5 +191,5 @@ end
 # Start up the mongrel server and tell it how to send the tests
 server = Mongrel::HttpServer.new("0.0.0.0",$PORT)
 Mongrel::DirHandler::add_mime_type('.xml','application/xml')
-server.register("/tests", FeedParserTestRequestHandler.new("./tests"))
+server.register("/", FeedParserTestRequestHandler.new("."))
 server.run
