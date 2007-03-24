@@ -501,6 +501,10 @@ def urljoin(base, uri)
   end
 end
 
+def py2rtime(pytuple)
+  Time.utc(pytuple[0..5])
+end
+
 # http://intertwingly.net/stories/2005/09/28/xchar.rb
 module XChar
   # http://intertwingly.net/stories/2004/04/14/i18n.html#CleaningWindows
