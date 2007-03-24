@@ -18,3 +18,11 @@ To use:
      require 'feedparser'
      
      fp = FeedParser.parse("some-feed-filepath-or-url")
+
+----
+
+For developers: 
+  I currently have the "rough" code in a bzr branch over at
+  <http://somethingsimilar.com/code/bzr/rfeedparser/>.  You'll want
+  to check out the rfeedparser-main branch for the current code, or
+  rfeedparser-release for the code in the latest release.
