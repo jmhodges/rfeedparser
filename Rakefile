@@ -15,7 +15,7 @@ spec = Gem::Specification.new do |s|
     s.autorequire       = "feedparser"
     s.test_file         = "tests/feedparsertest.rb"
     s.has_rdoc          = false
-    s.extra_rdoc_files  = ['README','LICENSE.feedparser', 'LICENSE.chardet', 'RUBY-TESTING']
+    s.extra_rdoc_files  = ['README','LICENSE', 'RUBY-TESTING']
     s.rubyforge_project = 'rfeedparser'
 
     # Dependencies
