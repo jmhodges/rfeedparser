@@ -9,7 +9,7 @@ open source, see LICENSE file for details
 To use:
   If installed as a gem
      require 'rubygems'
-     gem 'feedparser
+     gem 'rfeedparser
      require 'feedparser'
 
      fp = FeedParser.parse("some-feed-filepath-or-url")
