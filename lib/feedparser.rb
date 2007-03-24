@@ -25,7 +25,7 @@ begin
   gem 'htmltools'
   gem 'htmlentities'
   gem 'activesupport'
-  gem 'chardet'
+  gem 'rchardet'
 rescue Gem::LoadError,LoadError
 end
 
