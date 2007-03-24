@@ -12,7 +12,7 @@ spec = Gem::Specification.new do |s|
     s.summary    = "Parse RSS and Atom feeds in Ruby"
     s.files      = FileList["{lib,tests}/**/*"].exclude("rdoc").to_a
     s.require_path      = "lib"
-    s.autorequire       = "feedparser"
+    # s.autorequire       = "feedparser" # tHe 3vil according to Why.
     s.test_file         = "tests/feedparsertest.rb"
     s.has_rdoc          = false
     s.extra_rdoc_files  = ['README','LICENSE', 'RUBY-TESTING']
@@ -25,6 +25,7 @@ spec = Gem::Specification.new do |s|
     s.add_dependency('character-encodings', '>= 0.2')
     s.add_dependency('htmltools', '>= 1.10')
     s.add_dependency('htmlentities', '4.0.0')
+    s.add_dependency('mongrel', '>=1.0.1')
 
     s.requirements << 'The expat Ruby bindings found at <http://www.yoshidam.net/Ruby.html#xmlparser>'
 end

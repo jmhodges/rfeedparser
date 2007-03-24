@@ -1080,9 +1080,9 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE."""
 
-  Author = "Mark Pilgrim <http://diveintomark.org/>"
-  Contributors = [  "Jeff Hodges <http://somethingsimilar.com>",
-		    "Jason Diamond <http://injektilo.org/>",
+  Author = "Jeff Hodges <http://somethingsimilar.com>"
+  Copyright_Holder = "Mark Pilgrim <http://diveintomark.org/>"
+  Contributors = [  "Jason Diamond <http://injektilo.org/>",
                     "John Beimler <http://john.beimler.org/>",
                     "Fazal Majid <http://www.majid.info/mylos/weblog/>",
                     "Aaron Swartz <http://aaronsw.com/>",

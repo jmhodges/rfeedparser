@@ -13,9 +13,10 @@ begin
   gem 'mongrel'
   require 'mongrel'
 rescue => details
-  STDERR.puts "Whoops, had an error with loading mongrel as a gem. Trying just 'require'."
+  STDERR.puts "Whoops, had an error with loading mongrel as a gem. Trying just 'require'. Mongrel is required for testing."
   require 'mongrel'
 end
+
 
 $PORT = 8097 # Not configurable, hard coded in the xml files
 
