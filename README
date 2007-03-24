@@ -6,8 +6,15 @@ open source, see LICENSE file for details
 
 -----
 
-To install:
-$ python setup.py install
+To use:
+  If installed as a gem
+     require 'rubygems'
+     gem 'feedparser
+     require 'feedparser'
 
-Full documentation is available in the docs/ directory, or online at
-http://feedparser.org/docs/
+     fp = FeedParser.parse("some-feed-filepath-or-url")
+
+  If not installed as a gem, copy the contents of lib into the ruby path and just use 
+     require 'feedparser'
+     
+     fp = FeedParser.parse("some-feed-filepath-or-url")
