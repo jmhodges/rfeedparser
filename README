@@ -9,13 +9,12 @@ open source, see LICENSE file for details
 To use:
   If installed as a gem
      require 'rubygems'
-     gem 'rfeedparser
-     require 'feedparser'
+     require 'rfeedparser'
 
      fp = FeedParser.parse("some-feed-filepath-or-url")
 
   If not installed as a gem, copy the contents of lib into the ruby path and just use 
-     require 'feedparser'
+     require 'rfeedparser'
      
      fp = FeedParser.parse("some-feed-filepath-or-url")
 

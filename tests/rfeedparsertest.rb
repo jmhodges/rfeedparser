@@ -3,10 +3,8 @@
 # I've adapted it for feedparser.rb
 # http://intertwingly.net/blog/2005/10/30/Testing-FeedTools-Dynamically/
 
-# NOTE FIXME Mongrel doesn't like many of the encoding/x80*.xml tests. I don't know why
-# I haven't figured out yet how to make the Time methods "rollover" on 25 hours, 61 minutes, etc.
 require 'test/unit'
-require '../lib/feedparser'
+require File.dirname(__FILE__)+'/../lib/rfeedparser'
 
 begin 
   require 'rubygems'

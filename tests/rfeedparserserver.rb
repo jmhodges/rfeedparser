@@ -1,11 +1,12 @@
 #!/usr/bin/ruby
-# This is the same server code that runs in feedparsertest.rb, but split
+# This is the same server code that runs in rfeedparsertest.rb, but split
 # off so that we can fully check each test individually (i.e. get the HTTP
 # headers right).
+# This really needs to be merged into rfeedparsertest.rb
 require 'rubygems'
 gem 'mongrel'
 require 'mongrel'
-require '../lib/feedparser'
+require File.dirname(__FILE__)+'/../lib/rfeedparser'
 $PORT = 8097
 def translate_data(data)
   if data[0..3] == "\x4c\x6f\xa7\x94"

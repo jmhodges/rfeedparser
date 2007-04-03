@@ -19,17 +19,14 @@ require 'pp'
 require 'rubygems'
 require 'base64'
 require 'iconv'
-begin 
-  gem 'hpricot', ">=0.5"
-  gem 'character-encodings', ">=0.2.0"
-  gem 'htmltools'
-  gem 'htmlentities'
-  gem 'activesupport'
-  gem 'rchardet'
-rescue Gem::LoadError,LoadError
-end
+gem 'hpricot', ">=0.5"
+gem 'character-encodings', ">=0.2.0"
+gem 'htmltools', ">=1.10"
+gem 'htmlentities', ">=4.0.0"
+gem 'activesupport', ">=1.4.2"
+gem 'rchardet', ">=1.0"
 
-require 'chardet'
+require 'rchardet'
 $chardet = true
 
 require 'hpricot'

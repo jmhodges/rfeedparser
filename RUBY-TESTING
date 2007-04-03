@@ -1,12 +1,15 @@
 === Testing rFeedParser ===
-    Simply run `ruby feedparsertest.rb` to run all of the FeedParser tests.
-Optionally, you can start up feedparserserver.rb and run feedparser.rb
+    Simply run `ruby tests/rfeedparsertest.rb` to run all of the FeedParser tests.
+Optionally, you can start up rfeedparserserver.rb and, in another shell, run rfeedparser.rb
 against "http://localhost:8097/tests/path/to/testcase.xml" if you want
-to try a test individually.  I'll probably merge feedparserserver.rb into
-feedparsertext.rb soon.
+to try a test individually.  You can, of course, run rfeedparser.rb with
+the file path to the testcase, but there may be HTTP headers required for
+a successful run that can only be given by running rfeedparser against
+the HTTP server path. I'll probably merge feedparserserver.rb into
+rfeedparsertest.rb soon.
 
 === Last Count 20070321 ===
-    By my last count, feedparsertext.rb says that there are 45 assertions
+    By my last count, rfeedparsertest.rb says that there are 45 assertions
 that fail, and 4 that error out. I've included here a few tests that
 "Failed, Sort Of".  By that I mean, the behaviors the tests are meant to
 check are correct, but the test fails because of some other superficial
