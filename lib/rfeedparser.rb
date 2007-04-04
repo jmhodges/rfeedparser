@@ -41,7 +41,16 @@ $debug = false
 $compatible = true
 
 Encoding_Aliases = { # Adapted from python2.4's encodings/aliases.py
-  # ascii codec
+    'unicode'		 => 'utf-16', 
+    # MacOSX does not have Unicode as a separate encoding nor even
+    # aliased. My Ubuntu box has it as a separate encoding but I cannot
+    # for the life of me figure out where the source code for UNICODE.so
+    # is (supposedly, in libc6 .deb but that's a damn lie), so I don't
+    # know what it expects. After some extensive research, I've decided
+    # to alias it to utf-16 much like Python does when it is built with
+    # --enable-unicode=ucs2. This could be seriously wrong. I have no idea.
+    
+    # ascii codec
     '646'                => 'ascii',
     'ansi_x3.4_1968'     => 'ascii',
     'ansi_x3_4_1968'     => 'ascii', # some email headers use this non-standard name
