@@ -19,7 +19,7 @@ spec = Gem::Specification.new do |s|
     s.rubyforge_project = 'rfeedparser'
 
     # Dependencies
-    s.add_dependency('rchardet')
+    s.add_dependency('rchardet', '>=1.0')
     s.add_dependency('activesupport', '>= 1.4.1')
     s.add_dependency('hpricot', '>= 0.5')
     s.add_dependency('character-encodings', '>= 0.2')
