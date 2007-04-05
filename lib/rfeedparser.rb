@@ -1061,7 +1061,7 @@ module Hpricot
 end
 
 module FeedParser
-  Version = "0.1aleph_naught"
+  Version = "0.9.86"
 
   License = """Copyright (c) 2002-2006, Mark Pilgrim, All rights reserved.
 
@@ -3591,87 +3591,88 @@ class PprintSerializer < Serializer # FIXME ? use pp instead?
   end
 end
 
+if $0 == __FILE__
+  require 'optparse'
+  require 'ostruct'
+  options = OpenStruct.new
+  options.etag = options.modified = options.agent = options.referrer = nil
+  options.content_language = options.content_location = options.ctype = nil
+  options.format = 'pprint'
+  options.compatible = $compatible 
+  options.verbose = false
 
-require 'optparse'
-require 'ostruct'
-options = OpenStruct.new
-options.etag = options.modified = options.agent = options.referrer = nil
-options.content_language = options.content_location = options.ctype = nil
-options.format = 'pprint'
-options.compatible = $compatible 
-options.verbose = false
-
-opts = OptionParser.new do |opts|
-  opts.banner 
-  opts.separator ""
-  opts.on("-A", "--user-agent [AGENT]",
+  opts = OptionParser.new do |opts|
+    opts.banner 
+    opts.separator ""
+    opts.on("-A", "--user-agent [AGENT]",
 	  "User-Agent for HTTP URLs") {|agent|
-    options.agent = agent
-  }
+      options.agent = agent
+    }
 
-  opts.on("-e", "--referrer [URL]", 
+    opts.on("-e", "--referrer [URL]", 
 	  "Referrer for HTTP URLs") {|referrer|
-    options.referrer = referrer
-  }
+      options.referrer = referrer
+    }
 
-  opts.on("-t", "--etag [TAG]",
+    opts.on("-t", "--etag [TAG]",
 	  "ETag/If-None-Match for HTTP URLs") {|etag|
-    options.etag = etag
-  }
+      options.etag = etag
+    }
 
-  opts.on("-m", "--last-modified [DATE]",
+    opts.on("-m", "--last-modified [DATE]",
 	  "Last-modified/If-Modified-Since for HTTP URLs (any supported date format)") {|modified|
-    options.modified = modified
-  }
+      options.modified = modified
+    }
 
-  opts.on("-f", "--format [FORMAT]", [:text, :pprint],
+    opts.on("-f", "--format [FORMAT]", [:text, :pprint],
 	  "output resutls in FORMAT (text, pprint)") {|format|
-    options.format = format
-  }
+      options.format = format
+    }
 
-  opts.on("-v", "--[no-]verbose",
+    opts.on("-v", "--[no-]verbose",
 	  "write debugging information to stderr") {|v|
-    options.verbose = v
-  }
+      options.verbose = v
+    }
 
-  opts.on("-c", "--[no-]compatible",
+    opts.on("-c", "--[no-]compatible",
 	  "strip element attributes like feedparser.py 4.1 (default)") {|comp|
-    options.compatible = comp
-  }
-  opts.on("-l", "--content-location [LOCATION]",
+      options.compatible = comp
+    }
+    opts.on("-l", "--content-location [LOCATION]",
 	  "default Content-Location HTTP header") {|loc|
-    options.content_location = loc
-  }
-  opts.on("-a", "--content-language [LANG]",
+      options.content_location = loc
+    }
+    opts.on("-a", "--content-language [LANG]",
 	  "default Content-Language HTTP header") {|lang|
-    options.content_language = lang
-  }
-  opts.on("-t", "--content-type [TYPE]",
+      options.content_language = lang
+    }
+    opts.on("-t", "--content-type [TYPE]",
 	  "default Content-type HTTP header") {|ctype|
-    options.ctype = ctype
-  }
-end
+      options.ctype = ctype
+    }
+  end
 
-opts.parse!(ARGV)
-$debug = true if options.verbose 
-$compatible = options.compatible unless options.compatible.nil?
+  opts.parse!(ARGV)
+  $debug = true if options.verbose 
+  $compatible = options.compatible unless options.compatible.nil?
 
-if options.format == :text
-  serializer = TextSerializer
-else
-  serializer = PprintSerializer
-end
-args = *ARGV.dup
-unless args.nil?
-  args.each do |url| # opts.parse! removes everything but the urls from the command line
-    results = FeedParser.parse(url, :etag => options.etag, 
-			       :modified => options.modified, 
-			       :agent => options.agent, 
-			       :referrer => options.referrer, 
-			       :content_location => options.content_location,
-			       :content_language => options.content_language,
-			       :content_type => options.ctype
-			      )
-			      serializer.new(results).write($stdout)
+  if options.format == :text
+    serializer = TextSerializer
+  else
+    serializer = PprintSerializer
+  end
+  args = *ARGV.dup
+  unless args.nil? 
+    args.each do |url| # opts.parse! removes everything but the urls from the command line
+      results = FeedParser.parse(url, :etag => options.etag, 
+				 :modified => options.modified, 
+				 :agent => options.agent, 
+				 :referrer => options.referrer, 
+				 :content_location => options.content_location,
+				 :content_language => options.content_language,
+				 :content_type => options.ctype
+				)
+				serializer.new(results).write($stdout)
+    end
   end
 end
