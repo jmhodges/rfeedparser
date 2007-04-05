@@ -4,7 +4,7 @@ require 'rake/gempackagetask'
 
 spec = Gem::Specification.new do |s|
     s.name       = "rfeedparser"
-    s.version    = "0.9.7"
+    s.version    = "0.9.86"
     s.author     = "Jeff Hodges"
     s.email      = "jeff at somethingsimilar dot com"
     s.homepage   = "http://rfeedparser.rubyforge.org/"
