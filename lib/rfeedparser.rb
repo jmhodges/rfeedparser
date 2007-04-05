@@ -23,7 +23,7 @@ gem 'hpricot', ">=0.5"
 gem 'character-encodings', ">=0.2.0"
 gem 'htmltools', ">=1.10"
 gem 'htmlentities', ">=4.0.0"
-gem 'activesupport', ">=1.4.2"
+gem 'activesupport', ">=1.4.1"
 gem 'rchardet', ">=1.0"
 
 require 'rchardet'
