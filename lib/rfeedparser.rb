@@ -41,7 +41,8 @@ $debug = false
 $compatible = true
 
 Encoding_Aliases = { # Adapted from python2.4's encodings/aliases.py
-    'unicode'		 => 'utf-16', 
+    'unicode'		 => 'utf-16',  
+    
     # MacOSX does not have Unicode as a separate encoding nor even
     # aliased. My Ubuntu box has it as a separate encoding but I cannot
     # for the life of me figure out where the source code for UNICODE.so
@@ -483,8 +484,6 @@ def unichr(i)
 end
 
 def index_match(stri,regexp, offset)
-  if offset == 241
-  end
   i = stri.index(regexp, offset)
 
   return nil, nil unless i
@@ -500,6 +499,7 @@ end
 def urljoin(base, uri)
   urifixer = /^([A-Za-z][A-Za-z0-9+-.]*:\/\/)(\/*)(.*?)/u
   uri = uri.sub(urifixer, '\1\3') 
+
   begin
     return URI.join(base, uri).to_s 
   rescue URI::BadURIError => e
@@ -872,9 +872,10 @@ module XML
     end
   end
 end
-# This adds a nice scrub method to Hpricot, so we don't need a _HTMLSanitizer class
+
+# This used to be based on Michael Moen's Hpricot#scrub, but that seems to 
+# have only been part of its evolution. Hpricot#scrub is cool code, though.
 # http://underpantsgnome.com/2007/01/20/hpricot-scrub
-# I have modified it to check for attributes that are only allowed if they are in a certain tag
 module Hpricot
   Acceptable_Elements = ['a', 'abbr', 'acronym', 'address', 'area', 'b',
       'big', 'blockquote', 'br', 'button', 'caption', 'center', 'cite',
@@ -994,55 +995,29 @@ module Hpricot
     end
 
   class Elements 
-    def strip(allowed_tags=[]) # I completely route around this with the recursive_strip in Doc
-      each { |x| x.strip(allowed_tags) }
-    end
-
     def strip_attributes(safe=[])
       each { |x| x.strip_attributes(safe) }
     end
 
-    def strip_style(ok_props=[], ok_keywords=[])
+    def strip_style(ok_props=[], ok_keywords=[]) # NOTE unused so far.
       each { |x| x.strip_style(ok_props, ok_keywords) }
     end
   end
 
   class Text
-    def strip(foo)
-    end
     def strip_attributes(foo)
     end
   end
   class Comment
-    def strip(foo)
-    end
     def strip_attributes(foo)
     end
   end
   class BogusETag
-    def strip(foo)
-    end
     def strip_attributes(foo)
     end
   end
 
   class Elem
-    def decode_entities
-      children.each{ |x| x.decode_entities }
-    end
-
-    def cull
-      if children
-	swap(children.to_s)
-      end
-    end
-
-    def strip
-      if strip_removes?
-	cull
-      end
-    end
-
     def strip_attributes
       unless attributes.nil?
 	attributes.each do |atr|
@@ -1051,11 +1026,6 @@ module Hpricot
 	  end
 	end
       end
-    end
-
-    def strip_removes?
-      # I'm sure there are others that shuould be ripped instead of stripped
-      attributes && attributes['type'] =~ /script|css/
     end
   end
 end
@@ -1107,15 +1077,11 @@ POSSIBILITY OF SUCH DAMAGE."""
   # If you want feedparser to automatically run HTML markup through HTML Tidy, set
   # this to true.  Requires mxTidy <http://www.egenix.com/files/python/mxTidy.html>
   # or utidylib <http://utidylib.berlios.de/>.
-  TIDY_MARKUP = false #FIXME untranslated
+  #TIDY_MARKUP = false #FIXME untranslated
 
   # List of Python interfaces for HTML Tidy, in order of preference.  Only useful
   # if TIDY_MARKUP = true
-  PREFERRED_TIDY_INTERFACES = ["uTidy", "mxTidy"] #FIXME untranslated
-
-  # The original Python import. I'm using it to help translate
-  #import sgmllib, re, sys, copy, urlparse, time, rfc822, types, cgi, urllib, urllib2
-
+  #PREFERRED_TIDY_INTERFACES = ["uTidy", "mxTidy"] #FIXME untranslated
 
 
   # ---------- don't touch these ----------
@@ -1153,13 +1119,14 @@ POSSIBILITY OF SUCH DAMAGE."""
 =begin
      The naming of a certain common attribute (such as, "When was the last
      time this feed was updated?") can have many different names depending
-     on the type of feed we are handling. This class allows us to use
-     both the attribute name a person, who has knowledge of the kind of
-     feed being parsed, expects, as well as allowing a developer to rely
-     on one name to contain the proper attribute no matter what kind of
-     feed is being parsed. @@keymaps is a Hash that contains information
-     on what certain attributes "really is" in each feed type. It does so
-     by providing a common name that will map to any feed type in the keys,
+     on the type of feed we are handling. This class allows us to satisfy
+     the expectations of both the developer who has prior knowledge of the
+     feed type as well as the developer who wants a consistent application
+     interface.
+
+     @@keymap is a Hash that contains information on what a certain
+     attribute names "really are" in each kind of feed. It does this by
+     providing a common name that will map to any feed type in the keys,
      with possible "correct" attributes in the its values. the #[] and #[]=
      methods check with keymaps to see what attribute the developer "really
      means" if they've asked for one which happens to be in @@keymap's keys.
@@ -1183,6 +1150,7 @@ POSSIBILITY OF SUCH DAMAGE."""
     def entries # Apparently, Hash has an entries method!  That blew a good 3 hours or more of my time
       return self['entries']
     end
+
     # We could include the [] rewrite in new using Hash.new's fancy pants block thing
     # but we'd still have to overwrite []= and such. 
     # I'm going to make it easy to turn lists of pairs into FeedParserDicts's though.
@@ -1209,7 +1177,7 @@ POSSIBILITY OF SUCH DAMAGE."""
 	realkey.each{ |key| return self[key] if has_key?key }
       end
       # Note that the original key is preferred over the realkey we (might 
-      # have) found in @@keymaps
+      # have) found in @@keymap
       if has_key?(key)
 	return super(key)
       end
@@ -3079,7 +3047,7 @@ POSSIBILITY OF SUCH DAMAGE."""
       ename, eattr = l
       h.search(ename).each do |elem|
 	euri = elem.attributes[eattr]
-	if euri and not euri.empty? and URI.parse(euri).relative?
+	if euri and not euri.empty? and URI.parse(URI.encode(euri)).relative? 
 	  elem.attributes[eattr] = urljoin(baseURI, euri)
 	end
       end
@@ -3114,7 +3082,7 @@ POSSIBILITY OF SUCH DAMAGE."""
       end
       # yes, that '/' should be there. It's a search method. See the Hpricot docs.
 
-      unless $compatible # FIXME not properly recursive, see comment in recursive_strip
+      unless $compatible # FIXME nonworking
 	(self/tag).strip_style(@config[:allow_css_properties], @config[:allow_css_keywords])
       end
       return self
@@ -3125,6 +3093,7 @@ POSSIBILITY OF SUCH DAMAGE."""
     FeedParser::SanitizerDoc.new(Hpricot.make(html))
   end
   module_function(:SanitizerDoc)
+
   def self.sanitizeHTML(html,encoding)
     # FIXME Tidy not yet supported
     html = html.gsub(/<!((?!DOCTYPE|--|\[))/, '&lt;!\1')
