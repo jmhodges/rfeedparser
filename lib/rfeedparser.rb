@@ -1031,7 +1031,7 @@ module Hpricot
 end
 
 module FeedParser
-  Version = "0.9.86"
+  Version = "0.9.87"
 
   License = """Copyright (c) 2002-2006, Mark Pilgrim, All rights reserved.
 
