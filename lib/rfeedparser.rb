@@ -479,10 +479,6 @@ def uconvert(data, from_encoding, to_encoding = 'utf-8')
   Iconv.iconv(to_encoding, from_encoding, data)[0]
 end
 
-def unichr(i)
-  [i].pack('U*')
-end
-
 def index_match(stri,regexp, offset)
   i = stri.index(regexp, offset)
 
@@ -1474,7 +1470,7 @@ POSSIBILITY OF SUCH DAMAGE."""
 	else
 	  c = ref.to_i
 	end
-	text = uconvert(unichr(c),'unicode')
+	text = [c].pack('U*')
       end
       @elementstack[-1][2] << text
     end
