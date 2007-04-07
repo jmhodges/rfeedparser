@@ -496,6 +496,13 @@ def urljoin(base, uri)
   urifixer = /^([A-Za-z][A-Za-z0-9+-.]*:\/\/)(\/*)(.*?)/u
   uri = uri.sub(urifixer, '\1\3') 
 
+  puts "BASE #{base} and URI #{uri}"
+  begin
+    URI.parse(base) 
+  rescue URI::BadURIError # This is incredibly dumb but the URI class gives us no choice.
+    return uri
+  end
+
   begin
     return URI.join(base, uri).to_s 
   rescue URI::BadURIError => e
@@ -2123,7 +2130,7 @@ POSSIBILITY OF SUCH DAMAGE."""
       push('license', true)
       value = getAttribute(attrsD, 'rdf:resource')
       if value and not value.empty?
-	elementstack[-1][2] <<  value
+	@elementstack[-1][2] <<  value
 	pop('license')
       end
     end
@@ -2325,7 +2332,7 @@ POSSIBILITY OF SUCH DAMAGE."""
       push('generator', true)
       value = getAttribute(attrsD, 'rdf:resource')
       if value and not value.empty?
-	elementstack[-1][2] << value
+	@elementstack[-1][2] << value
       end
       pop('generator')
       getContext()['generator_detail'] = FeedParserDict.new({'href' => value})
