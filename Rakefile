@@ -26,8 +26,8 @@ spec = Gem::Specification.new do |s|
     s.add_dependency('htmltools', '>= 1.10')
     s.add_dependency('htmlentities', '4.0.0')
     s.add_dependency('mongrel', '>=1.0.1')
+    s.add_dependency('xmlparser', '0.6.81')
 
-    s.requirements << 'The expat Ruby bindings found at <http://www.yoshidam.net/Ruby.html#xmlparser>'
 end
 
 task :default => [:package]

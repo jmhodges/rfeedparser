@@ -14,7 +14,6 @@ require 'stringio'
 require 'uri'
 require 'cgi' # escaping html
 require 'time'
-require 'xml/saxdriver' # calling expat
 require 'pp'
 require 'rubygems'
 require 'base64'
@@ -25,6 +24,7 @@ gem 'htmltools', ">=1.10"
 gem 'htmlentities', ">=4.0.0"
 gem 'activesupport', ">=1.4.1"
 gem 'rchardet', ">=1.0"
+require 'xml/saxdriver' # calling expat
 
 require 'rchardet'
 $chardet = true
@@ -36,7 +36,6 @@ require 'htmlentities'
 require 'active_support'
 require 'open-uri'
 include OpenURI
-
 $debug = false
 $compatible = true
 
@@ -492,21 +491,92 @@ def _ebcdic_to_ascii(s)
   return Iconv.iconv("iso88591", "ebcdic-cp-be", s)[0]
 end
 
+module URI
+  # NOTE I wish I didn't have to open this module up,but I cannot find a 
+  # better way of accessing all of the instance methods of the URI module. I \
+  # may just be an idiot.
+  def self.split(uri)
+    case uri
+    when ''
+      # null uri
+
+    when ABS_URI
+      scheme, opaque, userinfo, host, port, 
+        registry, path, query, fragment = $~[1..-1]
+
+      # URI-reference = [ absoluteURI | relativeURI ] [ "#" fragment ]
+
+      # absoluteURI   = scheme ":" ( hier_part | opaque_part )
+      # hier_part     = ( net_path | abs_path ) [ "?" query ]
+      # opaque_part   = uric_no_slash *uric
+
+      # abs_path      = "/"  path_segments
+      # net_path      = "//" authority [ abs_path ]
+
+      # authority     = server | reg_name
+      # server        = [ [ userinfo "@" ] hostport ]
+
+      if !scheme
+        raise InvalidURIError, 
+          "bad URI(absolute but no scheme): #{uri}"
+      end
+      if !opaque && (!path && (!host && !registry))
+        raise InvalidURIError,
+          "bad URI(absolute but no path): #{uri}" 
+      end
+
+    when REL_URI
+      scheme = nil
+      opaque = nil
+
+      userinfo, host, port, registry, 
+        rel_segment, abs_path, query, fragment = $~[1..-1]
+      if rel_segment && abs_path
+        path = rel_segment + abs_path
+      elsif rel_segment
+        path = rel_segment
+      elsif abs_path
+        path = abs_path
+      end
+
+      # URI-reference = [ absoluteURI | relativeURI ] [ "#" fragment ]
+
+      # relativeURI   = ( net_path | abs_path | rel_path ) [ "?" query ]
+
+      # net_path      = "//" authority [ abs_path ]
+      # abs_path      = "/"  path_segments
+      # rel_path      = rel_segment [ abs_path ]
+
+      # authority     = server | reg_name
+      # server        = [ [ userinfo "@" ] hostport ]
+
+    else
+      #	NOTE this is the only part of the code that differs from the "clean" 
+      #	URI module.
+      return [nil,nil,uri,nil,nil,nil,nil,nil,nil]
+    end
+
+    path = '' if !path && !opaque # (see RFC2396 Section 5.2)
+    ret = [
+      scheme, 
+      userinfo, host, port,         # X
+      registry,                        # X
+      path,                         # Y
+      opaque,                        # Y
+      query,
+      fragment
+    ]
+    return ret
+  end
+end
+
 def urljoin(base, uri)
   urifixer = /^([A-Za-z][A-Za-z0-9+-.]*:\/\/)(\/*)(.*?)/u
   uri = uri.sub(urifixer, '\1\3') 
-
-  puts "BASE #{base} and URI #{uri}"
-  begin
-    URI.parse(base) 
-  rescue URI::BadURIError # This is incredibly dumb but the URI class gives us no choice.
-    return uri
-  end
-
   begin
     return URI.join(base, uri).to_s 
   rescue URI::BadURIError => e
-    if URI.parse(base).relative?
+    if URI.parse(base).relative? 
       return URI::parse(uri).to_s
     end
   end
@@ -3312,13 +3382,12 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
     end
     result['bozo'] = false
     handlers = options[:handlers]
-
     if handlers.class != Array # FIXME why does this happen?
       handlers = [handlers]
     end
 
     begin
-      if URI::parse(furi).class == URI::Generic
+      if File.exists?furi
 	f = open(furi) # OpenURI doesn't behave well when passing HTTP options to a file.
       else
 	# And when you do pass them, make sure they aren't just nil (this still true?)
