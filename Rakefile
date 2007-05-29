@@ -1,5 +1,6 @@
 require 'rubygems'
 Gem::manage_gems
+require 'rake/testtask'
 require 'rake/gempackagetask'
 
 spec = Gem::Specification.new do |s|
@@ -30,8 +31,16 @@ spec = Gem::Specification.new do |s|
 
 end
 
-task :default => [:package]
+
 
 Rake::GemPackageTask.new(spec) do |pkg|
     pkg.need_zip = true
 end
+
+Rake::TestTask.new do |t|
+    t.libs << "test"
+    t.test_files = FileList['tests/rfeedparsertest.rb']
+    t.verbose = true
+  end
+
+task :default => [:test]
