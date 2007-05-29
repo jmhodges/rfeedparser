@@ -61,7 +61,8 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
       ename, eattr = l
       h.search(ename).each do |elem|
 	euri = elem.attributes[eattr]
-	if euri and not euri.empty? and URI.parse(URI.encode(euri)).relative? 
+        # FIXME uses the URI.encode method.  should it?
+	if euri and not euri.empty? and ForgivingURI.parse(URI.encode(euri)).relative? 
 	  elem.attributes[eattr] = urljoin(baseURI, euri)
 	end
       end
