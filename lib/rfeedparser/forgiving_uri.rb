@@ -61,6 +61,10 @@ class ForgivingURI
         host = authority.gsub(/^([^\[\]]*)@/, "").gsub(/:([^:@\[\]]*?)$/, "")
         port = authority.scan(/:([^:@\[\]]*?)$/).flatten[0]
       end
+      if scheme == 'file'
+        path = "/#{host}" + path
+        host = nil
+      end
       if port.nil? || port == ""
         port = nil
       end
