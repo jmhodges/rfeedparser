@@ -143,7 +143,7 @@ POSSIBILITY OF SUCH DAMAGE."""
   
   def parse(furi, options = {})
     # Parse a feed from a URL, file, stream or string
-    $compatible = options[:compatible] || $compatible # Use the default compatibility if compatible is nil
+    $compatible = options[:compatible].nil? ? $compatible : options[:compatible]# Use the default compatibility if compatible is nil
     strictklass = options[:strict] || StrictFeedParser
     looseklass = options[:loose] || LooseFeedParser
     result = FeedParserDict.new
@@ -160,20 +160,20 @@ POSSIBILITY OF SUCH DAMAGE."""
     end
 
     begin
-      if File.exists?furi
-	f = open(furi) # OpenURI doesn't behave well when passing HTTP options to a file.
+      if ForgivingURI.parse(furi).scheme.nil?
+        f = open(furi) # OpenURI doesn't behave well when passing HTTP options to a file.
       else
-	# And when you do pass them, make sure they aren't just nil (this still true?)
-	newd = {}
-	newd["If-None-Match"] = options[:etag] unless options[:etag].nil?
-	newd["If-Modified-Since"] = options[:modified] unless options[:modified].nil?
-	newd["User-Agent"] = (options[:agent] || USER_AGENT).to_s 
-	newd["Referer"] = options[:referrer] unless options[:referrer].nil?
-	newd["Content-Location"] = options[:content_location] unless options[:content_location].nil?
-	newd["Content-Language"] = options[:content_language] unless options[:content_language].nil?                    
-	newd["Content-type"] = options[:content_type] unless options[:content_type].nil?
+        # And when you do pass them, make sure they aren't just nil (this still true?)
+        newd = {}
+        newd["If-None-Match"] = options[:etag] unless options[:etag].nil?
+        newd["If-Modified-Since"] = options[:modified] unless options[:modified].nil?
+        newd["User-Agent"] = (options[:agent] || USER_AGENT).to_s 
+        newd["Referer"] = options[:referrer] unless options[:referrer].nil?
+        newd["Content-Location"] = options[:content_location] unless options[:content_location].nil?
+        newd["Content-Language"] = options[:content_language] unless options[:content_language].nil?                    
+        newd["Content-type"] = options[:content_type] unless options[:content_type].nil?
 
-	f = open(furi, newd)
+        f = open(furi, newd)
       end
 
       data = f.read
