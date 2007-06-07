@@ -5,7 +5,7 @@ require 'rake/gempackagetask'
 
 spec = Gem::Specification.new do |s|
     s.name       = "rfeedparser"
-    s.version    = "0.9.91" # Don't forget the Version in rfeedparser.rb
+    s.version    = "0.9.92" # Don't forget the Version in rfeedparser.rb
     s.author     = "Jeff Hodges"
     s.email      = "jeff at somethingsimilar dot com"
     s.homepage   = "http://rfeedparser.rubyforge.org/"
@@ -27,8 +27,7 @@ spec = Gem::Specification.new do |s|
     s.add_dependency('htmltools', '>= 1.10')
     s.add_dependency('htmlentities', '4.0.0')
     s.add_dependency('mongrel', '>=1.0.1')
-    s.add_dependency('xmlparser', '0.6.81')
-
+    s.requirements << "Yoshida Masato's Ruby bindings to the Expat XML parser"
 end
 
 
