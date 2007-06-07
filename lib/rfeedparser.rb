@@ -161,6 +161,7 @@ POSSIBILITY OF SUCH DAMAGE."""
 
     begin
       if ForgivingURI.parse(furi).scheme.nil?
+        $stderr << "Opening local file #{furi}" if $debug
         f = open(furi) # OpenURI doesn't behave well when passing HTTP options to a file.
       else
         # And when you do pass them, make sure they aren't just nil (this still true?)
