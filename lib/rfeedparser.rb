@@ -142,6 +142,7 @@ POSSIBILITY OF SUCH DAMAGE."""
   }
   
   def parse(furi, options = {})
+    furi.strip!
     # Parse a feed from a URL, file, stream or string
     $compatible = options[:compatible].nil? ? $compatible : options[:compatible]# Use the default compatibility if compatible is nil
     strictklass = options[:strict] || StrictFeedParser
