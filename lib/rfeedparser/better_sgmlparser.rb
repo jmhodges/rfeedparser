@@ -14,7 +14,7 @@ class BetterSGMLParser < HTML::SGMLParser
 
   Shorttagopen = /'<[a-zA-Z][-.a-zA-Z0-9]*/u
   Shorttag = /'<([a-zA-Z][-.a-zA-Z0-9]*)\/([^\/]*)\//u
-  Endtagopen = /<\//u # Matching the Python SGMLParser
+  Endtagopen = /<\//u # Changed the RegExps to match the Python SGMLParser
   Endbracket = /[<>]/u
   Declopen = /<!/u
   Piopenbegin = /^<\?/u
@@ -24,8 +24,8 @@ class BetterSGMLParser < HTML::SGMLParser
   Commentclose = /--\s*>/u
   Tagfind = /[a-zA-Z][-_.:a-zA-Z0-9]*/u
   Attrfind = Regexp.compile('\s*([a-zA-Z_][-:.a-zA-Z_0-9]*)(\s*=\s*'+
-			    '(\'[^\']*\'|"[^"]*"|[\]\[\-a-zA-Z0-9./,:;+*%?!&$\(\)_#=~\'"@]*))?',
-			    64)
+  '(\'[^\']*\'|"[^"]*"|[\]\[\-a-zA-Z0-9./,:;+*%?!&$\(\)_#=~\'"@]*))?',
+  64)
   Endtagfind = /\s*\/\s*>/u
   def initialize(verbose=false)
     super(verbose)
@@ -40,98 +40,98 @@ class BetterSGMLParser < HTML::SGMLParser
     n = rawdata.length
     while i < n
       if @nomoretags
-	# handle_data_range does nothing more than set a "Range" that is never used. wtf?
-	handle_data(rawdata[i...n]) # i...n means "range from i to n not including n" 
-	i = n
-	break
+        # handle_data_range does nothing more than set a "Range" that is never used. wtf?
+        handle_data(rawdata[i...n]) # i...n means "range from i to n not including n" 
+        i = n
+        break
       end
       j = rawdata.index(Interesting, i) 
       j = n unless j
       handle_data(rawdata[i...j]) if i < j
       i = j
       break if (i == n)
-      if rawdata[i..i] == '<' # equivalent to rawdata[i..i] == '<' # Yeah, ugly.
-	if rawdata.index(Starttagopen,i) == i
-	  if @literal
-	    handle_data(rawdata[i..i])
-	    i = i+1
-	    next
-	  end
-	  k = parse_starttag(i)
-	  break unless k
-	  i = k
-	  next
-	end
-	if rawdata.index(Endtagopen,i) == i #Don't use Endtagopen
-	  k = parse_endtag(i)
-	  break unless k
-	  i = k
-	  @literal = false
-	  next
-	end
-	if @literal
-	  if n > (i+1)
-	    handle_data("<")
-	    i = i+1
-	  else
-	    #incomplete
-	    break
-	  end
-	  next
-	end
-	if rawdata.index(Commentopen,i) == i 
-	  k = parse_comment(i)
-	  break unless k
-	  i = k
-	  next
-	end
-	if rawdata.index(Piopenbegin,i) == i # Like Piopen but must be at beginning of rawdata
-	  k = parse_pi(i)
-	  break unless k
-	  i += k
-	  next
-	end
-	if rawdata.index(Declopen,i) == i
-	  # This is some sort of declaration; in "HTML as
-	  # deployed," this should only be the document type
-	  # declaration ("<!DOCTYPE html...>").
-	  k = parse_declaration(i)
-	  break unless k
-	  i = k
-	  next
-	end
+      if rawdata[i..i] == '<' # Yeah, ugly, but I prefer it to rawdata[i] == ?<
+        if rawdata.index(Starttagopen,i) == i
+          if @literal
+            handle_data(rawdata[i..i])
+            i = i+1
+            next
+          end
+          k = parse_starttag(i)
+          break unless k
+          i = k
+          next
+        end
+        if rawdata.index(Endtagopen,i) == i #Don't use Endtagopen
+          k = parse_endtag(i)
+          break unless k
+          i = k
+          @literal = false
+          next
+        end
+        if @literal
+          if n > (i+1)
+            handle_data("<")
+            i = i+1
+          else
+            #incomplete
+            break
+          end
+          next
+        end
+        if rawdata.index(Commentopen,i) == i 
+          k = parse_comment(i)
+          break unless k
+          i = k
+          next
+        end
+        if rawdata.index(Piopenbegin,i) == i # Like Piopen but must be at beginning of rawdata
+          k = parse_pi(i)
+          break unless k
+          i += k
+          next
+        end
+        if rawdata.index(Declopen,i) == i
+          # This is some sort of declaration; in "HTML as
+          # deployed," this should only be the document type
+          # declaration ("<!DOCTYPE html...>").
+          k = parse_declaration(i)
+          break unless k
+          i = k
+          next
+        end
       elsif rawdata[i..i] == '&'
-	if @literal # FIXME BUGME SGMLParser totally does not check this. Bug it.
-	  handle_data(rawdata[i..i])
-	  i += 1
-	  next
-	end
+        if @literal # FIXME BUGME SGMLParser totally does not check this. Bug it.
+          handle_data(rawdata[i..i])
+          i += 1
+          next
+        end
 
-      # the Char must come first as its #=~ method is the only one that is UTF-8 safe 
-      ni,match = index_match(rawdata, Charref, i)
-      if ni and ni == i # See? Ugly
-	handle_charref(match[1]) # $1 is just the first group we captured (with parentheses)
-	i += match[0].length  # $& is the "all" of the match.. it includes the full match we looked for not just the stuff we put parentheses around to capture. 
-	i -= 1 unless rawdata[i-1..i-1] == ";"
-	next
-      end
-      ni,match = index_match(rawdata, Entityref, i)
-      if ni and ni == i
-	handle_entityref(match[1])
-	i += match[0].length
-	i -= 1 unless rawdata[i-1..i-1] == ";"
-	next
-      end
+        # the Char must come first as its #=~ method is the only one that is UTF-8 safe 
+        ni,match = index_match(rawdata, Charref, i)
+        if ni and ni == i # See? Ugly
+          handle_charref(match[1]) # $1 is just the first group we captured (with parentheses)
+          i += match[0].length  # $& is the "all" of the match.. it includes the full match we looked for not just the stuff we put parentheses around to capture. 
+          i -= 1 unless rawdata[i-1..i-1] == ";"
+          next
+        end
+        ni,match = index_match(rawdata, Entityref, i)
+        if ni and ni == i
+          handle_entityref(match[1])
+          i += match[0].length
+          i -= 1 unless rawdata[i-1..i-1] == ";"
+          next
+        end
       else
-	error('neither < nor & ??')
+        error('neither < nor & ??')
       end
       # We get here only if incomplete matches but
       # nothing else
       ni,match = index_match(rawdata,Incomplete,i)
       unless ni and ni == 0
-	handle_data(rawdata[i...i+1]) # str[i...i+1] == str[i..i]
-	i += 1
-	next
+        handle_data(rawdata[i...i+1]) # str[i...i+1] == str[i..i]
+        i += 1
+        next
       end
       j = ni + match[0].length 
       break if j == n # Really incomplete
@@ -206,7 +206,7 @@ class BetterSGMLParser < HTML::SGMLParser
     else
       ni,match = index_match(rawdata,Tagfind,i+1)
       unless match
-	error('unexpected call to parse_starttag')
+        error('unexpected call to parse_starttag')
       end
       k = ni+match[0].length+1
       tag = match[0].downcase
@@ -220,9 +220,9 @@ class BetterSGMLParser < HTML::SGMLParser
       matched_length = match[0].length
       attrname, rest, attrvalue = match[1],match[2],match[3]
       if rest.nil? or rest.empty?
-	attrvalue = '' # was: = attrname # Why the change?
+        attrvalue = '' # was: = attrname # Why the change?
       elsif [?',?'] == [attrvalue[0..0], attrvalue[-1..-1]] or [?",?"] == [attrvalue[0],attrvalue[-1]]
-	attrvalue = attrvalue[1...-1]
+        attrvalue = attrvalue[1...-1]
       end
       attrsd << [attrname.downcase, attrvalue]
       k += matched_length
