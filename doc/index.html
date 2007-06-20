@@ -1,0 +1,71 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"><head>
+
+
+
+    
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <meta name="author" content="Jeff Hodges (http://somethingsimilar.com)"><title>Universal Feed Parser in Ruby</title></head><body>
+        <h2>Introduction to rFeedParser, the Universal Feed Parser in Ruby</h2>
+        <p>rFeedParser is a translation of Mark Pilgrim's <a href="http://feedparser.org/">Universal Feed Parser</a> from Python into Ruby.  It has nearly the exact same behavior.</p>
+        <p>Example code:</p>
+        <p></p><pre>            require 'rubygems'
+            require 'rfeedparser' 
+            # Now we can parse!
+
+            fp = FeedParser.parse('some-url-or-filepath')
+            
+            # These next four lines are equivalent!
+            fp.entries.each{ |e| puts e.title }
+            fp.entries.each{ |e| puts e['title'] }
+            fp['entries'].each{ |e| puts e.title }
+            fp['entries'].each{ |e| puts e['title'] }
+        </pre>
+        
+        <p><strong>Notes on Time/Date Storage:</strong>
+The storage of dates in the *_parsed items (such as, updated_parsed,
+created_parsed, etc.) are in the Python 9-tuple format. While this is
+great for passing the date tests, Ruby has no good way of understanding
+these things. So, I wrote a helper method <code>py2rtime</code> that
+takes one of these 9-tuples as its argument and returns a Ruby Time
+object. It's placed in the top-level namespace, so you can call it
+anywhere in your code (ex. <code>py2rtime(fp.entries[0].updated_parsed)</code> ).</p>
+        <p>More documentation can be found over at the <a href="http://feedparser.org/docs/">Feed Parser documentation</a> site.</p>
+        
+        <p>The latest release can is <a href="http://rubyforge.org/frs/shownotes.php?release_id=12225">0.9.92</a> and you can track new releases, send bug reports or just yell at me belligerently over at the <a href="http://rubyforge.org/projects/rfeedparser/">rFeedParser project page.</a></p>
+
+        <h2>Depedencies and Installation</h2>
+        <p>Currently, rFeedParser is a bit of a Frankenstein's monster. It depends on <a href="http://code.whytheluckystiff.net/hpricot/">Hpricot</a>, <a href="http://rubyforge.org/projects/char-encodings/">Character-Encodings</a>, <a href="http://rubyforge.org/projects/ruby-htmltools">HTMLTools</a>, <a href="http://htmlentities.rubyforge.org/">HTMLEntities</a>, and the not-quite-easy-to-get <a href="http://www.yoshidam.net/Ruby.html#xmlparser">Ruby bindings</a> of the <a href="http://expat.sourceforge.net/">Expat XML Parser</a>.
+The first four are easy to install (they all come as gems, and the
+dependencies are built in to the rfeedparser gem), while the Expat
+bindings are less so. If you are on a Ubuntu or Debian
+system, you can simply install the <code>libxml-parser-ruby1.8</code> package.  Others will have to download the source code from <a href="http://www.yoshidam.net/Ruby.html#xmlparser">Yoshida Masato's site</a> and compile it yourself (Sorry). I do have a gem for <a href="http://rubyforge.org/projects/xmlparser">xmlparser</a> which includes some patches from Debian, but there have been difficulties compiling it on certain systems, specifically some MacOSX 10.4 boxes.  For some reason, it compiles fine on mine but not others.  I'd love some help figuring out this Works for Me&trade; bug.</p>
+        <p>These
+dependencies are all being used because they allow for (mostly) UTF-8
+safe parsing and speed out the wazoo. rFeedParser runs at roughly the
+same pace as the Python Feed Parser in its best configuration. Of
+course, rFeedParser is quite a bit faster and more complete than the
+other Ruby feed parsers available.</p>
+
+        <p>Well, enough talk. Go code. And get a hold of me through the <a href="http://rubyforge.org/projects/rfeedparser/">project page</a> or <a href="http://www.somethingsimilar.com/wordpress/contact/">my contact form</a>if you have questions.</p>
+
+        <h2>Tests and Completeness</h2>
+        <p>For
+the curious, rFeedParser's XML test cases are exactly the same XML
+files that the original Universal Feed Parser is tested against. It
+currently succeeds on 98.7% of the tests, with some of the failures
+coming from "superficial" problems ("would pass if this little twiddly
+bit that doesn't mean anything was different"). I hope to correct these
+in the near future. I should point out here that this large of a
+success rate over such a mature and complex testing environment makes
+rFeedParser, by far, the most viable of the current crop of Ruby feed
+parsers.</p>
+        <p>I'll be blogging about all the coolness I was
+able to create from Sam Ruby's pirate testing ideas, Hpricot and
+so on. Links will be appearing as I write them.</p>
+
+       
+        <h2>On Me</h2>
+        <p>I'm Jeff Hodges and I sometimes blog over at <a href="http://somethingsimilar.com/">Something Similar</a> and I've got a side project up over at <a href="http://mixedstates.somethingsimilar.com/">Mixed States</a>.
+I've recently taken a position at <a href="http://ictv.com">ICTV</a> where part of my work is maintaining and improving rFP. 
+</body></html>
