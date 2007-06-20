@@ -403,6 +403,6 @@ end
 
 module FeedParserUtilities
   def py2rtime(pytuple)
-    Time.utc(pytuple[0..5])
+    Time.utc *pytuple[0..5]
   end
 end
