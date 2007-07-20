@@ -178,16 +178,17 @@ module FeedParserUtilities
       data = data[4..-1]
     end
     begin
-      newdata = uconvert(data, encoding, 'utf-8') 
+      newdata = uconvert(data, encoding, 'utf-8')
     rescue => details
+      raise details
     end
     $stderr << "successfully converted #{encoding} data to utf-8\n" if $debug
     declmatch = /^<\?xml[^>]*?>/
       newdecl = "<?xml version=\'1.0\' encoding=\'utf-8\'?>"
       if declmatch =~ newdata
-	newdata.sub!(declmatch, newdecl) 
+        newdata.sub!(declmatch, newdecl) 
       else
-	newdata = newdecl + "\n" + newdata
+        newdata = newdecl + "\n" + newdata
       end
     return newdata
   end
