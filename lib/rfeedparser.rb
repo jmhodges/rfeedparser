@@ -60,34 +60,34 @@ module FeedParser
 
   License = """Copyright (c) 2002-2006, Mark Pilgrim, All rights reserved.
 
-Redistribution and use in source and binary forms, with or without modification,
-are permitted provided that the following conditions are met:
+  Redistribution and use in source and binary forms, with or without modification,
+  are permitted provided that the following conditions are met:
 
-* Redistributions of source code must retain the above copyright notice,
+  * Redistributions of source code must retain the above copyright notice,
   this list of conditions and the following disclaimer.
-* Redistributions in binary form must reproduce the above copyright notice,
+  * Redistributions in binary form must reproduce the above copyright notice,
   this list of conditions and the following disclaimer in the documentation
   and/or other materials provided with the distribution.
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE."""
+  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
+  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+  POSSIBILITY OF SUCH DAMAGE."""
 
   Author = "Jeff Hodges <http://somethingsimilar.com>"
   Copyright_Holder = "Mark Pilgrim <http://diveintomark.org/>"
   Contributors = [  "Jason Diamond <http://injektilo.org/>",
-		    "John Beimler <http://john.beimler.org/>",
-		    "Fazal Majid <http://www.majid.info/mylos/weblog/>",
-		    "Aaron Swartz <http://aaronsw.com/>",
-		    "Kevin Marks <http://epeus.blogspot.com/>"
+    "John Beimler <http://john.beimler.org/>",
+    "Fazal Majid <http://www.majid.info/mylos/weblog/>",
+    "Aaron Swartz <http://aaronsw.com/>",
+    "Kevin Marks <http://epeus.blogspot.com/>"
   ]
   # HTTP "User-Agent" header to send to servers when downloading feeds.
   # If you are embedding feedparser in a larger application, you should
@@ -123,24 +123,24 @@ POSSIBILITY OF SUCH DAMAGE."""
 
 
   SUPPORTED_VERSIONS = {'' => 'unknown',
-		      'rss090' => 'RSS 0.90',
-		      'rss091n' => 'RSS 0.91 (Netscape)',
-		      'rss091u' => 'RSS 0.91 (Userland)',
-		      'rss092' => 'RSS 0.92',
-		      'rss093' => 'RSS 0.93',
-		      'rss094' => 'RSS 0.94',
-		      'rss20' => 'RSS 2.0',
-		      'rss10' => 'RSS 1.0',
-		      'rss' => 'RSS (unknown version)',
-		      'atom01' => 'Atom 0.1',
-		      'atom02' => 'Atom 0.2',
-		      'atom03' => 'Atom 0.3',
-		      'atom10' => 'Atom 1.0',
-		      'atom' => 'Atom (unknown version)',
-		      'cdf' => 'CDF',
-		      'hotrss' => 'Hot RSS'
+    'rss090' => 'RSS 0.90',
+    'rss091n' => 'RSS 0.91 (Netscape)',
+    'rss091u' => 'RSS 0.91 (Userland)',
+    'rss092' => 'RSS 0.92',
+    'rss093' => 'RSS 0.93',
+    'rss094' => 'RSS 0.94',
+    'rss20' => 'RSS 2.0',
+    'rss10' => 'RSS 1.0',
+    'rss' => 'RSS (unknown version)',
+    'atom01' => 'Atom 0.1',
+    'atom02' => 'Atom 0.2',
+    'atom03' => 'Atom 0.3',
+    'atom10' => 'Atom 1.0',
+    'atom' => 'Atom (unknown version)',
+    'cdf' => 'CDF',
+    'hotrss' => 'Hot RSS'
   }
-  
+
   def parse(furi, options = {})
     furi.strip!
     # Parse a feed from a URL, file, stream or string
@@ -190,27 +190,27 @@ POSSIBILITY OF SUCH DAMAGE."""
     end
     begin
       if f.meta
-	result['etag'] = options[:etag] || f.meta['etag']
-	result['modified'] = options[:modified] || f.last_modified 
-	result['url'] = f.base_uri.to_s
-	result['status'] = f.status[0] || 200
-	result['headers'] = f.meta
-	result['headers']['content-location'] ||= options[:content_location] unless options[:content_location].nil?
-	result['headers']['content-language'] ||= options[:content_language] unless options[:content_language].nil?
-	result['headers']['content-type'] ||= options[:content_type] unless options[:content_type].nil?
+        result['etag'] = options[:etag] || f.meta['etag']
+        result['modified'] = options[:modified] || f.last_modified 
+        result['url'] = f.base_uri.to_s
+        result['status'] = f.status[0] || 200
+        result['headers'] = f.meta
+        result['headers']['content-location'] ||= options[:content_location] unless options[:content_location].nil?
+        result['headers']['content-language'] ||= options[:content_language] unless options[:content_language].nil?
+        result['headers']['content-type'] ||= options[:content_type] unless options[:content_type].nil?
       end
     rescue NoMethodError
       result['headers'] = {}
       result['etag'] = result['headers']['etag'] = options[:etag] unless options[:etag].nil?
       result['modified'] = result['headers']['last-modified'] = options[:modified] unless options[:modified].nil?
       unless options[:content_location].nil?
-	result['headers']['content-location'] = options[:content_location]
+        result['headers']['content-location'] = options[:content_location]
       end
       unless options[:content_language].nil?
-	result['headers']['content-language'] = options[:content_language] 
+        result['headers']['content-language'] = options[:content_language] 
       end
       unless options[:content_type].nil?
-	result['headers']['content-type'] = options[:content_type]     
+        result['headers']['content-type'] = options[:content_type]     
       end
     end
 
@@ -222,13 +222,13 @@ POSSIBILITY OF SUCH DAMAGE."""
     # - result['encoding'] is the actual encoding, as per RFC 3023 and a variety of other conflicting specifications
     http_headers = result['headers']
     result['encoding'], http_encoding, xml_encoding, sniffed_xml_encoding, acceptable_content_type =
-      self.getCharacterEncoding(f,data)
+    self.getCharacterEncoding(f,data)
 
     if not http_headers.empty? and not acceptable_content_type
       if http_headers.has_key?('content-type')
-	bozo_message = "#{http_headers['content-type']} is not an XML media type"
+        bozo_message = "#{http_headers['content-type']} is not an XML media type"
       else
-	bozo_message = 'no Content-type specified'
+        bozo_message = 'no Content-type specified'
       end
       result['bozo'] = true
       result['bozo_exception'] = NonXMLContentType.new(bozo_message) # I get to care about this, cuz Mark says I should.
@@ -261,21 +261,21 @@ POSSIBILITY OF SUCH DAMAGE."""
       next if tried_encodings.include? proposed_encoding
       tried_encodings << proposed_encoding
       begin
-	data = self.toUTF8(data, proposed_encoding)
-	known_encoding = use_strict_parser = true
-	break
+        data = self.toUTF8(data, proposed_encoding)
+        known_encoding = use_strict_parser = true
+        break
       rescue
       end
     end
     # if no luck and we have auto-detection library, try that
     if not known_encoding and $chardet
       begin 
-	proposed_encoding = CharDet.detect(data)['encoding']
-	if proposed_encoding and not tried_encodings.include?proposed_encoding
-	  tried_encodings << proposed_encoding
-	  data = self.toUTF8(data, proposed_encoding)
-	  known_encoding = use_strict_parser = true
-	end
+        proposed_encoding = CharDet.detect(data)['encoding']
+        if proposed_encoding and not tried_encodings.include?proposed_encoding
+          tried_encodings << proposed_encoding
+          data = self.toUTF8(data, proposed_encoding)
+          known_encoding = use_strict_parser = true
+        end
       rescue
       end
     end
@@ -285,24 +285,24 @@ POSSIBILITY OF SUCH DAMAGE."""
     # if still no luck and we haven't tried utf-8 yet, try that
     if not known_encoding and not tried_encodings.include?'utf-8'
       begin
-	proposed_encoding = 'utf-8'
-	tried_encodings << proposed_encoding
-	data = self.toUTF8(data, proposed_encoding)
-	known_encoding = use_strict_parser = true
+        proposed_encoding = 'utf-8'
+        tried_encodings << proposed_encoding
+        data = self.toUTF8(data, proposed_encoding)
+        known_encoding = use_strict_parser = true
       rescue
       end
     end
     # if still no luck and we haven't tried windows-1252 yet, try that
     if not known_encoding and not tried_encodings.include?'windows-1252'
       begin
-	proposed_encdoing = 'windows-1252'
-	tried_encodings << proposed_encoding
-	data = self.toUTF8(data, proposed_encoding)
-	known_encoding = use_strict_parser = true
+        proposed_encoding = 'windows-1252'
+        tried_encodings << proposed_encoding
+        data = self.toUTF8(data, proposed_encoding)
+        known_encoding = use_strict_parser = true
       rescue
       end
     end
-
+    
     # NOTE this isn't in FeedParser.py 4.1
     # if still no luck and we haven't tried iso-8859-2 yet, try that.
     #if not known_encoding and not tried_encodings.include?'iso-8859-2'
@@ -339,15 +339,15 @@ POSSIBILITY OF SUCH DAMAGE."""
       inputdata = XML::SAX::InputSource.new('parsedfeed')
       inputdata.setByteStream(StringIO.new(data))
       begin
-	saxparser.parse(inputdata)
+        saxparser.parse(inputdata)
       rescue Exception => parseerr # resparse
-	if $debug
-	  $stderr << "xml parsing failed\n"
-	  $stderr << parseerr.to_s+"\n" # Hrmph.
-	end
-	result['bozo'] = true
-	result['bozo_exception'] = feedparser.exc || e 
-	use_strict_parser = false
+        if $debug
+          $stderr << "xml parsing failed\n"
+          $stderr << parseerr.to_s+"\n" # Hrmph.
+        end
+        result['bozo'] = true
+        result['bozo_exception'] = feedparser.exc || e 
+        use_strict_parser = false
       end
     end
     if not use_strict_parser
@@ -379,22 +379,22 @@ class TextSerializer < Serializer
     return if (node.nil? or node.empty?)
     if node.methods.include?'keys'
       node.keys.sort.each do |key|
-      next if ['description','link'].include? key
-      next if node.has_key? k+'_detail'
-      next if node.has_key? k+'_parsed'
-      writer(stream,node[k], prefix+k+'.')
+        next if ['description','link'].include? key
+        next if node.has_key? k+'_detail'
+        next if node.has_key? k+'_parsed'
+        writer(stream,node[k], prefix+k+'.')
       end
     elsif node.class == Array
       node.each_with_index do |thing, index|
-	writer(stream, thing, prefix[0..-2] + '[' + index.to_s + '].')
+        writer(stream, thing, prefix[0..-2] + '[' + index.to_s + '].')
       end
     else
       begin
-	s = u(node.to_s)
-	stream << prefix[0..-2]
-	stream << '='
-	stream << s
-	stream << "\n"
+        s = u(node.to_s)
+        stream << prefix[0..-2]
+        stream << '='
+        stream << s
+        stream << "\n"
       rescue
       end
     end
@@ -423,49 +423,49 @@ if $0 == __FILE__
     opts.banner 
     opts.separator ""
     opts.on("-A", "--user-agent [AGENT]",
-	  "User-Agent for HTTP URLs") {|agent|
+    "User-Agent for HTTP URLs") {|agent|
       options.agent = agent
     }
 
     opts.on("-e", "--referrer [URL]", 
-	  "Referrer for HTTP URLs") {|referrer|
+    "Referrer for HTTP URLs") {|referrer|
       options.referrer = referrer
     }
 
     opts.on("-t", "--etag [TAG]",
-	  "ETag/If-None-Match for HTTP URLs") {|etag|
+    "ETag/If-None-Match for HTTP URLs") {|etag|
       options.etag = etag
     }
 
     opts.on("-m", "--last-modified [DATE]",
-	  "Last-modified/If-Modified-Since for HTTP URLs (any supported date format)") {|modified|
+    "Last-modified/If-Modified-Since for HTTP URLs (any supported date format)") {|modified|
       options.modified = modified
     }
 
     opts.on("-f", "--format [FORMAT]", [:text, :pprint],
-	  "output resutls in FORMAT (text, pprint)") {|format|
+    "output resutls in FORMAT (text, pprint)") {|format|
       options.format = format
     }
 
     opts.on("-v", "--[no-]verbose",
-	  "write debugging information to stderr") {|v|
+    "write debugging information to stderr") {|v|
       options.verbose = v
     }
 
     opts.on("-c", "--[no-]compatible",
-	  "strip element attributes like feedparser.py 4.1 (default)") {|comp|
+    "strip element attributes like feedparser.py 4.1 (default)") {|comp|
       options.compatible = comp
     }
     opts.on("-l", "--content-location [LOCATION]",
-	  "default Content-Location HTTP header") {|loc|
+    "default Content-Location HTTP header") {|loc|
       options.content_location = loc
     }
     opts.on("-a", "--content-language [LANG]",
-	  "default Content-Language HTTP header") {|lang|
+    "default Content-Language HTTP header") {|lang|
       options.content_language = lang
     }
     opts.on("-t", "--content-type [TYPE]",
-	  "default Content-type HTTP header") {|ctype|
+    "default Content-type HTTP header") {|ctype|
       options.ctype = ctype
     }
   end
@@ -483,14 +483,14 @@ if $0 == __FILE__
   unless args.nil? 
     args.each do |url| # opts.parse! removes everything but the urls from the command line
       results = FeedParser.parse(url, :etag => options.etag, 
-				 :modified => options.modified, 
-				 :agent => options.agent, 
-				 :referrer => options.referrer, 
-				 :content_location => options.content_location,
-				 :content_language => options.content_language,
-				 :content_type => options.ctype
-				)
-				serializer.new(results).write($stdout)
+      :modified => options.modified, 
+      :agent => options.agent, 
+      :referrer => options.referrer, 
+      :content_location => options.content_location,
+      :content_language => options.content_language,
+      :content_type => options.ctype
+      )
+      serializer.new(results).write($stdout)
     end
   end
 end
