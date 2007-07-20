@@ -6,65 +6,65 @@ module FeedParserMixin
     $stderr << "initializing FeedParser\n" if $debug
 
     @namespaces = {'' => '',
-		'http://backend.userland.com/rss' => '',
-		'http://blogs.law.harvard.edu/tech/rss' => '',
-		'http://purl.org/rss/1.0/' => '',
-		'http://my.netscape.com/rdf/simple/0.9/' => '',
-		'http://example.com/newformat#' => '',
-		'http://example.com/necho' => '',
-		'http://purl.org/echo/' => '',
-		'uri/of/echo/namespace#' => '',
-		'http://purl.org/pie/' => '',
-		'http://purl.org/atom/ns#' => '',
-		'http://www.w3.org/2005/Atom' => '',
-		'http://purl.org/rss/1.0/modules/rss091#' => '',
-		'http://webns.net/mvcb/' =>                               'admin',
-		'http://purl.org/rss/1.0/modules/aggregation/' =>         'ag',
-		'http://purl.org/rss/1.0/modules/annotate/' =>            'annotate',
-		'http://media.tangent.org/rss/1.0/' =>                    'audio',
-		'http://backend.userland.com/blogChannelModule' =>        'blogChannel',
-		'http://web.resource.org/cc/' =>                          'cc',
-		'http://backend.userland.com/creativeCommonsRssModule' => 'creativeCommons',
-		'http://purl.org/rss/1.0/modules/company' =>              'co',
-		'http://purl.org/rss/1.0/modules/content/' =>             'content',
-		'http://my.theinfo.org/changed/1.0/rss/' =>               'cp',
-		'http://purl.org/dc/elements/1.1/' =>                     'dc',
-		'http://purl.org/dc/terms/' =>                            'dcterms',
-		'http://purl.org/rss/1.0/modules/email/' =>               'email',
-		'http://purl.org/rss/1.0/modules/event/' =>               'ev',
-		'http://rssnamespace.org/feedburner/ext/1.0' =>           'feedburner',
-		'http://freshmeat.net/rss/fm/' =>                         'fm',
-		'http://xmlns.com/foaf/0.1/' =>                           'foaf',
-		'http://www.w3.org/2003/01/geo/wgs84_pos#' =>             'geo',
-		'http://postneo.com/icbm/' =>                             'icbm',
-		'http://purl.org/rss/1.0/modules/image/' =>               'image',
-		'http://www.itunes.com/DTDs/PodCast-1.0.dtd' =>           'itunes',
-		'http://example.com/DTDs/PodCast-1.0.dtd' =>              'itunes',
-		'http://purl.org/rss/1.0/modules/link/' =>                'l',
-		'http://search.yahoo.com/mrss' =>                         'media',
-		'http://madskills.com/public/xml/rss/module/pingback/' => 'pingback',
-		'http://prismstandard.org/namespaces/1.2/basic/' =>       'prism',
-		'http://www.w3.org/1999/02/22-rdf-syntax-ns#' =>          'rdf',
-		'http://www.w3.org/2000/01/rdf-schema#' =>                'rdfs',
-		'http://purl.org/rss/1.0/modules/reference/' =>           'ref',
-		'http://purl.org/rss/1.0/modules/richequiv/' =>           'reqv',
-		'http://purl.org/rss/1.0/modules/search/' =>              'search',
-		'http://purl.org/rss/1.0/modules/slash/' =>               'slash',
-		'http://schemas.xmlsoap.org/soap/envelope/' =>            'soap',
-		'http://purl.org/rss/1.0/modules/servicestatus/' =>       'ss',
-		'http://hacks.benhammersley.com/rss/streaming/' =>        'str',
-		'http://purl.org/rss/1.0/modules/subscription/' =>        'sub',
-		'http://purl.org/rss/1.0/modules/syndication/' =>         'sy',
-		'http://purl.org/rss/1.0/modules/taxonomy/' =>            'taxo',
-		'http://purl.org/rss/1.0/modules/threading/' =>           'thr',
-		'http://purl.org/rss/1.0/modules/textinput/' =>           'ti',
-		'http://madskills.com/public/xml/rss/module/trackback/' =>'trackback',
-		'http://wellformedweb.org/commentAPI/' =>                 'wfw',
-		'http://purl.org/rss/1.0/modules/wiki/' =>                'wiki',
-		'http://www.w3.org/1999/xhtml' =>                         'xhtml',
-		'http://www.w3.org/XML/1998/namespace' =>                 'xml',
-		'http://www.w3.org/1999/xlink' =>                         'xlink',
-		'http://schemas.pocketsoap.com/rss/myDescModule/' =>      'szf'
+      'http://backend.userland.com/rss' => '',
+      'http://blogs.law.harvard.edu/tech/rss' => '',
+      'http://purl.org/rss/1.0/' => '',
+      'http://my.netscape.com/rdf/simple/0.9/' => '',
+      'http://example.com/newformat#' => '',
+      'http://example.com/necho' => '',
+      'http://purl.org/echo/' => '',
+      'uri/of/echo/namespace#' => '',
+      'http://purl.org/pie/' => '',
+      'http://purl.org/atom/ns#' => '',
+      'http://www.w3.org/2005/Atom' => '',
+      'http://purl.org/rss/1.0/modules/rss091#' => '',
+      'http://webns.net/mvcb/' =>                               'admin',
+      'http://purl.org/rss/1.0/modules/aggregation/' =>         'ag',
+      'http://purl.org/rss/1.0/modules/annotate/' =>            'annotate',
+      'http://media.tangent.org/rss/1.0/' =>                    'audio',
+      'http://backend.userland.com/blogChannelModule' =>        'blogChannel',
+      'http://web.resource.org/cc/' =>                          'cc',
+      'http://backend.userland.com/creativeCommonsRssModule' => 'creativeCommons',
+      'http://purl.org/rss/1.0/modules/company' =>              'co',
+      'http://purl.org/rss/1.0/modules/content/' =>             'content',
+      'http://my.theinfo.org/changed/1.0/rss/' =>               'cp',
+      'http://purl.org/dc/elements/1.1/' =>                     'dc',
+      'http://purl.org/dc/terms/' =>                            'dcterms',
+      'http://purl.org/rss/1.0/modules/email/' =>               'email',
+      'http://purl.org/rss/1.0/modules/event/' =>               'ev',
+      'http://rssnamespace.org/feedburner/ext/1.0' =>           'feedburner',
+      'http://freshmeat.net/rss/fm/' =>                         'fm',
+      'http://xmlns.com/foaf/0.1/' =>                           'foaf',
+      'http://www.w3.org/2003/01/geo/wgs84_pos#' =>             'geo',
+      'http://postneo.com/icbm/' =>                             'icbm',
+      'http://purl.org/rss/1.0/modules/image/' =>               'image',
+      'http://www.itunes.com/DTDs/PodCast-1.0.dtd' =>           'itunes',
+      'http://example.com/DTDs/PodCast-1.0.dtd' =>              'itunes',
+      'http://purl.org/rss/1.0/modules/link/' =>                'l',
+      'http://search.yahoo.com/mrss' =>                         'media',
+      'http://madskills.com/public/xml/rss/module/pingback/' => 'pingback',
+      'http://prismstandard.org/namespaces/1.2/basic/' =>       'prism',
+      'http://www.w3.org/1999/02/22-rdf-syntax-ns#' =>          'rdf',
+      'http://www.w3.org/2000/01/rdf-schema#' =>                'rdfs',
+      'http://purl.org/rss/1.0/modules/reference/' =>           'ref',
+      'http://purl.org/rss/1.0/modules/richequiv/' =>           'reqv',
+      'http://purl.org/rss/1.0/modules/search/' =>              'search',
+      'http://purl.org/rss/1.0/modules/slash/' =>               'slash',
+      'http://schemas.xmlsoap.org/soap/envelope/' =>            'soap',
+      'http://purl.org/rss/1.0/modules/servicestatus/' =>       'ss',
+      'http://hacks.benhammersley.com/rss/streaming/' =>        'str',
+      'http://purl.org/rss/1.0/modules/subscription/' =>        'sub',
+      'http://purl.org/rss/1.0/modules/syndication/' =>         'sy',
+      'http://purl.org/rss/1.0/modules/taxonomy/' =>            'taxo',
+      'http://purl.org/rss/1.0/modules/threading/' =>           'thr',
+      'http://purl.org/rss/1.0/modules/textinput/' =>           'ti',
+      'http://madskills.com/public/xml/rss/module/trackback/' =>'trackback',
+      'http://wellformedweb.org/commentAPI/' =>                 'wfw',
+      'http://purl.org/rss/1.0/modules/wiki/' =>                'wiki',
+      'http://www.w3.org/1999/xhtml' =>                         'xhtml',
+      'http://www.w3.org/XML/1998/namespace' =>                 'xml',
+      'http://www.w3.org/1999/xlink' =>                         'xlink',
+      'http://schemas.pocketsoap.com/rss/myDescModule/' =>      'szf'
     }
     @matchnamespaces = {}
     @namespaces.each do |l|
@@ -123,7 +123,7 @@ module FeedParserMixin
       k = old_k.downcase # Downcase all keys
       attrsD[k] = value
       if ['rel','type'].include?value
-	attrsD[k].downcase!   # Downcase the value if the key is 'rel' or 'type'
+        attrsD[k].downcase!   # Downcase the value if the key is 'rel' or 'type'
       end
     end
 
@@ -140,7 +140,7 @@ module FeedParserMixin
     end
     if lang and not lang.empty? # Seriously, this cannot be correct
       if ['feed', 'rss', 'rdf:RDF'].include?tag
-	@feeddata['language'] = lang.gsub('_','-')
+        @feeddata['language'] = lang.gsub('_','-')
       end
     end
     @lang = lang
@@ -150,9 +150,9 @@ module FeedParserMixin
     # track namespaces
     attrsd.each do |prefix, uri|
       if /^xmlns:/ =~ prefix # prefix begins with xmlns:
-	trackNamespace(prefix[6..-1], uri)
+        trackNamespace(prefix[6..-1], uri)
       elsif prefix == 'xmlns':
-	trackNamespace(nil, uri)
+        trackNamespace(nil, uri)
       end
     end
 
@@ -238,13 +238,13 @@ module FeedParserMixin
     if @basestack and not @basestack.empty?
       @basestack.pop
       if @basestack and @basestack[-1] and not (@basestack.empty? or @basestack[-1].empty?)
-	@baseuri = @basestack[-1]
+        @baseuri = @basestack[-1]
       end
     end
     if @langstack and not @langstack.empty?
       @langstack.pop
       if @langstack and not @langstack.empty? # and @langstack[-1] and not @langstack.empty?
-	@lang = @langstack[-1]
+        @lang = @langstack[-1]
       end
     end
   end
@@ -260,9 +260,9 @@ module FeedParserMixin
       text = "&##{ref};"
     else
       if ref[0..0] == 'x'
-	c = (ref[1..-1]).to_i(16)
+        c = (ref[1..-1]).to_i(16)
       else
-	c = ref.to_i
+        c = ref.to_i
       end
       text = [c].pack('U*')
     end
@@ -383,7 +383,7 @@ module FeedParserMixin
     if @contentparams['base64']
       out64 = Base64::decode64(output) # a.k.a. [output].unpack('m')[0]
       if not output.empty? and not out64.empty?
-	output = out64
+        output = out64
       end
     end
 
@@ -404,13 +404,13 @@ module FeedParserMixin
     # resolve relative URIs within embedded markup
     if @html_types.include?mapContentType(@contentparams['type'] || 'text/html')
       if @can_contain_relative_uris.include?element
-	output = FeedParser.resolveRelativeURIs(output, @baseuri, @encoding)
+        output = FeedParser.resolveRelativeURIs(output, @baseuri, @encoding)
       end
     end
     # sanitize embedded markup
     if @html_types.include?mapContentType(@contentparams['type'] || 'text/html')
       if @can_contain_dangerous_markup.include?element
-	output = FeedParser.sanitizeHTML(output, @encoding)
+        output = FeedParser.sanitizeHTML(output, @encoding)
       end
     end
 
@@ -425,34 +425,34 @@ module FeedParserMixin
     # store output in appropriate place(s)
     if @inentry and not @insource
       if element == 'content'
-	@entries[-1][element] ||= []
-	contentparams = Marshal.load(Marshal.dump(@contentparams)) # deepcopy
-	contentparams['value'] = output
-	@entries[-1][element] << contentparams
+        @entries[-1][element] ||= []
+        contentparams = Marshal.load(Marshal.dump(@contentparams)) # deepcopy
+        contentparams['value'] = output
+        @entries[-1][element] << contentparams
       elsif element == 'link'
-	@entries[-1][element] = output
-	if output and not output.empty?
-	  @entries[-1]['links'][-1]['href'] = output
-	end
+        @entries[-1][element] = output
+        if output and not output.empty?
+          @entries[-1]['links'][-1]['href'] = output
+        end
       else
-	element = 'summary' if element == 'description'
-	@entries[-1][element] = output
-	if @incontent != 0
-	  contentparams = Marshal.load(Marshal.dump(@contentparams))
-	  contentparams['value'] = output
-	  @entries[-1][element + '_detail'] = contentparams
-	end
+        element = 'summary' if element == 'description'
+        @entries[-1][element] = output
+        if @incontent != 0
+          contentparams = Marshal.load(Marshal.dump(@contentparams))
+          contentparams['value'] = output
+          @entries[-1][element + '_detail'] = contentparams
+        end
       end
     elsif (@infeed or @insource) and not @intextinput and not @inimage
       context = getContext()
       element = 'subtitle' if element == 'description'
       context[element] = output
       if element == 'link'
-	context['links'][-1]['href'] = output
+        context['links'][-1]['href'] = output
       elsif @incontent != 0
-	contentparams = Marshal.load(Marshal.dump(@contentparams))
-	contentparams['value'] = output
-	context[element + '_detail'] = contentparams
+        contentparams = Marshal.load(Marshal.dump(@contentparams))
+        contentparams['value'] = output
+        context[element + '_detail'] = contentparams
       end
     end
     return output
@@ -514,20 +514,20 @@ module FeedParserMixin
 
   def _start_rss(attrsD)
     versionmap = {'0.91' => 'rss091u',
-		  '0.92' => 'rss092',
-		  '0.93' => 'rss093',
-		  '0.94' => 'rss094'
+      '0.92' => 'rss092',
+      '0.93' => 'rss093',
+      '0.94' => 'rss094'
     }
 
     if not @version or @version.empty?
       attr_version = attrsD['version'] || ''
       version = versionmap[attr_version]
       if version and not version.empty?
-	@version = version
+        @version = version
       elsif /^2\./ =~ attr_version
-	@version = 'rss20'
+        @version = 'rss20'
       else
-	@version = 'rss'
+        @version = 'rss'
       end
     end
   end
@@ -558,17 +558,17 @@ module FeedParserMixin
   def _start_feed(attrsD)
     @infeed = true 
     versionmap = {'0.1' => 'atom01',
-		  '0.2' => 'atom02',
-		  '0.3' => 'atom03'
+      '0.2' => 'atom02',
+      '0.3' => 'atom03'
     }
 
     if not @version or @version.empty?
       attr_version = attrsD['version']
       version = versionmap[attr_version]
       if @version and not @version.empty?
-	@version = version
+        @version = version
       else
-	@version = 'atom'
+        @version = 'atom'
       end
     end
   end
@@ -776,11 +776,11 @@ module FeedParserMixin
       email = detail['email']
 
       if name and email and not (name.empty? or name.empty?)
-	context[key] = "#{name} (#{email})"
+        context[key] = "#{name} (#{email})"
       elsif name and not name.empty?
-	context[key] = name
+        context[key] = name
       elsif email and not email.empty?
-	context[key] = email
+        context[key] = email
       end
     else
       author = context[key].dup unless context[key].nil?
@@ -791,11 +791,11 @@ module FeedParserMixin
       author.gsub!("\(\)", '')
       author.strip!
       author.gsub!(/^\(/,'')
-		   author.gsub!(/\)$/,'')
-		   author.strip!
-		   context["#{key}_detail"] ||= FeedParserDict.new
-		   context["#{key}_detail"]['name'] = author
-		   context["#{key}_detail"]['email'] = email
+      author.gsub!(/\)$/,'')
+      author.strip!
+      context["#{key}_detail"] ||= FeedParserDict.new
+      context["#{key}_detail"]['name'] = author
+      context["#{key}_detail"]['email'] = email
     end
   end
 
@@ -1002,7 +1002,7 @@ module FeedParserMixin
     if attrsD.has_key? 'href'
       expectingText = false
       if (attrsD['rel'] == 'alternate') and @html_types.include?mapContentType(attrsD['type'])
-	context['link'] = attrsD['href']
+        context['link'] = attrsD['href']
       end
     else
       push('link', expectingText)
@@ -1077,9 +1077,9 @@ module FeedParserMixin
       value = popContent('description')
       context = getContext()
       if @intextinput
-	context['textinput']['description'] = value
+        context['textinput']['description'] = value
       elsif @inimage:
-	context['image']['description'] = value
+        context['image']['description'] = value
       end
     end
     @summaryKey = nil
@@ -1100,7 +1100,7 @@ module FeedParserMixin
     if attrsD and not attrsD.empty?
       attrsD = itsAnHrefDamnIt(attrsD)
       if attrsD.has_key?('href')
-	attrsD['href'] = resolveURI(attrsD['href'])
+        attrsD['href'] = resolveURI(attrsD['href'])
       end
     end
     getContext()['generator_detail'] = FeedParserDict.new(attrsD)
@@ -1164,7 +1164,7 @@ module FeedParserMixin
     if href and not href.empty?
       context = getContext()
       if not context['id']
-	context['id'] = href
+        context['id'] = href
       end
     end
   end
