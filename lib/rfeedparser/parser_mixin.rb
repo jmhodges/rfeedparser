@@ -1168,6 +1168,8 @@ module FeedParserMixin
       end
     end
   end
+  alias :_start_media_content :_start_enclosure
+  alias :_start_media_thumbnail :_start_enclosure
 
   def _start_source(attrsD)
     @insource = true
@@ -1230,6 +1232,7 @@ module FeedParserMixin
     value = pop('itunes_explicit', false)
     getContext()['itunes_explicit'] = (value == 'yes') and true or false
   end
+  
 end # End FeedParserMixin
 
 
