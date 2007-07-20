@@ -21,7 +21,7 @@ module FeedParser
     def getAttrs(attrs)
       ret = []
       for i in 0..attrs.getLength
-	ret.push([attrs.getName(i), attrs.getValue(i)])
+        ret.push([attrs.getName(i), attrs.getValue(i)])
       end
       ret
     end
@@ -43,17 +43,17 @@ module FeedParser
 
     def startElement(name, attrs)
       name =~ /^(([^;]*);)?(.+)$/ # Snag namespaceuri from name
-	namespaceuri = ($2 || '').downcase
+      namespaceuri = ($2 || '').downcase
       name = $3
       if /backend\.userland\.com\/rss/ =~ namespaceuri
-	# match any backend.userland.com namespace
-	namespaceuri = 'http://backend.userland.com/rss'
+        # match any backend.userland.com namespace
+        namespaceuri = 'http://backend.userland.com/rss'
       end
       prefix = @matchnamespaces[namespaceuri] 
       # No need to raise UndeclaredNamespace, Expat does that for us with
       "unbound prefix (XMLParserError)"
       if prefix and not prefix.empty?
-	name = prefix + ':' + name
+        name = prefix + ':' + name
       end
       name.downcase!
       unknown_starttag(name, attrs)
@@ -72,10 +72,10 @@ module FeedParser
 
     def endElement(name) 
       name =~ /^(([^;]*);)?(.+)$/ # Snag namespaceuri from name
-	namespaceuri = ($2 || '').downcase
+      namespaceuri = ($2 || '').downcase
       prefix = @matchnamespaces[namespaceuri]
       if prefix and not prefix.empty?
-	localname = prefix + ':' + name
+        localname = prefix + ':' + name
       end
       name.downcase!
       unknown_endtag(name)
@@ -112,13 +112,13 @@ module FeedParser
 
     attr_accessor :encoding, :bozo, :feeddata, :entries, :namespacesInUse
 
-    Elements_No_End_Tag = ['area', 'base', 'basefont', 'br', 'col', 'frame', 'hr',
-      'img', 'input', 'isindex', 'link', 'meta', 'param']
+    Elements_No_End_Tag = ['area', 'base', 'basefont', 'br', 'col', 'frame', 'hr', 'img', 'input', 'isindex', 'link', 'meta', 'param']
     New_Declname_Re = /[a-zA-Z][-_.a-zA-Z0-9:]*\s*/
-      alias :sgml_feed :feed # feed needs to mapped to feeddata, not the SGMLParser method feed. I think.
+    alias :sgml_feed :feed # feed needs to mapped to feeddata, not the SGMLParser method feed. I think.
     def feed       
       @feeddata
     end
+
     def feed=(data)
       @feeddata = data
     end
@@ -134,22 +134,23 @@ module FeedParser
     end
 
     def parse(data)
-      data.gsub!(/<!((?!DOCTYPE|--|\[))/i,  '&lt;!\1')
-	data.gsub!(/<([^<\s]+?)\s*\/>/) do |tag|
-	  clean = tag[1..-3].strip
-	  if Elements_No_End_Tag.include?clean
-	    tag
-	  else
-	  '<'+clean+'></'+clean+'>'
-	  end
-	end
+      doctype_regexp = Regexp.new('<!((?!DOCTYPE|--|\[))', Regexp::IGNORECASE) # Getting around a Textmate ident bug
+      data.gsub!(doctype_regexp,  '&lt;!\1')
+      data.gsub!(/<([^<\s]+?)\s*\/>/) do |tag|
+        clean = tag[1..-3].strip
+        if Elements_No_End_Tag.include?clean
+          tag
+        else
+          '<'+clean+'></'+clean+'>'
+        end
+      end
 
-	data.gsub!(/&#39;/, "'")
-	  data.gsub!(/&#34;/, "'")
-	  if @encoding and not @encoding.empty? # FIXME unicode check type(u'')
-	    data = uconvert(data,'utf-8',@encoding)
-	  end
-	sgml_feed(data) # see the alias above
+      data.gsub!(/&#39;/, "'")
+      data.gsub!(/&#34;/, "'")
+      if @encoding and not @encoding.empty? # FIXME unicode check type(u'')
+        data = uconvert(data,'utf-8',@encoding)
+      end
+      sgml_feed(data) # see the alias above
     end
 
 
@@ -165,11 +166,11 @@ module FeedParser
       data.gsub!('&#39;', '&apos;')
       data.gsub!('&#x27;', '&apos;')
       if @contentparams.has_key? 'type' and not ((@contentparams['type'] || 'xml') =~ /xml$/u)
-	data.gsub!('&lt;', '<')
-	data.gsub!('&gt;', '>')
-	data.gsub!('&amp;', '&')
-	data.gsub!('&quot;', '"')
-	data.gsub!('&apos;', "'")
+        data.gsub!('&lt;', '<')
+        data.gsub!('&gt;', '>')
+        data.gsub!('&amp;', '&')
+        data.gsub!('&quot;', '"')
+        data.gsub!('&apos;', "'")
       end
       return data
     end
