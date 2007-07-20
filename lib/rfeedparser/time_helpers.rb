@@ -20,35 +20,33 @@ module FeedParserMixin
     # FIXME The century regexp maybe not work ('\d\d$' says "two numbers at 
     # end of line" but we then attach more of a regexp.  
     iso8601_regexps = [ '^(\d{4})-?([01]\d)-([0123]\d)',
-		      '^(\d{4})-([01]\d)',
-		      '^(\d{4})-?([0123]\d\d)',
-		      '^(\d\d)-?([01]\d)-?([0123]\d)',
-		      '^(\d\d)-?([0123]\d\d)',
-		      '^(\d{4})',
-		      '-(\d\d)-?([01]\d)',
-		      '-([0123]\d\d)',
-		      '-(\d\d)',
-		      '--([01]\d)-?([0123]\d)',
-		      '--([01]\d)',
-		      '---([0123]\d)',
-		      '(\d\d$)',
-		      ''
-    ]
+    '^(\d{4})-([01]\d)',
+    '^(\d{4})-?([0123]\d\d)',
+    '^(\d\d)-?([01]\d)-?([0123]\d)',
+    '^(\d\d)-?([0123]\d\d)',
+    '^(\d{4})',
+    '-(\d\d)-?([01]\d)',
+    '-([0123]\d\d)',
+    '-(\d\d)',
+    '--([01]\d)-?([0123]\d)',
+    '--([01]\d)',
+    '---([0123]\d)',
+    '(\d\d$)',
+    '' ]
     iso8601_values = { '^(\d{4})-?([01]\d)-([0123]\d)' => ['year', 'month', 'day'],
-		  '^(\d{4})-([01]\d)' => ['year','month'], 
-		  '^(\d{4})-?([0123]\d\d)' => ['year', 'ordinal'],
-		  '^(\d\d)-?([01]\d)-?([0123]\d)' => ['year','month','day'], 
-		  '^(\d\d)-?([0123]\d\d)' => ['year','ordinal'],
-		  '^(\d{4})' => ['year'],
-		  '-(\d\d)-?([01]\d)' => ['year','month'], 
-		  '-([0123]\d\d)' => ['ordinal'], 
-		  '-(\d\d)' => ['year'],
-		  '--([01]\d)-?([0123]\d)' => ['month','day'],
-		  '--([01]\d)' => ['month'],
-		  '---([0123]\d)' => ['day'],
-		  '(\d\d$)' => ['century'], 
-		  '' => []
-    }
+    '^(\d{4})-([01]\d)' => ['year','month'], 
+    '^(\d{4})-?([0123]\d\d)' => ['year', 'ordinal'],
+    '^(\d\d)-?([01]\d)-?([0123]\d)' => ['year','month','day'], 
+    '^(\d\d)-?([0123]\d\d)' => ['year','ordinal'],
+    '^(\d{4})' => ['year'],
+    '-(\d\d)-?([01]\d)' => ['year','month'], 
+    '-([0123]\d\d)' => ['ordinal'], 
+    '-(\d\d)' => ['year'],
+    '--([01]\d)-?([0123]\d)' => ['month','day'],
+    '--([01]\d)' => ['month'],
+    '---([0123]\d)' => ['day'],
+    '(\d\d$)' => ['century'], 
+    '' => [] }
     add_to_all = '(T?(\d\d):(\d\d)(?::(\d\d))?([+-](\d\d)(?::(\d\d))?|Z)?)?'
     add_to_all_fields = ['hour', 'minute', 'second', 'tz', 'tzhour', 'tzmin'] 
     # NOTE We use '(?:' to prevent grouping of optional matches (ones trailed
@@ -86,9 +84,9 @@ module FeedParserMixin
       # ordinals are NOT normalized by mktime, we simulate them
       # by setting month=1, day=ordinal
       if ordinal
-	month = DateTime.ordinal(year,ordinal).month
+        month = DateTime.ordinal(year,ordinal).month
       else
-	month = Time.now.utc.month
+        month = Time.now.utc.month
       end
     end
     month = month.to_i unless month.nil?
@@ -96,11 +94,11 @@ module FeedParserMixin
     if day.nil? or day.empty?
       # see above
       if ordinal
-	day = DateTime.ordinal(year,ordinal).day
+        day = DateTime.ordinal(year,ordinal).day
       elsif params['century'] or params['year'] or params['month']
-	day = 1
+        day = 1
       else
-	day = Time.now.utc.day
+        day = Time.now.utc.day
       end
     else
       day = day.to_i
@@ -124,13 +122,13 @@ module FeedParserMixin
     if tz and not tz.empty? and tz != 'Z'
       # FIXME does this cross over days?
       if tz[0] == '-'
-	tm[3] += params['tzhour'].to_i
-      tm[4] += params['tzmin'].to_i
+        tm[3] += params['tzhour'].to_i
+        tm[4] += params['tzmin'].to_i
       elsif tz[0] == '+'
-	tm[3] -= params['tzhour'].to_i
-	tm[4] -= params['tzmin'].to_i
+        tm[3] -= params['tzhour'].to_i
+        tm[4] -= params['tzmin'].to_i
       else
-	return nil
+        return nil
       end
     end
     return Time.utc(*tm) # Magic!
@@ -148,7 +146,7 @@ module FeedParserMixin
     korean_onblog_date_re = /(\d{4})#{korean_year}\s+(\d{2})#{korean_month}\s+(\d{2})#{korean_day}\s+(\d{2}):(\d{2}):(\d{2})/
 
 
-      m = korean_onblog_date_re.match(dateString)
+    m = korean_onblog_date_re.match(dateString)
     return unless m
     w3dtfdate = "#{m[1]}-#{m[2]}-#{m[3]}T#{m[4]}:#{m[5]}:#{m[6]}+09:00"
 
@@ -163,7 +161,7 @@ module FeedParserMixin
     korean_pm    = u("오후") # bfc0 c8c4 in euc-kr
 
     korean_nate_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(#{korean_am}|#{korean_pm})\s+(\d{0,2}):(\d{0,2}):(\d{0,2})/
-      m = korean_nate_date_re.match(dateString)
+    m = korean_nate_date_re.match(dateString)
     return unless m
     hour = m[5].to_i
     ampm = m[4]
@@ -179,7 +177,7 @@ module FeedParserMixin
   def _parse_date_mssql(dateString)
     mssql_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})(\.\d+)?/
 
-      m = mssql_date_re.match(dateString)
+    m = mssql_date_re.match(dateString)
     return unless m
     w3dtfdate =  "#{m[1]}-#{m[2]}-#{m[3]}T#{m[4]}:#{m[5]}:#{m[6]}+09:00"
     $stderr << "MS SQL date parsed as: %s\n" % w3dtfdate if $debug
@@ -223,7 +221,7 @@ module FeedParserMixin
 
     greek_date_format = /([^,]+),\s+(\d{2})\s+([^\s]+)\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+([^\s]+)/
 
-      m = greek_date_format.match(dateString)
+    m = greek_date_format.match(dateString)
     return unless m
     begin
       wday = greek_wdays[m[1]]
@@ -239,7 +237,7 @@ module FeedParserMixin
   def _parse_date_hungarian(dateString)
     # Parse a string according to a Hungarian 8-bit date format.
     hungarian_date_format_re = /(\d{4})-([^-]+)-(\d{0,2})T(\d{0,2}):(\d{2})((\+|-)(\d{0,2}:\d{2}))/
-      m = hungarian_date_format_re.match(dateString)
+    m = hungarian_date_format_re.match(dateString)
     return unless m
 
     # Unicode strings for Hungarian date strings
@@ -314,8 +312,8 @@ module FeedParserMixin
       w3[2] -= num_days
       w3[1] += 1
       if w3[1] > 12
-	w3[0] += 1
-	w3[1] = set_self(w3[1], 12)
+        w3[0] += 1
+        w3[1] = set_self(w3[1], 12)
       end
       num_days = Time.days_in_month(w3[1], w3[0])
     end
@@ -323,9 +321,9 @@ module FeedParserMixin
 
     unless w3[6].class != String
       if /^-/ =~ w3[6] # Zone offset goes backwards
-	w3[6][0] = '+'
+        w3[6][0] = '+'
       elsif /^\+/ =~ w3[6]
-	w3[6][0] = '-'
+        w3[6][0] = '-'
       end
     end
     return Time.utc(w3[0], w3[1], w3[2] , w3[3], w3[4], w3[5])+Time.zone_offset(w3[6] || "UTC")
@@ -335,8 +333,8 @@ module FeedParserMixin
     # Parse an RFC822, RFC1123, RFC2822 or asctime-style date 
     # These first few lines are to fix up the stupid proprietary format from Disney
     unknown_timezones = { 'AT' => 'EDT', 'ET' => 'EST', 
-			'CT' => 'CST', 'MT' => 'MST', 
-			'PT' => 'PST' 
+      'CT' => 'CST', 'MT' => 'MST', 
+      'PT' => 'PST' 
     }
 
     mon = dateString.split[2]
@@ -390,11 +388,11 @@ module FeedParserMixin
   def parse_date(dateString)
     @date_handlers.each do |handler|
       begin 
-	$stderr << "Trying date_handler #{handler}\n" if $debug
-	datething = extract_tuple(send(handler,dateString))
-	return datething
+        $stderr << "Trying date_handler #{handler}\n" if $debug
+        datething = extract_tuple(send(handler,dateString))
+        return datething
       rescue Exception => e
-	$stderr << "#{handler} raised #{e}\n" if $debug
+        $stderr << "#{handler} raised #{e}\n" if $debug
       end
     end
     return nil
