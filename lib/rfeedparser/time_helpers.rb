@@ -402,6 +402,5 @@ end
 module FeedParserUtilities
   def py2rtime(pytuple)
     return Time.utc(*pytuple[0..5]) unless pytuple.blank? 
-    return nil
   end
 end
