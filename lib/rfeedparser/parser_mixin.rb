@@ -1210,13 +1210,13 @@ module FeedParserMixin
     if copyToDescription
       _save('description', value)
     end
-    alias :_end_body :_end_content
-    alias :_end_xhtml_body :_end_content
-    alias :_end_content_encoded :_end_content
-    alias :_end_fullitem :_end_content
-    alias :_end_prodlink :_end_content
   end
-
+  alias :_end_body :_end_content
+  alias :_end_xhtml_body :_end_content
+  alias :_end_content_encoded :_end_content
+  alias :_end_fullitem :_end_content
+  alias :_end_prodlink :_end_content
+  
   def _start_itunes_image(attrsD)
     push('itunes_image', false)
     getContext()['image'] = FeedParserDict.new({'href' => attrsD['href']})
