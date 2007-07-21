@@ -1,5 +1,5 @@
 #!/usr/bin/ruby
-gem 'hpricot', ">=0.5"
+gem 'hpricot', "=0.5"
 require 'hpricot'
 # This used to be based on Michael Moen's Hpricot#scrub, but that seems to 
 # have only been part of its evolution. Hpricot#scrub is cool code, though.
