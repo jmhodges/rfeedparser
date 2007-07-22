@@ -56,7 +56,7 @@ include FeedParserUtilities
 
 
 module FeedParser
-  Version = "0.9.93"
+  Version = "0.9.931"
 
   License = """Copyright (c) 2002-2006, Mark Pilgrim, All rights reserved.
 
