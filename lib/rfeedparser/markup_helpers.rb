@@ -1,14 +1,11 @@
 #!/usr/bin/ruby
 module FeedParserUtilities
-  #FIXME we need to find a better place for this method
   def stripDoctype(data)
-=begin
-Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
-
-    rss_version may be 'rss091n' or None
-    stripped_data is the same XML document, minus the DOCTYPE
-=end
+    #Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
+    #rss_version may be 'rss091n' or None
+    #stripped_data is the same XML document, minus the DOCTYPE
     entity_pattern = /<!ENTITY(.*?)>/m # m is for Regexp::MULTILINE
+    
     data = data.gsub(entity_pattern,'')
 
     doctype_pattern = /<!DOCTYPE(.*?)>/m
@@ -60,11 +57,11 @@ Strips DOCTYPE from XML document, returns (rss_version, stripped_data)
     relative_uris.each do |l|
       ename, eattr = l
       h.search(ename).each do |elem|
-	euri = elem.attributes[eattr]
+        euri = elem.attributes[eattr]
         # FIXME uses the URI.encode method.  should it?
-	if euri and not euri.empty? and ForgivingURI.parse(URI.encode(euri)).relative? 
-	  elem.attributes[eattr] = urljoin(baseURI, euri)
-	end
+        if euri and not euri.empty? and ForgivingURI.parse(URI.encode(euri)).relative? 
+          elem.attributes[eattr] = urljoin(baseURI, euri)
+        end
       end
     end
     return h.to_html
