@@ -151,7 +151,7 @@ module FeedParser
     result['feed'] = FeedParserDict.new
     result['entries'] = []
     if options[:modified]
-      options[:modified] = Time.parse(options[:modified]).rfc2822 
+      options[:modified] = Time.parse(options[:modified]).utc.rfc2822 
       # FIXME this ignores all of our time parsing work.  Does it matter?
     end
     result['bozo'] = false
@@ -188,31 +188,13 @@ module FeedParser
       data = ''
       f = nil
     end
-    begin
-      if f.meta
-        result['etag'] = options[:etag] || f.meta['etag']
-        result['modified'] = options[:modified] || f.last_modified 
+      if f.respond_to?(:meta)
+        result['etag'] = f.meta['etag']
+        result['modified'] = f.meta['modified']
         result['url'] = f.base_uri.to_s
         result['status'] = f.status[0] || 200
         result['headers'] = f.meta
-        result['headers']['content-location'] ||= options[:content_location] unless options[:content_location].nil?
-        result['headers']['content-language'] ||= options[:content_language] unless options[:content_language].nil?
-        result['headers']['content-type'] ||= options[:content_type] unless options[:content_type].nil?
       end
-    rescue NoMethodError
-      result['headers'] = {}
-      result['etag'] = result['headers']['etag'] = options[:etag] unless options[:etag].nil?
-      result['modified'] = result['headers']['last-modified'] = options[:modified] unless options[:modified].nil?
-      unless options[:content_location].nil?
-        result['headers']['content-location'] = options[:content_location]
-      end
-      unless options[:content_language].nil?
-        result['headers']['content-language'] = options[:content_language] 
-      end
-      unless options[:content_type].nil?
-        result['headers']['content-type'] = options[:content_type]     
-      end
-    end
 
 
     # there are four encodings to keep track of:
@@ -220,12 +202,12 @@ module FeedParser
     # - xml_encoding is the encoding declared in the <?xml declaration
     # - sniffed_encoding is the encoding sniffed from the first 4 bytes of the XML data
     # - result['encoding'] is the actual encoding, as per RFC 3023 and a variety of other conflicting specifications
-    http_headers = result['headers']
+    http_headers = result['headers'] || {}
     result['encoding'], http_encoding, xml_encoding, sniffed_xml_encoding, acceptable_content_type =
     self.getCharacterEncoding(f,data)
 
-    if not http_headers.empty? and not acceptable_content_type
-      if http_headers.has_key?('content-type')
+    if not http_headers.blank? and not acceptable_content_type
+      unless http_headers['content-type'].nil?
         bozo_message = "#{http_headers['content-type']} is not an XML media type"
       else
         bozo_message = 'no Content-type specified'
@@ -234,6 +216,7 @@ module FeedParser
       result['bozo_exception'] = NonXMLContentType.new(bozo_message) # I get to care about this, cuz Mark says I should.
     end
     result['version'], data = self.stripDoctype(data)
+    
     baseuri = http_headers['content-location'] || result['href']
     baselang = http_headers['content-language']
 
