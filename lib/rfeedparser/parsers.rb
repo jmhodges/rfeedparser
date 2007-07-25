@@ -1,6 +1,5 @@
 #!/usr/bin/ruby
 
-
 module FeedParser
   class StrictFeedParser < XML::SAX::HandlerBase # expat
     include FeedParserMixin
