@@ -175,12 +175,21 @@ module FeedParser
         newd["Content-Location"] = options[:content_location] unless options[:content_location].nil?
         newd["Content-Language"] = options[:content_language] unless options[:content_language].nil?                    
         newd["Content-type"] = options[:content_type] unless options[:content_type].nil?
-
+        
         f = open(furi, newd)
+        
       end
 
       data = f.read
       f.close 
+      
+    rescue OpenURI::HTTPError => e
+      unless e.to_s[0..2].to_i == 0
+        result['status'] = e.to_s[0..2].to_i
+        data = ''
+        f = nil
+      end
+      
     rescue => e
       $stderr << "Rescued in parse: "+e.to_s+"\n" if $debug # My addition
       result['bozo'] = true
@@ -188,13 +197,13 @@ module FeedParser
       data = ''
       f = nil
     end
-      if f.respond_to?(:meta)
-        result['etag'] = f.meta['etag']
-        result['modified'] = f.meta['modified']
-        result['url'] = f.base_uri.to_s
-        result['status'] = f.status[0] || 200
-        result['headers'] = f.meta
-      end
+    if f.respond_to?(:meta)
+      result['etag'] = f.meta['etag']
+      result['modified'] = f.meta['modified']
+      result['url'] = f.base_uri.to_s
+      result['status'] ||= f.status[0].to_i
+      result['headers'] = f.meta
+    end
 
 
     # there are four encodings to keep track of:
