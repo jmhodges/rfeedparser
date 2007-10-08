@@ -24,6 +24,7 @@ gem 'htmltools', ">=1.10"
 gem 'htmlentities', ">=4.0.0"
 gem 'activesupport', ">=1.4.1"
 gem 'rchardet', ">=1.0"
+
 require 'xml/saxdriver' # calling expat through the xmlparser gem
 
 require 'rchardet'
@@ -56,7 +57,7 @@ include FeedParserUtilities
 
 
 module FeedParser
-  Version = "0.9.931"
+  Version = "0.9.932"
 
   License = """Copyright (c) 2002-2006, Mark Pilgrim, All rights reserved.
 
