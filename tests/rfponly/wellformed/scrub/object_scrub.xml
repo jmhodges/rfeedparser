@@ -1,11 +1,9 @@
 <!--
   Description: object tag should not cause
-  Expect:      not bozo and entries[0]['description'] == u'<p>S'okay</p>'
+  Expect:      not bozo and entries[0]['description'] == u'<p>Okay</p>'
 -->
 <rss version="2.0">
   <channel>
-    <item>
-      <description><![CDATA[<object><param></param><param></param><p>S'okay</p></object>]]></description>
-    </item>
+      <description><![CDATA[<object><param></param><param></param><p>Okay</p></object>]]></description>
   </channel>
 </rss>
