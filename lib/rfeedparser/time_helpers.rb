@@ -344,19 +344,24 @@ module FeedParserMixin
     if dateString[-3..-1] != "GMT" and unknown_timezones[dateString[-2..-1]]
       dateString[-2..-1] = unknown_timezones[dateString[-2..-1]]
     end
+    
     # Okay, the Disney date format should be fixed up now.
-    rfc = dateString.match(/([A-Za-z]{3}), ([0123]\d) ([A-Za-z]{3}) (\d{4})( (\d\d):(\d\d)(?::(\d\d))? ([A-Za-z]{3}))?/)
+    rfc_tz = '([A-Za-z]{3}|[\+\-]?\d\d\d\d)'
+    rfc = dateString.match(/([A-Za-z]{3}), ([0123]\d) ([A-Za-z]{3}) (\d{4})( (\d\d):(\d\d)(?::(\d\d))? #{rfc_tz})?/)
+    
     if rfc.to_a.length > 1 and rfc.to_a.include? nil
       dow, day, mon, year, hour, min, sec, tz = rfc[1..-1]
       hour,min,sec = [hour,min,sec].map{|e| e.to_s.rjust(2,'0') }
       tz ||= "GMT"
     end
+    
     asctime_match = dateString.match(/([A-Za-z]{3}) ([A-Za-z]{3})  (\d?\d) (\d\d):(\d\d):(\d\d) ([A-Za-z]{3}) (\d\d\d\d)/).to_a
     if asctime_match.to_a.length > 1
       # Month-abbr dayofmonth hour:minute:second year
       dow, mon, day, hour, min, sec, tz, year = asctime_match[1..-1]
       day.to_s.rjust(2,'0')
     end
+    
     if (rfc.to_a.length > 1 and rfc.to_a.include? nil) or asctime_match.to_a.length > 1
       ds = "#{dow}, #{day} #{mon} #{year} #{hour}:#{min}:#{sec} #{tz}"
     else
