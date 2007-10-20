@@ -1,47 +1,47 @@
 #!/usr/bin/ruby
-gem 'hpricot', "=0.5"
+gem 'hpricot', "=0.6"
 require 'hpricot'
 # This used to be based on Michael Moen's Hpricot#scrub, but that seems to 
 # have only been part of its evolution. Hpricot#scrub is cool code, though.
 # http://underpantsgnome.com/2007/01/20/hpricot-scrub
 module Hpricot
   Acceptable_Elements = ['a', 'abbr', 'acronym', 'address', 'area', 'b',
-      'big', 'blockquote', 'br', 'button', 'caption', 'center', 'cite',
-      'code', 'col', 'colgroup', 'dd', 'del', 'dfn', 'dir', 'div', 'dl', 'dt',
-      'em', 'fieldset', 'font', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-      'hr', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'map',
-      'menu', 'ol', 'optgroup', 'option', 'p', 'pre', 'q', 's', 'samp',
-      'select', 'small', 'span', 'strike', 'strong', 'sub', 'sup', 'table',
-      'tbody', 'td', 'textarea', 'tfoot', 'th', 'thead', 'tr', 'tt', 'u',
-      'ul', 'var'
+    'big', 'blockquote', 'br', 'button', 'caption', 'center', 'cite',
+    'code', 'col', 'colgroup', 'dd', 'del', 'dfn', 'dir', 'div', 'dl', 'dt',
+    'em', 'fieldset', 'font', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'hr', 'i', 'img', 'input', 'ins', 'kbd', 'label', 'legend', 'li', 'map',
+    'menu', 'ol', 'optgroup', 'option', 'p', 'pre', 'q', 's', 'samp',
+    'select', 'small', 'span', 'strike', 'strong', 'sub', 'sup', 'table',
+    'tbody', 'td', 'textarea', 'tfoot', 'th', 'thead', 'tr', 'tt', 'u',
+    'ul', 'var'
   ]
 
   Acceptable_Attributes = ['abbr', 'accept', 'accept-charset', 'accesskey',
-      'action', 'align', 'alt', 'axis', 'border', 'cellpadding',
-      'cellspacing', 'char', 'charoff', 'charset', 'checked', 'cite', 'class',
-      'clear', 'cols', 'colspan', 'color', 'compact', 'coords', 'datetime',
-      'dir', 'disabled', 'enctype', 'for', 'frame', 'headers', 'height',
-      'href', 'hreflang', 'hspace', 'id', 'ismap', 'label', 'lang',
-      'longdesc', 'maxlength', 'media', 'method', 'multiple', 'name',
-      'nohref', 'noshade', 'nowrap', 'prompt', 'readonly', 'rel', 'rev',
-      'rows', 'rowspan', 'rules', 'scope', 'selected', 'shape', 'size',
-      'span', 'src', 'start', 'summary', 'tabindex', 'target', 'title', 
-      'type', 'usemap', 'valign', 'value', 'vspace', 'width', 'xml:lang'
+    'action', 'align', 'alt', 'axis', 'border', 'cellpadding',
+    'cellspacing', 'char', 'charoff', 'charset', 'checked', 'cite', 'class',
+    'clear', 'cols', 'colspan', 'color', 'compact', 'coords', 'datetime',
+    'dir', 'disabled', 'enctype', 'for', 'frame', 'headers', 'height',
+    'href', 'hreflang', 'hspace', 'id', 'ismap', 'label', 'lang',
+    'longdesc', 'maxlength', 'media', 'method', 'multiple', 'name',
+    'nohref', 'noshade', 'nowrap', 'prompt', 'readonly', 'rel', 'rev',
+    'rows', 'rowspan', 'rules', 'scope', 'selected', 'shape', 'size',
+    'span', 'src', 'start', 'summary', 'tabindex', 'target', 'title', 
+    'type', 'usemap', 'valign', 'value', 'vspace', 'width', 'xml:lang'
   ]
 
   Unacceptable_Elements_With_End_Tag = ['script', 'applet']
 
   Acceptable_Css_Properties = ['azimuth', 'background-color',
-      'border-bottom-color', 'border-collapse', 'border-color',
-      'border-left-color', 'border-right-color', 'border-top-color', 'clear',
-      'color', 'cursor', 'direction', 'display', 'elevation', 'float', 'font',
-      'font-family', 'font-size', 'font-style', 'font-variant', 'font-weight',
-      'height', 'letter-spacing', 'line-height', 'overflow', 'pause',
-      'pause-after', 'pause-before', 'pitch', 'pitch-range', 'richness',
-      'speak', 'speak-header', 'speak-numeral', 'speak-punctuation',
-      'speech-rate', 'stress', 'text-align', 'text-decoration', 'text-indent',
-      'unicode-bidi', 'vertical-align', 'voice-family', 'volume',
-      'white-space', 'width'
+    'border-bottom-color', 'border-collapse', 'border-color',
+    'border-left-color', 'border-right-color', 'border-top-color', 'clear',
+    'color', 'cursor', 'direction', 'display', 'elevation', 'float', 'font',
+    'font-family', 'font-size', 'font-style', 'font-variant', 'font-weight',
+    'height', 'letter-spacing', 'line-height', 'overflow', 'pause',
+    'pause-after', 'pause-before', 'pitch', 'pitch-range', 'richness',
+    'speak', 'speak-header', 'speak-numeral', 'speak-punctuation',
+    'speech-rate', 'stress', 'text-align', 'text-decoration', 'text-indent',
+    'unicode-bidi', 'vertical-align', 'voice-family', 'volume',
+    'white-space', 'width'
   ]
 
   # survey of common keywords found in feeds
@@ -82,38 +82,38 @@ module Hpricot
 
   # svgtiny + class + opacity + offset + xmlns + xmlns:xlink
   Svg_Attributes = ['accent-height', 'accumulate', 'additive', 'alphabetic',
-     'arabic-form', 'ascent', 'attributeName', 'attributeType',
-     'baseProfile', 'bbox', 'begin', 'by', 'calcMode', 'cap-height',
-     'class', 'color', 'color-rendering', 'content', 'cx', 'cy', 'd',
-     'descent', 'display', 'dur', 'end', 'fill', 'fill-rule', 'font-family',
-     'font-size', 'font-stretch', 'font-style', 'font-variant',
-     'font-weight', 'from', 'fx', 'fy', 'g1', 'g2', 'glyph-name', 
-     'gradientUnits', 'hanging', 'height', 'horiz-adv-x', 'horiz-origin-x',
-     'id', 'ideographic', 'k', 'keyPoints', 'keySplines', 'keyTimes',
-     'lang', 'mathematical', 'max', 'min', 'name', 'offset', 'opacity',
-     'origin', 'overline-position', 'overline-thickness', 'panose-1',
-     'path', 'pathLength', 'points', 'preserveAspectRatio', 'r',
-     'repeatCount', 'repeatDur', 'requiredExtensions', 'requiredFeatures',
-     'restart', 'rotate', 'rx', 'ry', 'slope', 'stemh', 'stemv', 
-     'stop-color', 'stop-opacity', 'strikethrough-position',
-     'strikethrough-thickness', 'stroke', 'stroke-dasharray',
-     'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin',
-     'stroke-miterlimit', 'stroke-width', 'systemLanguage', 'target',
-     'text-anchor', 'to', 'transform', 'type', 'u1', 'u2',
-     'underline-position', 'underline-thickness', 'unicode',
-     'unicode-range', 'units-per-em', 'values', 'version', 'viewBox',
-     'visibility', 'width', 'widths', 'x', 'x-height', 'x1', 'x2',
-     'xlink:actuate', 'xlink:arcrole', 'xlink:href', 'xlink:role',
-     'xlink:show', 'xlink:title', 'xlink:type', 'xml:base', 'xml:lang',
-     'xml:space', 'xmlns', 'xmlns:xlink', 'y', 'y1', 'y2', 'zoomAndPan'
+    'arabic-form', 'ascent', 'attributeName', 'attributeType',
+    'baseProfile', 'bbox', 'begin', 'by', 'calcMode', 'cap-height',
+    'class', 'color', 'color-rendering', 'content', 'cx', 'cy', 'd',
+    'descent', 'display', 'dur', 'end', 'fill', 'fill-rule', 'font-family',
+    'font-size', 'font-stretch', 'font-style', 'font-variant',
+    'font-weight', 'from', 'fx', 'fy', 'g1', 'g2', 'glyph-name', 
+    'gradientUnits', 'hanging', 'height', 'horiz-adv-x', 'horiz-origin-x',
+    'id', 'ideographic', 'k', 'keyPoints', 'keySplines', 'keyTimes',
+    'lang', 'mathematical', 'max', 'min', 'name', 'offset', 'opacity',
+    'origin', 'overline-position', 'overline-thickness', 'panose-1',
+    'path', 'pathLength', 'points', 'preserveAspectRatio', 'r',
+    'repeatCount', 'repeatDur', 'requiredExtensions', 'requiredFeatures',
+    'restart', 'rotate', 'rx', 'ry', 'slope', 'stemh', 'stemv', 
+    'stop-color', 'stop-opacity', 'strikethrough-position',
+    'strikethrough-thickness', 'stroke', 'stroke-dasharray',
+    'stroke-dashoffset', 'stroke-linecap', 'stroke-linejoin',
+    'stroke-miterlimit', 'stroke-width', 'systemLanguage', 'target',
+    'text-anchor', 'to', 'transform', 'type', 'u1', 'u2',
+    'underline-position', 'underline-thickness', 'unicode',
+    'unicode-range', 'units-per-em', 'values', 'version', 'viewBox',
+    'visibility', 'width', 'widths', 'x', 'x-height', 'x1', 'x2',
+    'xlink:actuate', 'xlink:arcrole', 'xlink:href', 'xlink:role',
+    'xlink:show', 'xlink:title', 'xlink:type', 'xml:base', 'xml:lang',
+    'xml:space', 'xmlns', 'xmlns:xlink', 'y', 'y1', 'y2', 'zoomAndPan'
   ]
 
   Svg_Attr_Map = nil
   Svg_Elem_Map = nil
 
   Acceptable_Svg_Properties = [ 'fill', 'fill-opacity', 'fill-rule',
-      'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin',
-      'stroke-opacity'
+    'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin',
+    'stroke-opacity'
   ]
 
   unless $compatible 
@@ -148,11 +148,9 @@ module Hpricot
   class Elem
     def strip_attributes
       unless attributes.nil?
-	attributes.each do |atr|
-	  unless Acceptable_Attributes.include?atr[0] 
-	    remove_attribute(atr[0]) 
-	  end
-	end
+        ra = {}
+        raw_attributes.keys.each{|atr| ra[atr] = raw_attributes[atr] if Acceptable_Attributes.include?(atr) }
+        self.raw_attributes = ra
       end
     end
   end
@@ -160,35 +158,44 @@ end
 
 module FeedParserUtilities
   class SanitizerDoc < Hpricot::Doc
-
+    
     def scrub
-      traverse_all_element do |e| 
-	if e.elem? 
-	  if Acceptable_Elements.include?e.name
-	    e.strip_attributes
-	  else
-	    if Unacceptable_Elements_With_End_Tag.include?e.name
-	      e.inner_html = ''
-	    end
-	    e.swap(SanitizerDoc.new(e.children).scrub.to_html) # The important part
-	  end
-	elsif e.doctype?
-	  e.parent.children.delete(e)
-	elsif e.text?
-	  ets = e.to_s
-	  ets.gsub!(/&#39;/, "'") 
-	    ets.gsub!(/&#34;/, '"')
-	    ets.gsub!(/\r/,'')
-	  e.swap(ets)
-	else
-	end
-      end
+      others = children.map do |e|
+        if e.elem?
+          if Acceptable_Elements.include?e.name
+            e.strip_attributes
+            e.inner_html = SanitizerDoc.new(e.children).scrub
+            result = e
+          else
+            result = e
+            
+            if Unacceptable_Elements_With_End_Tag.include?e.name
+              result = nil
+            end
+            
+            if result 
+              result = SanitizerDoc.new(result.children).scrub   # The important part
+            end            
+          end
+          
+        elsif e.doctype?
+          result = nil
 
-      unless $compatible # FIXME nonworking
-	# yes, that '/' should be there. It's a search method. See the Hpricot docs.
-	(self/tag).strip_style(@config[:allow_css_properties], @config[:allow_css_keywords])
+        elsif e.text?
+          ets = e.to_html
+          ets.gsub!(/&#39;/, "'") 
+          ets.gsub!(/&#34;/, '"')
+          ets.gsub!(/\r/,'')
+          result = ets
+        end
+        result
       end
-      return self
+      
+      unless $compatible # FIXME nonworking
+        # yes, that '/' should be there. It's a search method. See the Hpricot docs.
+        (self/tag).strip_style(@config[:allow_css_properties], @config[:allow_css_keywords])
+      end
+      return others.compact.join
     end
   end
 
@@ -200,8 +207,8 @@ module FeedParserUtilities
   def sanitizeHTML(html,encoding)
     # FIXME Tidy not yet supported
     html = html.gsub(/<!((?!DOCTYPE|--|\[))/, '&lt;!\1')
-      h = SanitizerDoc(html)
-      h = h.scrub
-      return h.to_html.strip
+    h = SanitizerDoc(html)
+    h = h.scrub
+    return h.strip
   end
 end

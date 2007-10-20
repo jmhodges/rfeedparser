@@ -58,9 +58,8 @@ module FeedParserUtilities
       ename, eattr = l
       h.search(ename).each do |elem|
         euri = elem.attributes[eattr]
-        # FIXME uses the URI.encode method.  should it?
-        if euri and not euri.empty? and ForgivingURI.parse(URI.encode(euri)).relative? 
-          elem.attributes[eattr] = urljoin(baseURI, euri)
+        if euri and not euri.empty? and ForgivingURI.parse(URI.encode(euri)).relative?
+          elem.raw_attributes[eattr] = urljoin(baseURI, euri)
         end
       end
     end

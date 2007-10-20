@@ -344,9 +344,9 @@ module FeedParser
       end
     end
     if not use_strict_parser
+      $stderr << "Using LooseFeed\n\n" if $debug
       feedparser = looseklass.new(baseuri, baselang, (known_encoding and 'utf-8' or ''))
       feedparser.parse(data)
-      $stderr << "Using LooseFeed\n\n" if $debug
     end
     result['feed'] = feedparser.feeddata
     result['entries'] = feedparser.entries

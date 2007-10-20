@@ -22,7 +22,7 @@ spec = Gem::Specification.new do |s|
     # Dependencies
     s.add_dependency('rchardet', '>=1.1')
     s.add_dependency('activesupport', '>= 1.4.1')
-    s.add_dependency('hpricot', '=0.5')
+    s.add_dependency('hpricot', '=0.6')
     s.add_dependency('character-encodings', '>= 0.2')
     s.add_dependency('htmltools', '>= 1.10')
     s.add_dependency('htmlentities', '4.0.0')
