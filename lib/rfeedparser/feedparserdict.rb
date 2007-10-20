@@ -16,26 +16,36 @@ module FeedParserUtilities
      methods check with keymaps to see what attribute the developer "really
      means" if they've asked for one which happens to be in @@keymap's keys.
 =end
-    @@keymap = {'channel' => 'feed',
-	      'items' => 'entries',
-	      'guid' => 'id',
-	      'date' => 'updated',
-	      'date_parsed' => 'updated_parsed',
-	      'description' => ['subtitle', 'summary'],
-	      'url' => ['href'],
-	      'modified' => 'updated',
-	      'modified_parsed' => 'updated_parsed',
-	      'issued' => 'published',
-	      'issued_parsed' => 'published_parsed',
-	      'copyright' => 'rights',
-	      'copyright_detail' => 'rights_detail',
-	      'tagline' => 'subtitle',
-	      'tagline_detail' => 'subtitle_detail'}
-
-    def entries # Apparently, Hash has an entries method!  That blew a good 3 hours or more of my time
-      return self['entries']
+    @@keymap = {
+      'channel' => 'feed',
+      'items' => 'entries',
+	    'guid' => 'id',
+	    'date' => 'updated',
+	    'date_parsed' => 'updated_parsed',
+	    'description' => ['subtitle', 'summary'],
+	    'url' => ['href'],
+	    'modified' => 'updated',
+	    'modified_parsed' => 'updated_parsed',
+	    'issued' => 'published',
+	    'issued_parsed' => 'published_parsed',
+	    'copyright' => 'rights',
+	    'copyright_detail' => 'rights_detail',
+	    'tagline' => 'subtitle',
+	    'tagline_detail' => 'subtitle_detail'
+    }
+    
+    # Apparently, Hash has an entries method!  That blew a good 3 hours or more of my time
+    alias :hash_entries :entries
+    def entries 
+      self['entries']
     end
 
+    # Added to avoid deprecated method wornings
+    alias :object_type :type
+    def type
+      self['type']
+    end
+    
     # We could include the [] rewrite in new using Hash.new's fancy pants block thing
     # but we'd still have to overwrite []= and such. 
     # I'm going to make it easy to turn lists of pairs into FeedParserDicts's though.
