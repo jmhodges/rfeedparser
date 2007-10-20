@@ -93,7 +93,7 @@ module FeedParser
   # HTTP "User-Agent" header to send to servers when downloading feeds.
   # If you are embedding feedparser in a larger application, you should
   # change this to your application name and URL.
-  USER_AGENT = "UniversalFeedParser/%s +http://feedparser.org/" % @version
+  USER_AGENT = "rFeedParser/#{Version} +http://rfeedparser.rubyforge.org/"
 
   # HTTP "Accept" header to send to servers when downloading feeds.  If you don't
   # want to send an Accept header, set this to None.
