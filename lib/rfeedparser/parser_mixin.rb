@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 module FeedParser
 module FeedParserMixin
   include FeedParserUtilities

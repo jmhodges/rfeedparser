@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
 module FeedParser
   class StrictFeedParser < XML::SAX::HandlerBase # expat

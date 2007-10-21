@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
 # Add some helper methods to make AttributeList (all of those damn attrs
 # and attrsD used by StrictFeedParser) act more like a Hash.

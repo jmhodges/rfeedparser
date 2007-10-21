@@ -1,0 +1,8 @@
+<!--
+Status:      301
+Header:      Location: http://127.0.0.1:8097/tests/rfponly/http/301.xml_redirect
+Description: return 301 status code
+Expect:      not bozo and status == u"200" and feed['title'] == u"Feed 301"
+-->
+<feed version="0.3" xmlns="http://purl.org/atom/ns#">
+</feed>

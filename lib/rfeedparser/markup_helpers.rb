@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 module FeedParserUtilities
   def stripDoctype(data)
     #Strips DOCTYPE from XML document, returns (rss_version, stripped_data)

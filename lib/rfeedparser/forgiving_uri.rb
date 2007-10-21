@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 # From Robert Aman's GentleCMS URI.
 # GentleCMS, Copyright (c) 2006 Robert Aman
 #

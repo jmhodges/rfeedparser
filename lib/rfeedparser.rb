@@ -88,7 +88,8 @@ module FeedParser
     "John Beimler <http://john.beimler.org/>",
     "Fazal Majid <http://www.majid.info/mylos/weblog/>",
     "Aaron Swartz <http://aaronsw.com/>",
-    "Kevin Marks <http://epeus.blogspot.com/>"
+    "Kevin Marks <http://epeus.blogspot.com/>",
+    "Jesse Newland <http://jnewland.com/>"
   ]
   # HTTP "User-Agent" header to send to servers when downloading feeds.
   # If you are embedding feedparser in a larger application, you should
@@ -148,16 +149,19 @@ module FeedParser
     $compatible = options[:compatible].nil? ? $compatible : options[:compatible]# Use the default compatibility if compatible is nil
     strictklass = options[:strict] || StrictFeedParser
     looseklass = options[:loose] || LooseFeedParser
+    
     result = FeedParserDict.new
     result['feed'] = FeedParserDict.new
     result['entries'] = []
+    
     if options[:modified]
-      options[:modified] = Time.parse(options[:modified]).utc.rfc2822 
-      # FIXME this ignores all of our time parsing work.  Does it matter?
+      options[:modified] = py2rtime(parse_date(options[:modified])).httpdate
     end
+    
     result['bozo'] = false
+    
     handlers = options[:handlers]
-    if handlers.class != Array # FIXME why does this happen?
+    if handlers.class != Array 
       handlers = [handlers]
     end
 
@@ -167,40 +171,41 @@ module FeedParser
         $stderr << "Opening local file #{furi}\n" if $debug
         f = open(parsed_furi.path) # OpenURI doesn't behave well when passing HTTP options to a file.
       else
-        # And when you do pass them, make sure they aren't just nil (this still true?)
-        newd = {}
-        newd["If-None-Match"] = options[:etag] unless options[:etag].nil?
-        newd["If-Modified-Since"] = options[:modified] unless options[:modified].nil?
-        newd["User-Agent"] = (options[:agent] || USER_AGENT).to_s 
-        newd["Referer"] = options[:referrer] unless options[:referrer].nil?
-        newd["Content-Location"] = options[:content_location] unless options[:content_location].nil?
-        newd["Content-Language"] = options[:content_language] unless options[:content_language].nil?                    
-        newd["Content-type"] = options[:content_type] unless options[:content_type].nil?
         
-        f = open(furi, newd)
+        hout = {} # Dictionary of headers to send out
+        hout["If-None-Match"] = options[:etag] unless options[:etag].nil?
+        hout["If-Modified-Since"] = options[:modified] unless options[:modified].nil?
+        hout["User-Agent"] = (options[:agent] || USER_AGENT).to_s 
+        hout["Referer"] = options[:referrer] unless options[:referrer].nil?
+        hout["Content-Location"] = options[:content_location] unless options[:content_location].nil?
+        hout["Content-Language"] = options[:content_language] unless options[:content_language].nil?                    
+        hout["Content-type"] = options[:content_type] unless options[:content_type].nil?
         
+        f = open(furi, hout)
+        result['status'] = f.status[0]
       end
 
       data = f.read
       f.close 
       
     rescue OpenURI::HTTPError => e
-      unless e.to_s[0..2].to_i == 0
-        result['status'] = e.to_s[0..2].to_i
-        data = ''
-        f = nil
-      end
+      result['status'] = e.io.status[0]
+      result['bozo'] = true
+      result['bozo_exception'] = e
+      data = ''
+      f = nil
       
     rescue => e
-      $stderr << "Rescued in parse: "+e.to_s+"\n" if $debug # My addition
+      $stderr << "Rescued in parse: "+e.to_s+"\n" if $debug
       result['bozo'] = true
       result['bozo_exception'] = e
       data = ''
       f = nil
     end
+    
     if f.respond_to?(:meta)
       result['etag'] = f.meta['etag']
-      result['modified'] = f.meta['modified']
+      result['modified'] = f.meta['last-modified']
       result['url'] = f.base_uri.to_s
       result['status'] ||= f.status[0].to_i
       result['headers'] = f.meta

@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 
 module FeedParserUtilities
   # Adapted from python2.4's encodings/aliases.py

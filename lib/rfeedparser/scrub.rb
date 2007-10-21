@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/usr/bin/env ruby
 # This used to be based on Michael Moen's Hpricot#scrub, but that seems to 
 # have only been part of its evolution. Hpricot#scrub is cool code, though.
 # http://underpantsgnome.com/2007/01/20/hpricot-scrub
