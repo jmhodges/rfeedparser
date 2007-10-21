@@ -172,7 +172,7 @@ module FeedParser
         f = open(parsed_furi.path) # OpenURI doesn't behave well when passing HTTP options to a file.
       else
         
-        hout = {} # Dictionary of headers to send out
+        hout = {} # Hash of headers to send out
         hout["If-None-Match"] = options[:etag] unless options[:etag].nil?
         hout["If-Modified-Since"] = options[:modified] unless options[:modified].nil?
         hout["User-Agent"] = (options[:agent] || USER_AGENT).to_s 
