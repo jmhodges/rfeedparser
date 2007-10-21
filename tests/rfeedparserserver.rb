@@ -7,7 +7,12 @@ require 'rubygems'
 gem 'mongrel'
 require 'mongrel'
 require File.dirname(__FILE__)+'/../lib/rfeedparser'
+
 $PORT = 8097
+
+def uconvert(one, two, three); FeedParser::uconvert(one, two, three); end
+def _ebcdic_to_ascii(one); FeedParser::_ebcdic_to_ascii(one); end
+
 def translate_data(data)
   if data[0..3] == "\x4c\x6f\xa7\x94"
     # EBCDIC
@@ -43,7 +48,6 @@ def translate_data(data)
   return data
 end
 
-
 def scrape_headers(xmlfile)
   # Called by the server
   xm = open(xmlfile)
@@ -74,7 +78,6 @@ end
 
 
 class FeedParserTestRequestHandler < Mongrel::DirHandler
-  
   def process(request, response)
     req_method = request.params[Mongrel::Const::REQUEST_METHOD] || Mongrel::Const::GET
     req_path = can_serve request.params[Mongrel::Const::PATH_INFO]

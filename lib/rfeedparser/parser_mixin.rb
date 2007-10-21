@@ -1,5 +1,7 @@
 #!/usr/bin/ruby
+module FeedParser
 module FeedParserMixin
+  include FeedParserUtilities
   attr_accessor :feeddata, :version, :namespacesInUse, :date_handlers
 
   def startup(baseuri=nil, baselang=nil, encoding='utf-8')
@@ -103,10 +105,6 @@ module FeedParserMixin
     if baselang 
       @feeddata['language'] = baselang.gsub('_','-')
     end
-    @date_handlers = [:_parse_date_rfc822,
-      :_parse_date_hungarian, :_parse_date_greek,:_parse_date_mssql,
-      :_parse_date_nate,:_parse_date_onblog,:_parse_date_w3dtf,:_parse_date_iso8601
-    ]
     $stderr << "Leaving startup\n" if $debug # My addition
   end
 
@@ -873,7 +871,9 @@ module FeedParserMixin
 
   def _end_published
     value = pop('published')
-    _save('published_parsed', parse_date(value))
+    tuple = parse_date(value)
+    _save('published_parsed', tuple)
+    _save('published_time', py2rtime(tuple))
   end
   alias :_end_dcterms_issued :_end_published
   alias :_end_issued :_end_published
@@ -888,7 +888,9 @@ module FeedParserMixin
 
   def _end_updated
     value = pop('updated')
-    _save('updated_parsed', parse_date(value))
+    tuple = parse_date(value)
+    _save('updated_parsed', tuple)
+    _save('updated_time', py2rtime(tuple))
   end
   alias :_end_modified :_end_updated
   alias :_end_dcterms_modified :_end_updated
@@ -902,7 +904,9 @@ module FeedParserMixin
 
   def _end_created
     value = pop('created')
-    _save('created_parsed', parse_date(value))
+    tuple = parse_date(value)
+    _save('created_parsed', tuple)
+    _save('created_time', py2rtime(tuple))
   end
   alias :_end_dcterms_created :_end_created
 
@@ -910,7 +914,9 @@ module FeedParserMixin
     push('expired', true)
   end
   def _end_expirationdate
-    _save('expired_parsed', parse_date(pop('expired')))
+    tuple = parse_date(pop('expired'))
+    _save('expired_parsed', tuple)
+    _save('expired_rtime', py2rtime(tuple))
   end
 
   def _start_cc_license(attrsD)
@@ -1234,5 +1240,4 @@ module FeedParserMixin
   end
   
 end # End FeedParserMixin
-
-
+end

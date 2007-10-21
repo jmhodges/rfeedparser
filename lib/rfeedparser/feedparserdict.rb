@@ -1,5 +1,5 @@
 #!/usr/bin/ruby
-module FeedParserUtilities
+module FeedParser
   class FeedParserDict < Hash 
 =begin
      The naming of a certain common attribute (such as, "When was the last

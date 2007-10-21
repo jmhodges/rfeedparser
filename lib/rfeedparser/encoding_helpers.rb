@@ -125,7 +125,7 @@ module FeedParserUtilities
     end
     return true_encoding, http_encoding, xml_encoding, sniffed_xml_encoding, acceptable_content_type
   end
-
+  
   def toUTF8(data, encoding)
     $stderr << "entering self.toUTF8, trying encoding %s\n" % encoding if $debug
     # NOTE we must use double quotes when dealing with \x encodings!
@@ -186,7 +186,7 @@ module FeedParserUtilities
     end
     return newdata
   end
-
+  
 end
 
 unless defined?(Builder::XChar)

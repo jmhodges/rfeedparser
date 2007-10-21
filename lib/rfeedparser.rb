@@ -19,6 +19,8 @@ require 'rubygems'
 require 'base64'
 require 'iconv'
 
+gem 'hpricot', "=0.6"
+require 'hpricot'
 gem 'character-encodings', ">=0.2.0"
 gem 'htmltools', ">=1.10"
 gem 'htmlentities', ">=4.0.0"
@@ -41,22 +43,20 @@ $debug = false
 $compatible = true
 
 $LOAD_PATH << File.expand_path(File.dirname(__FILE__))
+require 'rfeedparser/utilities'
 require 'rfeedparser/forgiving_uri'
-require 'rfeedparser/aliases'
-require 'rfeedparser/encoding_helpers'
 require 'rfeedparser/better_sgmlparser'
 require 'rfeedparser/better_attributelist'
-require 'rfeedparser/scrub'
-require 'rfeedparser/time_helpers'
 require 'rfeedparser/feedparserdict'
 require 'rfeedparser/parser_mixin'
 require 'rfeedparser/parsers'
-require 'rfeedparser/markup_helpers'
 
-include FeedParserUtilities
+
 
 
 module FeedParser
+  extend FeedParserUtilities
+  
   Version = "0.9.932"
 
   License = """Copyright (c) 2002-2006, Mark Pilgrim, All rights reserved.
@@ -214,7 +214,7 @@ module FeedParser
     # - result['encoding'] is the actual encoding, as per RFC 3023 and a variety of other conflicting specifications
     http_headers = result['headers'] || {}
     result['encoding'], http_encoding, xml_encoding, sniffed_xml_encoding, acceptable_content_type =
-    self.getCharacterEncoding(f,data)
+    getCharacterEncoding(f,data)
 
     if not http_headers.blank? and not acceptable_content_type
       unless http_headers['content-type'].nil?
@@ -225,7 +225,7 @@ module FeedParser
       result['bozo'] = true
       result['bozo_exception'] = NonXMLContentType.new(bozo_message) # I get to care about this, cuz Mark says I should.
     end
-    result['version'], data = self.stripDoctype(data)
+    result['version'], data = stripDoctype(data)
     
     baseuri = http_headers['content-location'] || result['href']
     baselang = http_headers['content-language']
@@ -254,7 +254,7 @@ module FeedParser
       next if tried_encodings.include? proposed_encoding
       tried_encodings << proposed_encoding
       begin
-        data = self.toUTF8(data, proposed_encoding)
+        data = toUTF8(data, proposed_encoding)
         known_encoding = use_strict_parser = true
         break
       rescue
@@ -266,7 +266,7 @@ module FeedParser
         proposed_encoding = CharDet.detect(data)['encoding']
         if proposed_encoding and not tried_encodings.include?proposed_encoding
           tried_encodings << proposed_encoding
-          data = self.toUTF8(data, proposed_encoding)
+          data = toUTF8(data, proposed_encoding)
           known_encoding = use_strict_parser = true
         end
       rescue
@@ -280,7 +280,7 @@ module FeedParser
       begin
         proposed_encoding = 'utf-8'
         tried_encodings << proposed_encoding
-        data = self.toUTF8(data, proposed_encoding)
+        data = toUTF8(data, proposed_encoding)
         known_encoding = use_strict_parser = true
       rescue
       end
@@ -290,7 +290,7 @@ module FeedParser
       begin
         proposed_encoding = 'windows-1252'
         tried_encodings << proposed_encoding
-        data = self.toUTF8(data, proposed_encoding)
+        data = toUTF8(data, proposed_encoding)
         known_encoding = use_strict_parser = true
       rescue
       end
@@ -302,7 +302,7 @@ module FeedParser
     #  begin
     #    proposed_encoding = 'iso-8859-2'
     #    tried_encodings << proposed_encoding
-    #    data = self.toUTF8(data, proposed_encoding)
+    #    data = toUTF8(data, proposed_encoding)
     #    known_encoding = use_strict_parser = true
     #  rescue
     #  end

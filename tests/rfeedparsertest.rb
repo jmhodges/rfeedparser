@@ -15,6 +15,8 @@ rescue => details
   require 'mongrel'
 end
 
+def uconvert(one, two, three); FeedParser::uconvert(one, two, three); end
+def _ebcdic_to_ascii(one); FeedParser::_ebcdic_to_ascii(one); end
 
 $PORT = 8097 # Not configurable, hard coded in the xml files
 

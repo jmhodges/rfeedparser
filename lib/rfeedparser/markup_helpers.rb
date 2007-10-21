@@ -24,7 +24,7 @@ module FeedParserUtilities
     data = data.sub(doctype_pattern, '')
     return version, data
   end
-
+  
   def resolveRelativeURIs(htmlSource, baseURI, encoding)
     $stderr << "entering resolveRelativeURIs\n" if $debug # FIXME write a decent logger
     relative_uris = [ ['a','href'],
