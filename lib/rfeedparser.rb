@@ -236,7 +236,7 @@ module FeedParser
       # if feed is gzip-compressed, decompress it
       if f.meta['content-encoding'] == 'gzip'
         begin
-          gz =  Zlib::GzipReader.new(StringIO(data))
+          gz =  Zlib::GzipReader.new(StringIO.new(data))
           data = gz.read
           gz.close
         rescue => e
