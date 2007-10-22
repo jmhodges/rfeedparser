@@ -1,7 +1,7 @@
 <!--
 Status:      220
 Description: return 220 status code which is unknown but successful, so interpret it as 200
-Expect:      not bozo and len(entries) == 1 and status == "200"
+Expect:      not bozo and len(entries) == 1 and status == "220"
 -->
 <feed xmlns="http://www.w3.org/2005/Atom">
 <title>Feed 220</title>
