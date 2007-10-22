@@ -27,26 +27,21 @@ module FeedParserUtilities
     return Iconv.iconv("iso88591", "ebcdic-cp-be", s)[0]
   end
 
-  def getCharacterEncoding(feed, xml_data)
+  def getCharacterEncoding(http_headers, xml_data)
     # Get the character encoding of the XML document
     $stderr << "In getCharacterEncoding\n" if $debug
     sniffed_xml_encoding = nil
     xml_encoding = nil
     true_encoding = nil
-    begin 
-      http_headers = feed.meta
-      http_content_type = feed.meta['content-type'].split(';')[0]
-      encoding_scan = feed.meta['content-type'].to_s.scan(/charset\s*=\s*(.*?)(?:"|')*$/)
-      http_encoding = encoding_scan.flatten[0].to_s.gsub(/("|')/,'')
-      http_encoding = nil if http_encoding.empty?
+    
+    http_content_type, charset = http_headers['content-type'].to_s.split(';',2)
+    encoding_regexp = /\s*charset\s*=\s*(?:"|')?(.*?)(?:"|')?\s*$/
+    http_encoding = charset.to_s.scan(encoding_regexp).flatten[0]
+    http_encoding = nil if http_encoding.blank?
       # FIXME Open-Uri returns iso8859-1 if there is no charset header,
       # but that doesn't pass the tests. Open-Uri claims its following
       # the right RFC. Are they wrong or do we need to change the tests?
-    rescue NoMethodError
-      http_headers = {}
-      http_content_type = nil
-      http_encoding = nil
-    end
+    
     # Must sniff for non-ASCII-compatible character encodings before
     # searching for XML declaration.  This heuristic is defined in
     # section F of the XML specification:

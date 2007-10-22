@@ -143,72 +143,134 @@ module FeedParser
     'hotrss' => 'Hot RSS'
   }
 
-  def parse(furi, options = {})
-    furi.strip!
-    # Parse a feed from a URL, file, stream or string
-    $compatible = options[:compatible].nil? ? $compatible : options[:compatible]# Use the default compatibility if compatible is nil
+  # Accepted in options: :agent, :modified, :etag, and :referrer 
+  def open_resource(url_file_stream_or_string, options)
+    options[:handlers] ||= []
+
+    if url_file_stream_or_string.respond_to?(:read)
+      return url_file_stream_or_string
+
+    elsif url_file_stream_or_string == '-'
+      return $stdin
+    end
+      
+    # open-uri freaks out if there's leading spaces.
+    url_file_stream_or_string.strip!
+    
+    if ['http','https','ftp'].include?(ForgivingURI.parse(url_file_stream_or_string).scheme)
+      furi = ForgivingURI.parse(url_file_stream_or_string)
+      auth = nil
+
+      if furi.host && furi.password
+        auth = Base64::encode64(furi.password).strip
+        furi.password = nil
+        url_file_stream_or_string = furi.to_s
+      end
+
+      req_headers = {} 
+      req_headers["User-Agent"] = options[:agent] || USER_AGENT
+      req_headers["If-None-Match"] = options[:etag] if options[:etag]
+      
+      if options[:modified]
+        if options[:modified].is_a?(String)
+          req_headers["If-Modified-Since"] = py2rtime(parse_date(options[:modified])).httpdate
+        elsif options[:modified].is_a?(Time)
+          req_headers["If-Modified-Since"] = options[:modified].httpdate
+        end
+      end
+      
+      req_headers["Referer"] = options[:referrer] if options[:referrer]
+      req_headers["Accept-encoding"] = 'gzip, deflate' # FIXME make tests
+      req_headers["Authorization"] = "Basic #{auth}" if auth
+      req_headers['Accept'] = ACCEPT_HEADER if ACCEPT_HEADER
+      req_headers['A-IM'] = 'feed' # RFC 3229 support 
+      
+      begin
+        return open(url_file_stream_or_string, req_headers) 
+      rescue OpenURI::HTTPError => e
+        return e.io
+      rescue
+      end
+    end
+
+    # try to open with native open function (if url_file_stream_or_string is a filename)
+    begin 
+      return open(url_file_stream_or_string)
+    rescue
+    end
+    # treat url_file_stream_or_string as string          
+    return StringIO.new(url_file_stream_or_string.to_s)
+  end
+  module_function(:open_resource)
+  
+  # Parse a feed from a URL, file, stream or string
+  def parse(url_file_stream_or_string, options = {})
+      
+    
+    # Use the default compatibility if compatible is nil
+    $compatible = options[:compatible].nil? ? $compatible : options[:compatible]
+    
     strictklass = options[:strict] || StrictFeedParser
     looseklass = options[:loose] || LooseFeedParser
+    options[:handlers] = options[:handlers] || []
     
     result = FeedParserDict.new
     result['feed'] = FeedParserDict.new
     result['entries'] = []
     
-    if options[:modified]
-      options[:modified] = py2rtime(parse_date(options[:modified])).httpdate
-    end
-    
     result['bozo'] = false
-    
-    handlers = options[:handlers]
-    if handlers.class != Array 
-      handlers = [handlers]
-    end
-
+        
     begin
-      parsed_furi = ForgivingURI.parse(furi)
-      if [nil, "file"].include? parsed_furi.scheme
-        $stderr << "Opening local file #{furi}\n" if $debug
-        f = open(parsed_furi.path) # OpenURI doesn't behave well when passing HTTP options to a file.
-      else
-        
-        hout = {} # Hash of headers to send out
-        hout["If-None-Match"] = options[:etag] unless options[:etag].nil?
-        hout["If-Modified-Since"] = options[:modified] unless options[:modified].nil?
-        hout["User-Agent"] = (options[:agent] || USER_AGENT).to_s 
-        hout["Referer"] = options[:referrer] unless options[:referrer].nil?
-        hout["Content-Location"] = options[:content_location] unless options[:content_location].nil?
-        hout["Content-Language"] = options[:content_language] unless options[:content_language].nil?                    
-        hout["Content-type"] = options[:content_type] unless options[:content_type].nil?
-        
-        f = open(furi, hout)
-        result['status'] = f.status[0]
-      end
-
+      f = open_resource(url_file_stream_or_string, options)
       data = f.read
-      f.close 
-      
-    rescue OpenURI::HTTPError => e
-      result['status'] = e.io.status[0]
-      result['bozo'] = true
-      result['bozo_exception'] = e
-      data = ''
-      f = nil
-      
     rescue => e
-      $stderr << "Rescued in parse: "+e.to_s+"\n" if $debug
       result['bozo'] = true
       result['bozo_exception'] = e
       data = ''
       f = nil
+    end
+    
+    if f and !data.blank? and f.respond_to?(:meta)
+      # if feed is gzip-compressed, decompress it
+      if f.meta['content-encoding'] == 'gzip'
+        begin
+          gz =  Zlib::GzipReader.new(StringIO(data))
+          data = gz.read
+          gz.close
+        rescue => e
+          # Some feeds claim to be gzipped but they're not, so
+          # we get garbage.  Ideally, we should re-request the
+          # feed without the 'Accept-encoding: gzip' header,
+          # but we don't.
+          result['bozo'] = true
+          result['bozo_exception'] = e
+          data = ''
+        end
+      elsif f.meta['content-encoding'] == 'deflate'
+        begin
+          data = Zlib::Deflate.inflate(data)
+        rescue => e
+          result['bozo'] = true
+          result['bozo_exception'] = e
+          data = ''
+        end
+      end
     end
     
     if f.respond_to?(:meta)
       result['etag'] = f.meta['etag']
-      result['modified'] = f.meta['last-modified']
-      result['url'] = f.base_uri.to_s
-      result['status'] ||= f.status[0].to_i
+      result['modified'] = py2rtime(parse_date(f.meta['last-modified']))
       result['headers'] = f.meta
+    end
+    
+    # FIXME open-uri does not return a non-nil base_uri in its HTTPErrors. 
+    if f.respond_to?(:base_uri)
+      result['href'] = f.base_uri.to_s # URI => String
+      result['status'] = '200'
+    end
+    
+    if f.respond_to?(:status)
+      result['status'] = f.status[0] 
     end
 
 
@@ -219,7 +281,7 @@ module FeedParser
     # - result['encoding'] is the actual encoding, as per RFC 3023 and a variety of other conflicting specifications
     http_headers = result['headers'] || {}
     result['encoding'], http_encoding, xml_encoding, sniffed_xml_encoding, acceptable_content_type =
-    getCharacterEncoding(f,data)
+    getCharacterEncoding(http_headers,data)
 
     if not http_headers.blank? and not acceptable_content_type
       unless http_headers['content-type'].nil?

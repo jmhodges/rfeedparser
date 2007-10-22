@@ -25,7 +25,7 @@ Dir['**/*.xml'].each do |xmlfile|
     fp = FeedParser.parse("http://127.0.0.1:#{$PORT}/#{xmlfile}", options) 
     # I should point out that the 'compatible' arg is not necessary, 
     # but probably will be in the future if we decide to change the default.
-    
+
     description, evalString = scrape_assertion_strings(xmlfile)
     assert fp.instance_eval(evalString), description.inspect
   }
