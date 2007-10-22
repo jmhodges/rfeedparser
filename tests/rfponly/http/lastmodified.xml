@@ -1,6 +1,6 @@
 <!-- 
 Description: last-modified conditional fetching works
-Expect:      not bozo and modified.httpdate == File.stat('tests/rfponly/http/lastmodified.xml').mtime.httpdate and FeedParser.parse('http://127.0.0.1:8097/tests/rfponly/http/lastmodified.xml', {:modified => modified}).status == "304"
+Expect:      not bozo and modified_time.httpdate == File.stat('tests/rfponly/http/lastmodified.xml').mtime.httpdate and FeedParser.parse('http://127.0.0.1:8097/tests/rfponly/http/lastmodified.xml', {:modified => modified_time}).status == "304"
 -->
 <feed xmlns="http://www.w3.org/2005/Atom">
 <title>Feed LastUpdated</title>

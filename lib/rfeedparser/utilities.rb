@@ -12,6 +12,11 @@ module FeedParserUtilities
   end
   module_function :parse_date
 
+  def extract_tuple(atime)
+    FeedParser::FeedTimeParser.extract_tuple(atime)
+  end
+  module_function :extract_tuple
+  
   def py2rtime(pytuple)
     return Time.utc(*pytuple[0..5]) unless pytuple.blank? 
   end

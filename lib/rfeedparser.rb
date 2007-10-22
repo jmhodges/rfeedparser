@@ -173,9 +173,11 @@ module FeedParser
       
       if options[:modified]
         if options[:modified].is_a?(String)
-          req_headers["If-Modified-Since"] = py2rtime(parse_date(options[:modified])).httpdate
+          req_headers["If-Modified-Since"] = parse_date(options[:modified]).httpdate
         elsif options[:modified].is_a?(Time)
           req_headers["If-Modified-Since"] = options[:modified].httpdate
+        elsif options[:modified].is_a?(Array)
+          req_headers["If-Modified-Since"] = py2rtime(options[:modified]).httpdate
         end
       end
       
@@ -259,7 +261,8 @@ module FeedParser
     
     if f.respond_to?(:meta)
       result['etag'] = f.meta['etag']
-      result['modified'] = py2rtime(parse_date(f.meta['last-modified']))
+      result['modified_time'] = parse_date(f.meta['last-modified'])
+      result['modified'] = extract_tuple(result['modified_time'])
       result['headers'] = f.meta
     end
     

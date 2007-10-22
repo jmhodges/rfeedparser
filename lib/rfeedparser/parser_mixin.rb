@@ -871,9 +871,9 @@ module FeedParserMixin
 
   def _end_published
     value = pop('published')
-    tuple = parse_date(value)
-    _save('published_parsed', tuple)
-    _save('published_time', py2rtime(tuple))
+    d = parse_date(value)
+    _save('published_parsed', extract_tuple(d))
+    _save('published_time', d)
   end
   alias :_end_dcterms_issued :_end_published
   alias :_end_issued :_end_published
@@ -888,9 +888,9 @@ module FeedParserMixin
 
   def _end_updated
     value = pop('updated')
-    tuple = parse_date(value)
-    _save('updated_parsed', tuple)
-    _save('updated_time', py2rtime(tuple))
+    d = parse_date(value)
+    _save('updated_parsed', extract_tuple(d))
+    _save('updated_time', d)
   end
   alias :_end_modified :_end_updated
   alias :_end_dcterms_modified :_end_updated
@@ -904,9 +904,9 @@ module FeedParserMixin
 
   def _end_created
     value = pop('created')
-    tuple = parse_date(value)
-    _save('created_parsed', tuple)
-    _save('created_time', py2rtime(tuple))
+    d = parse_date(value)
+    _save('created_parsed', extract_tuple(d))
+    _save('created_time', d)
   end
   alias :_end_dcterms_created :_end_created
 
@@ -914,9 +914,9 @@ module FeedParserMixin
     push('expired', true)
   end
   def _end_expirationdate
-    tuple = parse_date(pop('expired'))
-    _save('expired_parsed', tuple)
-    _save('expired_rtime', py2rtime(tuple))
+    d = parse_date(pop('expired'))
+    _save('expired_parsed', extract_tuple(d))
+    _save('expired_time', d)
   end
 
   def _start_cc_license(attrsD)

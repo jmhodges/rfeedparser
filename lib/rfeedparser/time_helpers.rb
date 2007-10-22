@@ -153,7 +153,7 @@ module FeedParser
 
 
         m = korean_onblog_date_re.match(dateString)
-        return unless m
+        
         w3dtfdate = "#{m[1]}-#{m[2]}-#{m[3]}T#{m[4]}:#{m[5]}:#{m[6]}+09:00"
 
         $stderr << "OnBlog date parsed as: %s\n" % w3dtfdate if $debug
@@ -168,7 +168,7 @@ module FeedParser
 
         korean_nate_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(#{korean_am}|#{korean_pm})\s+(\d{0,2}):(\d{0,2}):(\d{0,2})/
         m = korean_nate_date_re.match(dateString)
-        return unless m
+        
         hour = m[5].to_i
         ampm = m[4]
         if ampm == korean_pm
@@ -184,7 +184,7 @@ module FeedParser
         mssql_date_re = /(\d{4})-(\d{2})-(\d{2})\s+(\d{2}):(\d{2}):(\d{2})(\.\d+)?/
 
         m = mssql_date_re.match(dateString)
-        return unless m
+        
         w3dtfdate =  "#{m[1]}-#{m[2]}-#{m[3]}T#{m[4]}:#{m[5]}:#{m[6]}+09:00"
         $stderr << "MS SQL date parsed as: %s\n" % w3dtfdate if $debug
         return parse_date_w3dtf(w3dtfdate)
@@ -228,13 +228,10 @@ module FeedParser
         greek_date_format = /([^,]+),\s+(\d{2})\s+([^\s]+)\s+(\d{4})\s+(\d{2}):(\d{2}):(\d{2})\s+([^\s]+)/
 
         m = greek_date_format.match(dateString)
-        return unless m
-        begin
-          wday = greek_wdays[m[1]]
-          month = greek_months[m[3]]
-        rescue
-          return nil
-        end
+        
+        wday = greek_wdays[m[1]]
+        month = greek_months[m[3]]
+       
         rfc822date = "#{wday}, #{m[2]} #{month} #{m[4]} #{m[5]}:#{m[6]}:#{m[7]} #{m[8]}" 
         $stderr << "Greek date parsed as: #{rfc822date}\n" if $debug
         return parse_date_rfc822(rfc822date) 
@@ -244,7 +241,6 @@ module FeedParser
         # Parse a string according to a Hungarian 8-bit date format.
         hungarian_date_format_re = /(\d{4})-([^-]+)-(\d{0,2})T(\d{0,2}):(\d{2})((\+|-)(\d{0,2}:\d{2}))/
         m = hungarian_date_format_re.match(dateString)
-        return unless m
 
         # Unicode strings for Hungarian date strings
         hungarian_months = { 
@@ -261,13 +257,9 @@ module FeedParser
           u("november") =>      u("11"),
           u("december") =>      u("12"),
         }
-        begin
-          month = hungarian_months[m[2]]
-          day = m[3].rjust(2,'0')
-          hour = m[4].rjust(2,'0')
-        rescue
-          return
-        end
+        month = hungarian_months[m[2]]
+        day = m[3].rjust(2,'0')
+        hour = m[4].rjust(2,'0')
 
         w3dtfdate = "#{m[1]}-#{month}-#{day}T#{hour}:#{m[5]}:00#{m[6]}"
         $stderr << "Hungarian date parsed as: #{w3dtfdate}\n" if $debug
@@ -385,6 +377,7 @@ module FeedParser
       end
 
       def extract_tuple(atime)
+        return unless atime
         # NOTE leave the error handling to parse_date
         t = [atime.year, atime.month, atime.mday, atime.hour,
           atime.min, atime.sec, (atime.wday-1) % 7, atime.yday,
@@ -400,7 +393,7 @@ module FeedParser
         @@date_handlers.each do |handler|
           begin 
             $stderr << "Trying date_handler #{handler}\n" if $debug
-            datething = extract_tuple(send(handler,dateString))
+            datething = send(handler,dateString)
             return datething
           rescue Exception => e
             $stderr << "#{handler} raised #{e}\n" if $debug
