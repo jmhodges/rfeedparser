@@ -162,7 +162,7 @@ module FeedParser
       auth = nil
 
       if furi.host && furi.password
-        auth = Base64::encode64(furi.password).strip
+        auth = Base64::encode64("#{furi.user}:#{furi.password}").strip
         furi.password = nil
         url_file_stream_or_string = furi.to_s
       end
