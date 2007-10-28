@@ -157,8 +157,9 @@ module FeedParser
     # open-uri freaks out if there's leading spaces.
     url_file_stream_or_string.strip!
     
-    if ['http','https','ftp'].include?(ForgivingURI.parse(url_file_stream_or_string).scheme)
-      furi = ForgivingURI.parse(url_file_stream_or_string)
+    
+    furi = ForgivingURI.parse(url_file_stream_or_string)
+    if furi && ['http','https','ftp'].include?(furi.scheme)
       auth = nil
 
       if furi.host && furi.password
