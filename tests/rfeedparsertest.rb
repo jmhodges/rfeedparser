@@ -8,9 +8,8 @@ require File.join(File.dirname(__FILE__),'rfeedparser_test_helper')
 # default methods to be public
 XMLTests.send(:public)
 # add one unit test for each file
-Dir['**/*.xml'].each do |xmlfile| 
-  #Dir['tests/**/*.xml'].each do |xmlfile|
-  methname = "tests_"+xmlfile.gsub('/','_').sub('.xml','')
+Dir["#{File.dirname(__FILE__)}/**/*.xml"].each do |xmlfile| 
+  methname = "tests_"+xmlfile.gsub('./', '').gsub('/','_').sub('.xml','')
   XMLTests.send(:define_method, methname) {
 
     options = {}
