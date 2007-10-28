@@ -82,8 +82,8 @@ module FeedParser
   ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
   POSSIBILITY OF SUCH DAMAGE."""
 
-  Author = "Jeff Hodges <http://somethingsimilar.com>"
-  Copyright_Holder = "Mark Pilgrim <http://diveintomark.org/>"
+  Translator_From_Python_To_Ruby = "Jeff Hodges <http://somethingsimilar.com>"
+  Author = "Mark Pilgrim <http://diveintomark.org/>"
   Contributors = [  "Jason Diamond <http://injektilo.org/>",
     "John Beimler <http://john.beimler.org/>",
     "Fazal Majid <http://www.majid.info/mylos/weblog/>",
