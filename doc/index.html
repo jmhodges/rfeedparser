@@ -13,7 +13,7 @@
             # The above is new in 0.9.94
             fp = FeedParser.parse(a_url_file_stream_or_string)
             
-            # These next four lines are equivalent!
+            # These next four lines are equivalent.
             fp.entries.each{ |e| puts e.title }
             fp.entries.each{ |e| puts e['title'] }
             fp['entries'].each{ |e| puts e.title }
@@ -32,6 +32,8 @@ right next door.  The use of the <code>py2rtime</code> is deprecated and no
 longer accessible from the top level.  You can still find it at 
 <code>FeedParser.py2rtime</code></p>
         <p>More documentation can be found over at the <a href="http://feedparser.org/docs/">Feed Parser documentation</a> site.</p>
+        
+        <p>There is one extra thing.  You can subclass <code>StrictFeedParser</code> or <code>LooseFeedParser</code> and pass it to <code>FeedParser#parse</code> with the keys <code>:strict</code> and <code>:loose</code> and your subclass will be used to parse the feeds in its respective case.</p>
         
         <p>The latest release can is <a href="http://rubyforge.org/frs/?group_id=3309">0.9.94</a> and you can track new releases, send bug reports or just yell at me belligerently over at the <a href="http://rubyforge.org/projects/rfeedparser/">rFeedParser project page</a>.</p>
 
