@@ -5,30 +5,35 @@
         <h2>Introduction to rFeedParser, the Universal Feed Parser in Ruby</h2>
         <p>rFeedParser is a translation of Mark Pilgrim's <a href="http://feedparser.org/">Universal Feed Parser</a> from Python into Ruby.  It has nearly the exact same behavior.</p>
         <p>Example code:</p>
-        <p></p><pre>            require 'rubygems'
+        <p><pre>            require 'rubygems'
             require 'rfeedparser' 
             # Now we can parse!
 
-            fp = FeedParser.parse('some-url-or-filepath')
+            # fp = rfp(a_url_file_stream_or_string)
+            # The above is new in 0.9.94
+            fp = FeedParser.parse(a_url_file_stream_or_string)
             
             # These next four lines are equivalent!
             fp.entries.each{ |e| puts e.title }
             fp.entries.each{ |e| puts e['title'] }
             fp['entries'].each{ |e| puts e.title }
             fp['entries'].each{ |e| puts e['title'] }
-        </pre>
+        </pre></p>
         
         <p><strong>Notes on Time/Date Storage:</strong>
 The storage of dates in the *_parsed items (such as, updated_parsed,
 created_parsed, etc.) are in the Python 9-tuple format. While this is
 great for passing the date tests, Ruby has no good way of understanding
-these things. So, I wrote a helper method <code>py2rtime</code> that
-takes one of these 9-tuples as its argument and returns a Ruby Time
-object. It's placed in the top-level namespace, so you can call it
-anywhere in your code (ex. <code>py2rtime(fp.entries[0].updated_parsed)</code> ).</p>
+these things. As of version <code>0.9.94</code>, there is now a "_time" key 
+next to every key containing a Python datetime 9-tuple that contains a Ruby 
+Time object.  So, if you see <code>updated</code> or 
+<code>updated_parsed</code>, you can also find a <code>updated_time</code>
+right next door.  The use of the <code>py2rtime</code> is deprecated and no 
+longer accessible from the top level.  You can still find it at 
+<code>FeedParser.py2rtime</code></p>
         <p>More documentation can be found over at the <a href="http://feedparser.org/docs/">Feed Parser documentation</a> site.</p>
         
-        <p>The latest release can is <a href="http://rubyforge.org/frs/?group_id=3309">0.9.93</a> and you can track new releases, send bug reports or just yell at me belligerently over at the <a href="http://rubyforge.org/projects/rfeedparser/">rFeedParser project page.</a></p>
+        <p>The latest release can is <a href="http://rubyforge.org/frs/?group_id=3309">0.9.94</a> and you can track new releases, send bug reports or just yell at me belligerently over at the <a href="http://rubyforge.org/projects/rfeedparser/">rFeedParser project page</a>.</p>
 
         <h2>Depedencies and Installation</h2>
         <p>Currently, rFeedParser is a bit of a Frankenstein's monster. It depends on <a href="http://code.whytheluckystiff.net/hpricot/">Hpricot</a>, <a href="http://rubyforge.org/projects/char-encodings/">Character-Encodings</a>, <a href="http://as.rubyonrails.com/">ActiveSupport</a>, <a href="http://rubyforge.org/projects/ruby-htmltools">HTMLTools</a>, <a href="http://htmlentities.rubyforge.org/">HTMLEntities</a>, and the not-quite-easy-to-get <a href="http://www.yoshidam.net/Ruby.html#xmlparser">Ruby bindings</a> of the <a href="http://expat.sourceforge.net/">Expat XML Parser</a>.
