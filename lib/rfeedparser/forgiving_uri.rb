@@ -535,7 +535,7 @@ class ForgivingURI
     
     # Merges two URIs together.
     def merge(uri)
-      return self + uri
+      return (self + uri)
     end
     
     # Destructive form of merge.
@@ -940,12 +940,14 @@ class ForgivingURI
 def urljoin(base, uri)
   urifixer = /^([A-Za-z][A-Za-z0-9+-.]*:\/\/)(\/*)(.*?)/u
   uri = uri.sub(urifixer, '\1\3') 
-  begin
-    return ForgivingURI.join(base, uri).to_s 
-  rescue URI::BadURIError => e
-    if ForgivingURI.parse(base).relative? 
-      return ForgivingURI.parse(uri).to_s
+  pbase = ForgivingURI.parse(base) rescue nil
+  if pbase && pbase.absolute?
+    puri = ForgivingURI.parse(uri) rescue nil
+    if puri && puri.relative?
+      # ForgivingURI.join does the wrong thing.  What the hell.
+      return ForgivingURI.join(base, uri).to_s.gsub(/[^:]\/{2,}/, '')
     end
   end
+  return uri
 end
 
