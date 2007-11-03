@@ -57,7 +57,7 @@ require 'rfeedparser/parsers'
 module FeedParser
   extend FeedParserUtilities
   
-  Version = "0.9.94"
+  Version = "0.9.940"
 
   License = """Copyright (c) 2002-2006, Mark Pilgrim, All rights reserved.
 
