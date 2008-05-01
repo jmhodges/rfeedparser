@@ -18,6 +18,7 @@ require 'pp'
 require 'rubygems'
 require 'base64'
 require 'iconv'
+require 'zlib'
 
 gem 'hpricot', "=0.6"
 require 'hpricot'
