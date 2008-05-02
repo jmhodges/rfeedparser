@@ -49,6 +49,7 @@ desc "If you're building from source, run this task first to setup the necessary
 task :setup do
   puts "\nOn top of these gems, you'll also need #{spec.requirements.join(',')}."
   
+  puts "Checking for gems that need to be installed."
   gems = Gem::SourceIndex.from_installed_gems
   
   # Runtime dependencies from the Gem's spec
