@@ -51,7 +51,7 @@ require 'rfeedparser/better_attributelist'
 require 'rfeedparser/feedparserdict'
 require 'rfeedparser/parser_mixin'
 require 'rfeedparser/parsers'
-
+require 'rfeedparser/monkey_patches'
 
 
 
