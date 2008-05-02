@@ -1,5 +1,5 @@
 Universal Feed Parser
-Parse RSS and Atom feeds in Python.  3000 unit tests.  Open source.
+Parse RSS and Atom feeds in Python translated to Ruby.  3000 unit tests.  Open source.
 
 Copyright (c) 2002-5 by Mark Pilgrim
 open source, see LICENSE file for details
@@ -13,13 +13,13 @@ To use:
     require 'rubygems'
     require 'rfeedparser'
 
-    pf = FeedParser.parse("some-feed-filepath-or-url")
+    pf = FeedParser.parse("some-feed-stream-filepath-or-url")
 
   If not installed as a gem, copy the contents of lib into the your directory:
   
     require 'rfeedparser'
 
-    pf = FeedParser.parse("some-feed-filepath-or-url")
+    pf = FeedParser.parse("some-feed-filepath-stream-or-url")
      
 ----
 
