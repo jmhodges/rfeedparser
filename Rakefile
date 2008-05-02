@@ -43,3 +43,30 @@ Rake::TestTask.new do |t|
   end
 
 task :default => [:test]
+
+# Taken liberally from http://blog.labnotes.org/2008/02/28/svn-checkout-rake-setup/
+desc "If you're building from source, run this task first to setup the necessary dependencies."
+task :setup do
+  puts "\nOn top of these gems, you'll also need #{spec.requirements.join(',')}."
+  
+  gems = Gem::SourceIndex.from_installed_gems
+  
+  # Runtime dependencies from the Gem's spec
+  dependencies = spec.dependencies
+  
+  dependencies.each do |dep|
+    if gems.search(dep.name, dep.version_requirements).empty?
+      puts "Installing dependency: #{dep}"
+      begin
+        require 'rubygems/dependency_installer'
+        di = Gem::DependencyInstaller.new()
+        di.install dep.name, dep.version_requirements
+      rescue LoadError # < rubygems 1.0.1
+        require 'rubygems/remote_installer'
+        Gem::RemoteInstaller.new.install(dep.name, dep.version_requirements)
+      end
+    end
+  end
+  
+  puts "\nAnd done."
+end
