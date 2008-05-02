@@ -405,7 +405,9 @@ module FeedParser
       inputdata.setByteStream(StringIO.new(data))
       begin
         saxparser.parse(inputdata)
-      rescue Exception => parseerr # resparse
+        
+      rescue StandardError, XML::SAX::SAXParseException => parseerr # resparse
+
         if $debug
           $stderr << "xml parsing failed\n"
           $stderr << parseerr.to_s+"\n" # Hrmph.

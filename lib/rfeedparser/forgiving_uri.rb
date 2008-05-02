@@ -176,7 +176,7 @@ class ForgivingURI
           else
             parsed_uris << (base_uri + self.parse(uri_string))
           end
-        rescue Exception
+        rescue
           nil
         end
       end
@@ -567,7 +567,7 @@ class ForgivingURI
       if normalized_host != nil
         begin
           normalized_host = ForgivingURI::IDNA.to_ascii(normalized_host)
-        rescue Exception
+        rescue
           nil
         end
       end
@@ -677,7 +677,7 @@ class ForgivingURI
       begin
         display_uri.instance_variable_set("@host",
           ForgivingURI::IDNA.to_unicode(display_uri.host))
-      rescue Exception
+      rescue
         nil
       end
       return display_uri
@@ -693,7 +693,7 @@ class ForgivingURI
       else
         begin
           uri_string = ForgivingURI.parse(uri.to_s).normalize.to_s
-        rescue Exception
+        rescue
           return false
         end
       end
