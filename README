@@ -4,24 +4,25 @@ Parse RSS and Atom feeds in Python.  3000 unit tests.  Open source.
 Copyright (c) 2002-5 by Mark Pilgrim
 open source, see LICENSE file for details
 
+See <http://rfeedparser.rubyforge.org> and
+<http://github.com/jmhodges/rfeedparser/tree/master>.
 -----
 
 To use:
   If installed as a gem
-     require 'rubygems'
-     require 'rfeedparser'
+    require 'rubygems'
+    require 'rfeedparser'
 
-     fp = FeedParser.parse("some-feed-filepath-or-url")
+    pf = FeedParser.parse("some-feed-filepath-or-url")
 
-  If not installed as a gem, copy the contents of lib into the ruby path and just use 
-     require 'rfeedparser'
+  If not installed as a gem, copy the contents of lib into the your directory:
+  
+    require 'rfeedparser'
+
+    pf = FeedParser.parse("some-feed-filepath-or-url")
      
-     fp = FeedParser.parse("some-feed-filepath-or-url")
-
 ----
 
-For developers: 
-  I currently have the "rough" code in a bzr branch over at
-  <http://somethingsimilar.com/code/bzr/rfeedparser/>.  You'll want
-  to check out the rfeedparser-main branch for the current code, or
-  rfeedparser-release for the code in the latest release.
+To help out:
+  Clone the git repository at <git://github.com/jmhodges/rfeedparser.git> and
+  which has a webpage at <http://github.com/jmhodges/rfeedparser/tree/master>.
