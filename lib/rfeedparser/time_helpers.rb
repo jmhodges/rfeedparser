@@ -395,7 +395,7 @@ module FeedParser
             $stderr << "Trying date_handler #{handler}\n" if $debug
             datething = send(handler,dateString)
             return datething
-          rescue Exception => e
+          rescue => e
             $stderr << "#{handler} raised #{e}\n" if $debug
           end
         end

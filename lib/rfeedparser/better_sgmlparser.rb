@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 
-class BetterSGMLParserError < Exception; end;
+class BetterSGMLParserError < StandardError; end;
 class BetterSGMLParser < HTML::SGMLParser
   # Replaced Tagfind and Charref Regexps with the ones in feedparser.py
   # This makes things work. 

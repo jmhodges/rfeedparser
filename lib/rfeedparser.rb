@@ -113,7 +113,7 @@ module FeedParser
 
 
   # ---------- don't touch these ----------
-  class ThingsNobodyCaresAboutButMe < Exception
+  class ThingsNobodyCaresAboutButMe < StandardError
   end
   class CharacterEncodingOverride < ThingsNobodyCaresAboutButMe
   end
@@ -121,7 +121,7 @@ module FeedParser
   end
   class NonXMLContentType < ThingsNobodyCaresAboutButMe
   end
-  class UndeclaredNamespace < Exception
+  class UndeclaredNamespace < StandardError
   end
 
 
