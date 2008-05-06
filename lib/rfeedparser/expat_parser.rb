@@ -27,7 +27,13 @@ module FeedParser
 
        inputdata = XML::SAX::InputSource.new('parsedfeed')
        inputdata.setByteStream(StringIO.new(data))
-       saxparser.parse(inputdata)
+       begin
+         saxparser.parse(inputdata)
+       rescue err => XML::SAX::SAXParseException
+         # This does not inherit from StandardError as it should, so
+         # we have to catch and re-raise specially.
+         raise err.to_s
+       end
      end
    end
 

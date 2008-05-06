@@ -64,13 +64,15 @@ begin
   require 'rfeedparser/libxml_parser'
   StrictFeedParser = FeedParser::LibXml::StrictFeedParser
 rescue LoadError
+  puts "Could not load libxml; trying expat"
+  begin
+    require 'rfeedparser/expat_parser'
+    StrictFeedParser = FeedParser::Expat::StrictFeedParser
+  rescue LoadError
+    puts "Could not load expat either; will use loose parser."
+  end
 end
 
-begin
-  require 'rfeedparser/expat_parser'
-  StrictFeedParser = FeedParser::Expat::StrictFeedParser unless defined? StrictFeedParser
-rescue LoadError
-end
 
 require 'rfeedparser/monkey_patches'
 
@@ -233,8 +235,7 @@ module FeedParser
     # Use the default compatibility if compatible is nil
     $compatible = options[:compatible].nil? ? $compatible : options[:compatible]
 
-    # TODO: don't even try strict if it's not defined
-    strictklass = options[:strict] || StrictFeedParser
+    strictklass = options[:strict] || StrictFeedParser rescue nil
     looseklass = options[:loose] || LooseFeedParser
     options[:handlers] = options[:handlers] || []
     
@@ -412,18 +413,15 @@ module FeedParser
       result['encoding'] = proposed_encoding
     end
 
+    use_strict_parser = false if !defined? StrictFeedParser
+
     if use_strict_parser
       begin
         parser = StrictFeedParser.new(baseuri, baselang)
         feedparser = parser.handler
         parser.parse(data)
-        
-      rescue StandardError, XML::SAX::SAXParseException => parseerr # resparse
-
-        if $debug
-          $stderr << "xml parsing failed\n"
-          $stderr << parseerr.to_s+"\n" # Hrmph.
-        end
+      rescue => err
+        $stderr << "xml parsing failed: #{err.message}\n#{err.backtrace.join("\n")}" if $debug
         result['bozo'] = true
         result['bozo_exception'] = feedparser.exc || e 
         use_strict_parser = false
