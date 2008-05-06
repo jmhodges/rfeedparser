@@ -43,6 +43,9 @@ require 'htmlentities'
 gem 'activesupport', ">=1.4.1"
 require 'active_support'
 
+gem 'addressable', ">= 1.0.4"
+require 'addressable/uri'
+
 gem 'rchardet', ">=1.0"
 require 'rchardet'
 $chardet = true
@@ -52,7 +55,6 @@ $compatible = true
 
 $LOAD_PATH.unshift File.expand_path(File.dirname(__FILE__))
 require 'rfeedparser/utilities'
-require 'rfeedparser/forgiving_uri'
 require 'rfeedparser/better_sgmlparser'
 require 'rfeedparser/better_attributelist'
 require 'rfeedparser/feedparserdict'
@@ -119,7 +121,7 @@ module FeedParser
   USER_AGENT = "rFeedParser/#{VERSION} +http://rfeedparser.rubyforge.org/"
 
   # HTTP "Accept" header to send to servers when downloading feeds.  If you don't
-  # want to send an Accept header, set this to None.
+  # want to send an Accept header, set this to nil.
   ACCEPT_HEADER = "application/atom+xml,application/rdf+xml,application/rss+xml,application/x-netcdf,application/xml;q=0.9,text/xml;q=0.2,*/*;q=0.1"
 
 
@@ -180,14 +182,14 @@ module FeedParser
     url_file_stream_or_string.strip!
     
     
-    furi = ForgivingURI.parse(url_file_stream_or_string)
-    if furi && ['http','https','ftp'].include?(furi.scheme)
+    uri = Addressable::URI.parse(url_file_stream_or_string)
+    if uri && ['http','https','ftp'].include?(uri.scheme)
       auth = nil
 
-      if furi.host && furi.password
-        auth = Base64::encode64("#{furi.user}:#{furi.password}").strip
-        furi.password = nil
-        url_file_stream_or_string = furi.to_s
+      if uri.host && uri.password
+        auth = Base64::encode64("#{uri.user}:#{uri.password}").strip
+        uri.password = nil
+        url_file_stream_or_string = uri.to_s
       end
 
       req_headers = {} 

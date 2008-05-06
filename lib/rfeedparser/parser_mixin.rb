@@ -1241,3 +1241,17 @@ module FeedParserMixin
   
 end # End FeedParserMixin
 end
+
+def urljoin(base, uri)
+  urifixer = /^([A-Za-z][A-Za-z0-9+-.]*:\/\/)(\/*)(.*?)/u
+  uri = uri.sub(urifixer, '\1\3') 
+  pbase = ForgivingURI.parse(base) rescue nil
+  if pbase && pbase.absolute?
+    puri = ForgivingURI.parse(uri) rescue nil
+    if puri && puri.relative?
+      # ForgivingURI.join does the wrong thing.  What the hell.
+      return ForgivingURI.join(base, uri).to_s.gsub(/[^:]\/{2,}/, '')
+    end
+  end
+  return uri
+end

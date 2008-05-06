@@ -1,7 +1,11 @@
 require 'rubygems'
 require 'rake/testtask'
 require 'rake/gempackagetask'
-require 'lib/rfeedparser'
+begin
+  require 'lib/rfeedparser'
+rescue LoadError
+  puts "Problem loading rfeedparser; try rake setup"
+end
 
 spec = Gem::Specification.new do |s|
   s.name       = "rfeedparser"
