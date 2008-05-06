@@ -68,7 +68,7 @@ end
 
 begin
   require 'rfeedparser/expat_parser'
-  StrictFeedParser = FeedParser::Expat::StrictFeedParser
+  StrictFeedParser = FeedParser::Expat::StrictFeedParser unless defined? StrictFeedParser
 rescue LoadError
 end
 
