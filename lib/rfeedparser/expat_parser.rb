@@ -1,3 +1,12 @@
+# If you don't have libxml installed (or for some reason you would
+# rather use expat) you can fall back upon this for your parser. Be
+# advised that the bindings for expat are much older (from the days of
+# Ruby 1.6.7) and are unmaintained. If you want to force use of expat
+# even when libxml is installed, you can do this:
+#
+#   feed = FeedParser.parse("some-feed-stream-filepath-or-url",
+#                           :strict => FeedParser::Expat::StrictFeedParser)
+
 require 'xml/saxdriver'
 
 module FeedParser
