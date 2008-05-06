@@ -58,7 +58,7 @@ require 'rfeedparser/monkey_patches'
 module FeedParser
   extend FeedParserUtilities
   
-  Version = "0.9.940"
+  VERSION = "0.9.940"
 
   License = """Copyright (c) 2002-2006, Mark Pilgrim, All rights reserved.
 
@@ -95,7 +95,7 @@ module FeedParser
   # HTTP "User-Agent" header to send to servers when downloading feeds.
   # If you are embedding feedparser in a larger application, you should
   # change this to your application name and URL.
-  USER_AGENT = "rFeedParser/#{Version} +http://rfeedparser.rubyforge.org/"
+  USER_AGENT = "rFeedParser/#{VERSION} +http://rfeedparser.rubyforge.org/"
 
   # HTTP "Accept" header to send to servers when downloading feeds.  If you don't
   # want to send an Accept header, set this to None.

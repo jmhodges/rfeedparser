@@ -1,11 +1,11 @@
 require 'rubygems'
-Gem::manage_gems
 require 'rake/testtask'
 require 'rake/gempackagetask'
+require 'lib/rfeedparser'
 
 spec = Gem::Specification.new do |s|
   s.name       = "rfeedparser"
-  s.version    = "0.9.940" # Don't forget the Version in rfeedparser.rb
+  s.version    = FeedParser::VERSION
   s.author     = "Jeff Hodges"
   s.email      = "jeff at somethingsimilar dot com"
   s.homepage   = "http://rfeedparser.rubyforge.org/"
@@ -15,7 +15,7 @@ spec = Gem::Specification.new do |s|
   s.require_path      = "lib"
   # s.autorequire       = "feedparser" # tHe 3vil according to Why.
   s.test_file         = "tests/rfeedparsertest.rb"
-  s.has_rdoc          = false
+  s.has_rdoc          = false # TODO: fix
   s.extra_rdoc_files  = ['README','LICENSE', 'RUBY-TESTING']
   s.rubyforge_project = 'rfeedparser'
 
