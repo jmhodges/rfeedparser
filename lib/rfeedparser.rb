@@ -83,15 +83,17 @@ module FeedParser
   
   VERSION = "0.9.940"
 
-  Translator_From_Python_To_Ruby = "Jeff Hodges <http://somethingsimilar.com>"
-  Author = "Mark Pilgrim <http://diveintomark.org/>"
-  Contributors = [  "Jason Diamond <http://injektilo.org/>",
-    "John Beimler <http://john.beimler.org/>",
-    "Fazal Majid <http://www.majid.info/mylos/weblog/>",
-    "Aaron Swartz <http://aaronsw.com/>",
-    "Kevin Marks <http://epeus.blogspot.com/>",
-    "Jesse Newland <http://jnewland.com/>"
-  ]
+  AUTHOR = "Mark Pilgrim <http://diveintomark.org/>"
+  PORTER = "Jeff Hodges <http://somethingsimilar.com>"
+  CONTRIBUTERS = ["Jason Diamond <http://injektilo.org/>",
+                  "John Beimler <http://john.beimler.org/>",
+                  "Fazal Majid <http://www.majid.info/mylos/weblog/>",
+                  "Aaron Swartz <http://aaronsw.com/>",
+                  "Kevin Marks <http://epeus.blogspot.com/>",
+                  "Jesse Newland <http://jnewland.com/>",
+                  "Charlie Savage <http://cfis.savagexi.com/>",
+                  "Phil Hagelberg <http://technomancy.us>"]
+
   # HTTP "User-Agent" header to send to servers when downloading feeds.
   # If you are embedding feedparser in a larger application, you should
   # change this to your application name and URL.
