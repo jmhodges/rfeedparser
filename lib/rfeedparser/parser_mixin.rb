@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+
 module FeedParser
 module FeedParserMixin
   include FeedParserUtilities
@@ -386,7 +387,7 @@ module FeedParserMixin
     end
 
     # resolve relative URIs
-    if @can_be_relative_uri.include?element and output and not output.empty?
+    if @can_be_relative_uri.include?(element) and !output.blank?
       output = resolveURI(output)
     end
 
@@ -1245,12 +1246,12 @@ end
 def urljoin(base, uri)
   urifixer = /^([A-Za-z][A-Za-z0-9+-.]*:\/\/)(\/*)(.*?)/u
   uri = uri.sub(urifixer, '\1\3') 
-  pbase = ForgivingURI.parse(base) rescue nil
+  pbase = Addressable::URI.parse(base) rescue nil
   if pbase && pbase.absolute?
-    puri = ForgivingURI.parse(uri) rescue nil
+    puri = Addressable::URI.parse(uri) rescue nil
     if puri && puri.relative?
       # ForgivingURI.join does the wrong thing.  What the hell.
-      return ForgivingURI.join(base, uri).to_s.gsub(/[^:]\/{2,}/, '')
+      return Addressable::URI.join(base, uri).to_s.gsub(/[^:]\/{2,}/, '')
     end
   end
   return uri

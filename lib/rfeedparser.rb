@@ -22,6 +22,7 @@ require 'zlib'
 
 require 'rubygems'
 
+
 # If available, Nikolai's UTF-8 library will ease use of utf-8 documents.
 # See http://git.bitwi.se/ruby-character-encodings.git/.
 begin
