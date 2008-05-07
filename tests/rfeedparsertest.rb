@@ -11,25 +11,25 @@ class XMLTests < Test::Unit::TestCase
   # Some tests are known to fail because we're copying the Python
   # version's feed suite verbatim, and we have minor implementation
   # details that don't constitute brokenness but are still
-  # different. By default we should skip them to reduce line noise. If
-  # you want to leave them in, use `rake test all=yes'
+  # different. Running `rake test skip=y' will skip these.
   #
   # Additionally if you want to run a single test, run:
   # rake test n=test_tests_wellformed_encoding_x80macroman
   #
   def self.skip?(name)
-    return false if ENV['all']
-    return ENV['n'] != name if ENV['n']
-    
-    @to_skip ||= YAML.load(File.open(File.dirname(__FILE__) + '/to_skip.yml'))
-    @to_skip.include? name
+    return true if ENV['n'] and ENV['n'] != name
+
+    if ENV['skip']
+      @to_skip ||= YAML.load(File.open(File.dirname(__FILE__) + '/to_skip.yml'))
+      @to_skip.include? name
+    end
   end
 
   Dir["#{File.dirname(__FILE__)}/**/*.xml"].each do |xmlfile|
     name = "test_#{xmlfile.gsub('./', '').gsub('/','_').sub('.xml','')}"
     next if skip?(name)
     
-    XMLTests.send(:define_method, name) do
+    define_method(name) do
       fp = FeedParser.parse("http://127.0.0.1:#{$PORT}/#{xmlfile}", :compatible => true) 
       # I should point out that the 'compatible' arg is not necessary,
       # but probably will be in the future if we decide to change the default.
@@ -40,6 +40,7 @@ class XMLTests < Test::Unit::TestCase
   end
 end
 
+# TODO: don't fail if the rfeedparserserver.rb is already running
 # Start up the mongrel server and tell it how to send the tests
 server = Mongrel::HttpServer.new("0.0.0.0",$PORT)
 Mongrel::DirHandler::add_mime_type('.xml','application/xml')
