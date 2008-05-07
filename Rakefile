@@ -4,6 +4,7 @@ require 'rake/gempackagetask'
 begin
   require 'lib/rfeedparser'
 rescue LoadError
+  module FeedParser; VERSION = 'not loaded'; end
   puts "Problem loading rfeedparser; try rake setup"
 end
 
@@ -31,10 +32,9 @@ spec = Gem::Specification.new do |s|
   s.add_dependency('htmltools', '>= 1.10')
   s.add_dependency('htmlentities', '4.0.0')
   s.add_dependency('mongrel', '>=1.0.1')
-  s.requirements << "Yoshida Masato's Ruby bindings to the Expat XML parser or libxml"
+  s.add_dependency('addressable', '>= 1.0.4')
+  s.requirements << "Ruby bindings to the Expat XML parser or libxml2 (version 0.5.2 or greater)"
 end
-
-
 
 Rake::GemPackageTask.new(spec) do |pkg|
   pkg.need_zip = true

@@ -29,7 +29,7 @@ module FeedParser
        inputdata.setByteStream(StringIO.new(data))
        begin
          saxparser.parse(inputdata)
-       rescue err => XML::SAX::SAXParseException
+       rescue XML::SAX::SAXParseException => err
          # This does not inherit from StandardError as it should, so
          # we have to catch and re-raise specially.
          raise err.to_s
