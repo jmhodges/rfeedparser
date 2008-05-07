@@ -4,7 +4,7 @@ require 'rake/gempackagetask'
 begin
   require 'lib/rfeedparser'
 rescue LoadError
-  module FeedParser; VERSION = 'not loaded'; end
+  module FeedParser; VERSION = '0.0.0'; end
   puts "Problem loading rfeedparser; try rake setup"
 end
 
@@ -49,6 +49,7 @@ end
 task :default => [:test]
 
 # Taken liberally from http://blog.labnotes.org/2008/02/28/svn-checkout-rake-setup/
+# TODO: update to work with rubygems 1.0+
 desc "If you're building from source, run this task first to setup the necessary dependencies."
 task :setup do
   puts "\nOn top of these gems, you'll also need #{spec.requirements.join(',')}."
