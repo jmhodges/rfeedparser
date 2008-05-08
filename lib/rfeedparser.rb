@@ -190,6 +190,9 @@ module FeedParser
       req_headers['A-IM'] = 'feed' # RFC 3229 support 
       
       begin
+        require 'net/http'
+        wtf = Net::HTTP.get(URI.parse(url_file_stream_or_string))
+        puts "WTF #{wtf}"
         c = Curl::Easy.new(url_file_stream_or_string)
         c.perform
 
