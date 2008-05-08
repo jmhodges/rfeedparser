@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
 require File.join(File.dirname(__FILE__), 'rfeedparser_test_helper')
-
+puts "Opening Mongrel on port #{$PORT}"
 # Start up the mongrel server and tell it how to send the tests
 server = Mongrel::HttpServer.new("0.0.0.0", $PORT)
 Mongrel::DirHandler::add_mime_type('.xml','application/xml')

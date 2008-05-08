@@ -27,6 +27,7 @@ spec = Gem::Specification.new do |s|
   s.add_dependency('htmltools', '>= 1.10')
   s.add_dependency('htmlentities', '4.0.0')
   s.add_dependency('mongrel', '>=1.0.1')
+  s.add_dependency('curb', '0.1.4')
   s.requirements << "Yoshida Masato's Ruby bindings to the Expat XML parser"
 end
 

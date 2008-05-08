@@ -27,6 +27,7 @@ gem 'htmltools', ">=1.10"
 gem 'htmlentities', ">=4.0.0"
 gem 'activesupport', ">=1.4.1"
 gem 'rchardet', ">=1.0"
+gem 'curb', '>=0.1.4'
 
 require 'xml/saxdriver' # calling expat through the xmlparser gem
 
@@ -37,8 +38,7 @@ require 'encoding/character/utf-8'
 require 'html/sgml-parser'
 require 'htmlentities'
 require 'active_support'
-require 'open-uri'
-include OpenURI
+require 'curb'
 
 $debug = false
 $compatible = true
@@ -190,14 +190,15 @@ module FeedParser
       req_headers['A-IM'] = 'feed' # RFC 3229 support 
       
       begin
-        return open(url_file_stream_or_string, req_headers) 
-      rescue OpenURI::HTTPError => e
-        return e.io
+        c = Curl::Easy.new(url_file_stream_or_string)
+        c.perform
+
+        return StringIO.new(c.body_str)
       rescue
       end
     end
 
-    # try to open with native open function (if url_file_stream_or_string is a filename)
+    # try to open with native open function (if curb can't handle it)
     begin 
       return open(url_file_stream_or_string)
     rescue
@@ -268,14 +269,13 @@ module FeedParser
       result['headers'] = f.meta
     end
     
-    # FIXME open-uri does not return a non-nil base_uri in its HTTPErrors. 
-    if f.respond_to?(:base_uri)
-      result['href'] = f.base_uri.to_s # URI => String
+    if f.respond_to?(:url)
+      result['href'] = f.url # URI => String
       result['status'] = '200'
     end
     
-    if f.respond_to?(:status)
-      result['status'] = f.status[0] 
+    if f.respond_to?(:response_code)
+      result['status'] = f.response_code 
     end
 
 
