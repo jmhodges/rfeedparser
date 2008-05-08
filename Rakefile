@@ -1,11 +1,16 @@
 require 'rubygems'
-Gem::manage_gems
 require 'rake/testtask'
 require 'rake/gempackagetask'
+begin
+  require 'lib/rfeedparser'
+rescue LoadError
+  module FeedParser; VERSION = '0.0.0'; end
+  puts "Problem loading rfeedparser; try rake setup"
+end
 
 spec = Gem::Specification.new do |s|
   s.name       = "rfeedparser"
-  s.version    = "0.9.940" # Don't forget the Version in rfeedparser.rb
+  s.version    = FeedParser::VERSION
   s.author     = "Jeff Hodges"
   s.email      = "jeff at somethingsimilar dot com"
   s.homepage   = "http://rfeedparser.rubyforge.org/"
@@ -15,7 +20,7 @@ spec = Gem::Specification.new do |s|
   s.require_path      = "lib"
   # s.autorequire       = "feedparser" # tHe 3vil according to Why.
   s.test_file         = "tests/rfeedparsertest.rb"
-  s.has_rdoc          = false
+  s.has_rdoc          = false # TODO: fix
   s.extra_rdoc_files  = ['README','LICENSE', 'RUBY-TESTING']
   s.rubyforge_project = 'rfeedparser'
 
@@ -27,10 +32,9 @@ spec = Gem::Specification.new do |s|
   s.add_dependency('htmltools', '>= 1.10')
   s.add_dependency('htmlentities', '4.0.0')
   s.add_dependency('mongrel', '>=1.0.1')
-  s.requirements << "Yoshida Masato's Ruby bindings to the Expat XML parser"
+  s.add_dependency('addressable', '>= 1.0.4')
+  s.requirements << "Ruby bindings to the Expat XML parser or libxml2 (version 0.5.2 or greater)"
 end
-
-
 
 Rake::GemPackageTask.new(spec) do |pkg|
   pkg.need_zip = true
@@ -45,6 +49,7 @@ end
 task :default => [:test]
 
 # Taken liberally from http://blog.labnotes.org/2008/02/28/svn-checkout-rake-setup/
+# TODO: update to work with rubygems 1.0+
 desc "If you're building from source, run this task first to setup the necessary dependencies."
 task :setup do
   puts "\nOn top of these gems, you'll also need #{spec.requirements.join(',')}."

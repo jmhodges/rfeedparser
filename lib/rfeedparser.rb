@@ -1,104 +1,109 @@
 #!/usr/bin/env ruby
-"""Universal feed parser in Ruby
+# Universal feed parser in Ruby
+#
+# Handles RSS 0.9x, RSS 1.0, RSS 2.0, CDF, Atom 0.3, and Atom 1.0 feeds
+#
+# Visit http://feedparser.org/ for the latest version in Python
+# Visit http://feedparser.org/docs/ for the latest documentation
+# Email Jeff Hodges at jeff@obquo.com for questions
+#
+# Required: Ruby 1.8
 
-Handles RSS 0.9x, RSS 1.0, RSS 2.0, CDF, Atom 0.3, and Atom 1.0 feeds
-
-Visit http://feedparser.org/ for the latest version in Python
-Visit http://feedparser.org/docs/ for the latest documentation
-Email Jeff Hodges at jeff@obquo.com for questions
-
-Required: Ruby 1.8
-"""
 $KCODE = 'UTF8'
 require 'stringio'
 require 'uri'
+require 'open-uri'
 require 'cgi' # escaping html
 require 'time'
 require 'pp'
-require 'rubygems'
 require 'base64'
 require 'iconv'
 require 'zlib'
 
+require 'rubygems'
+
+
+# If available, Nikolai's UTF-8 library will ease use of utf-8 documents.
+# See http://git.bitwi.se/ruby-character-encodings.git/.
+begin
+  gem 'character-encodings', ">=0.2.0"
+  require 'encoding/character/utf-8'
+rescue LoadError
+end
+
+# TODO: require these in the files that need them, not in the toplevel
 gem 'hpricot', "=0.6"
 require 'hpricot'
-gem 'character-encodings', ">=0.2.0"
+
 gem 'htmltools', ">=1.10"
+require 'html/sgml-parser'
+
 gem 'htmlentities', ">=4.0.0"
+require 'htmlentities'
+
 gem 'activesupport', ">=1.4.1"
+require 'active_support'
+
+gem 'addressable', ">= 1.0.4"
+require 'addressable/uri'
+
 gem 'rchardet', ">=1.0"
-
-require 'xml/saxdriver' # calling expat through the xmlparser gem
-
 require 'rchardet'
 $chardet = true
-
-require 'encoding/character/utf-8'
-require 'html/sgml-parser'
-require 'htmlentities'
-require 'active_support'
-require 'open-uri'
-include OpenURI
 
 $debug = false
 $compatible = true
 
-$LOAD_PATH << File.expand_path(File.dirname(__FILE__))
+$LOAD_PATH.unshift File.expand_path(File.dirname(__FILE__))
 require 'rfeedparser/utilities'
-require 'rfeedparser/forgiving_uri'
 require 'rfeedparser/better_sgmlparser'
 require 'rfeedparser/better_attributelist'
 require 'rfeedparser/feedparserdict'
 require 'rfeedparser/parser_mixin'
-require 'rfeedparser/parsers'
+
+require 'rfeedparser/loose_feed_parser'
+
+begin
+  require 'rfeedparser/expat_parser'
+  StrictFeedParser = FeedParser::Expat::StrictFeedParser
+  
+rescue LoadError, NameError
+  STDERR.puts "Could not load expat; trying libxml."
+  
+  begin
+    require 'rfeedparser/libxml_parser'
+    StrictFeedParser = FeedParser::LibXml::StrictFeedParser
+  rescue LoadError, NameError
+    STDERR.puts "Could not load libxml either; will use loose parser."
+  end
+end
+
+
 require 'rfeedparser/monkey_patches'
-
-
 
 module FeedParser
   extend FeedParserUtilities
   
-  Version = "0.9.940"
+  VERSION = "0.9.940"
 
-  License = """Copyright (c) 2002-2006, Mark Pilgrim, All rights reserved.
+  AUTHOR = "Mark Pilgrim <http://diveintomark.org/>"
+  PORTER = "Jeff Hodges <http://somethingsimilar.com>"
+  CONTRIBUTERS = ["Jason Diamond <http://injektilo.org/>",
+                  "John Beimler <http://john.beimler.org/>",
+                  "Fazal Majid <http://www.majid.info/mylos/weblog/>",
+                  "Aaron Swartz <http://aaronsw.com/>",
+                  "Kevin Marks <http://epeus.blogspot.com/>",
+                  "Jesse Newland <http://jnewland.com/>",
+                  "Charlie Savage <http://cfis.savagexi.com/>",
+                  "Phil Hagelberg <http://technomancy.us>"]
 
-  Redistribution and use in source and binary forms, with or without modification,
-  are permitted provided that the following conditions are met:
-
-  * Redistributions of source code must retain the above copyright notice,
-  this list of conditions and the following disclaimer.
-  * Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
-
-  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS 'AS IS'
-  AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-  ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-  LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-  CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-  SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-  INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-  CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-  POSSIBILITY OF SUCH DAMAGE."""
-
-  Translator_From_Python_To_Ruby = "Jeff Hodges <http://somethingsimilar.com>"
-  Author = "Mark Pilgrim <http://diveintomark.org/>"
-  Contributors = [  "Jason Diamond <http://injektilo.org/>",
-    "John Beimler <http://john.beimler.org/>",
-    "Fazal Majid <http://www.majid.info/mylos/weblog/>",
-    "Aaron Swartz <http://aaronsw.com/>",
-    "Kevin Marks <http://epeus.blogspot.com/>",
-    "Jesse Newland <http://jnewland.com/>"
-  ]
   # HTTP "User-Agent" header to send to servers when downloading feeds.
   # If you are embedding feedparser in a larger application, you should
   # change this to your application name and URL.
-  USER_AGENT = "rFeedParser/#{Version} +http://rfeedparser.rubyforge.org/"
+  USER_AGENT = "rFeedParser/#{VERSION} +http://rfeedparser.rubyforge.org/"
 
   # HTTP "Accept" header to send to servers when downloading feeds.  If you don't
-  # want to send an Accept header, set this to None.
+  # want to send an Accept header, set this to nil.
   ACCEPT_HEADER = "application/atom+xml,application/rdf+xml,application/rss+xml,application/x-netcdf,application/xml;q=0.9,text/xml;q=0.2,*/*;q=0.1"
 
 
@@ -159,14 +164,14 @@ module FeedParser
     url_file_stream_or_string.strip!
     
     
-    furi = ForgivingURI.parse(url_file_stream_or_string)
-    if furi && ['http','https','ftp'].include?(furi.scheme)
+    uri = Addressable::URI.parse(url_file_stream_or_string)
+    if uri && ['http','https','ftp'].include?(uri.scheme)
       auth = nil
 
-      if furi.host && furi.password
-        auth = Base64::encode64("#{furi.user}:#{furi.password}").strip
-        furi.password = nil
-        url_file_stream_or_string = furi.to_s
+      if uri.host && uri.password
+        auth = Base64::encode64("#{uri.user}:#{uri.password}").strip
+        uri.password = nil
+        url_file_stream_or_string = uri.to_s
       end
 
       req_headers = {} 
@@ -213,8 +218,8 @@ module FeedParser
     
     # Use the default compatibility if compatible is nil
     $compatible = options[:compatible].nil? ? $compatible : options[:compatible]
-    
-    strictklass = options[:strict] || StrictFeedParser
+
+    strictklass = options[:strict] || StrictFeedParser rescue nil
     looseklass = options[:loose] || LooseFeedParser
     options[:handlers] = options[:handlers] || []
     
@@ -392,26 +397,15 @@ module FeedParser
       result['encoding'] = proposed_encoding
     end
 
+    use_strict_parser = false if !defined? StrictFeedParser
+
     if use_strict_parser
-      # initialize the SAX parser
-      saxparser = XML::SAX::Helpers::ParserFactory.makeParser("XML::Parser::SAXDriver")
-      feedparser = strictklass.new(baseuri, baselang, 'utf-8')
-      saxparser.setDocumentHandler(feedparser)
-      saxparser.setDTDHandler(feedparser)
-      saxparser.setEntityResolver(feedparser)
-      saxparser.setErrorHandler(feedparser)
-
-      inputdata = XML::SAX::InputSource.new('parsedfeed')
-      inputdata.setByteStream(StringIO.new(data))
       begin
-        saxparser.parse(inputdata)
-        
-      rescue StandardError, XML::SAX::SAXParseException => parseerr # resparse
-
-        if $debug
-          $stderr << "xml parsing failed\n"
-          $stderr << parseerr.to_s+"\n" # Hrmph.
-        end
+        parser = StrictFeedParser.new(baseuri, baselang)
+        feedparser = parser.handler
+        parser.parse(data)
+      rescue => err
+        $stderr << "xml parsing failed: #{err.message}\n#{err.backtrace.join("\n")}" if $debug
         result['bozo'] = true
         result['bozo_exception'] = feedparser.exc || e 
         use_strict_parser = false

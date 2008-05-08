@@ -58,7 +58,7 @@ module FeedParserUtilities
       ename, eattr = l
       h.search(ename).each do |elem|
         euri = elem.attributes[eattr]
-        uri = ForgivingURI.parse(URI.encode(euri)) rescue nil
+        uri = Addressable::URI.parse(Addressable::URI.encode(euri)) rescue nil
         if euri and not euri.empty? and uri and uri.relative?
           elem.raw_attributes[eattr] = urljoin(baseURI, euri)
         end

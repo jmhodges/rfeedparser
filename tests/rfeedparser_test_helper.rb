@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 require 'test/unit'
 require File.join(File.dirname(__FILE__),'../lib/rfeedparser')
 
@@ -5,10 +7,11 @@ begin
   require 'rubygems'
   gem 'mongrel'
   require 'mongrel'
-rescue => details
+rescue LoadError
   STDERR.puts "Whoops, had an error with loading mongrel as a gem. Trying just 'require'. Mongrel is required for testing."
   require 'mongrel'
 end
+
 Mongrel::HTTP_STATUS_CODES[220] = "Unspecified success"
 
 def uconvert(one, two, three); FeedParser::uconvert(one, two, three); end
@@ -249,14 +252,5 @@ class FeedParserTestRequestHandler < Mongrel::DirHandler
         response.send_file(req_path, stat.size < Mongrel::Const::CHUNK_SIZE * 2)
       end
     end
-  end
-end
-
-
-class XMLTests < Test::Unit::TestCase
-  # Empty, but here for clarity
-  def setup
-  end
-  def teardown
   end
 end
