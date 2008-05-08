@@ -6,14 +6,16 @@ to try a test individually.  You can, of course, run rfeedparser.rb with
 the file path to the testcase, but there may be HTTP headers required for
 a successful run that can only be given by running rfeedparser against
 the HTTP server path. I'll probably merge feedparserserver.rb into
-rfeedparsertest.rb soon.
+rfeedparsertest.rb soon.  Note that there are many test failures that occur 
+solely because of problems with a platforms iconv installation.  Inconsistency
+in iconv is the leading cause of errors in rfp's test cases.
 
 === Last Count 20070321 ===
     By my last count, rfeedparsertest.rb says that there are 45 assertions
 that fail, and 4 that error out. I've included here a few tests that
 "Failed, Sort Of".  By that I mean, the behaviors the tests are meant to
 check are correct, but the test fails because of some other superficial
-or unrelated behavior.
+or unrelated behavior. 
 
 === Tests Failed, Sort Of ===
 
