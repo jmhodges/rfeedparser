@@ -64,15 +64,17 @@ require 'rfeedparser/parser_mixin'
 require 'rfeedparser/loose_feed_parser'
 
 begin
-  require 'rfeedparser/libxml_parser'
-  StrictFeedParser = FeedParser::LibXml::StrictFeedParser
+  require 'rfeedparser/expat_parser'
+  StrictFeedParser = FeedParser::Expat::StrictFeedParser
+  
 rescue LoadError, NameError
-  STDERR.puts "Could not load libxml; trying expat."
+  STDERR.puts "Could not load expat; trying libxml."
+  
   begin
-    require 'rfeedparser/expat_parser'
-    StrictFeedParser = FeedParser::Expat::StrictFeedParser
+    require 'rfeedparser/libxml_parser'
+    StrictFeedParser = FeedParser::LibXml::StrictFeedParser
   rescue LoadError, NameError
-    STDERR.puts "Could not load expat either; will use loose parser."
+    STDERR.puts "Could not load libxml either; will use loose parser."
   end
 end
 
