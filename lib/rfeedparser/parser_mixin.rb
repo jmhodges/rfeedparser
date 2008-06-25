@@ -103,6 +103,7 @@ module FeedParserMixin
     @langstack = []
     @baseuri = baseuri || ''
     @lang = baselang || nil
+    @has_title = false
     if baselang 
       @feeddata['language'] = baselang.gsub('_','-')
     end
@@ -421,6 +422,8 @@ module FeedParserMixin
     # categories/tags/keywords/whatever are handled in _end_category
     return output if element == 'category'
 
+    return output if element == 'title' and @has_title
+
     # store output in appropriate place(s)
     if @inentry and not @insource
       if element == 'content'
@@ -579,6 +582,7 @@ module FeedParserMixin
 
   def _start_image(attrsD)
     @inimage = true
+    @has_title = false
     push('image', false)
     context = getContext()
     context['image'] ||= FeedParserDict.new
@@ -591,6 +595,7 @@ module FeedParserMixin
 
   def _start_textinput(attrsD)
     @intextinput = true
+    @has_title = false
     push('textinput', false)
     context = getContext()
     context['textinput'] ||= FeedParserDict.new
@@ -826,6 +831,7 @@ module FeedParserMixin
     @entries << FeedParserDict.new
     push('item', false)
     @inentry = true
+    @has_title = false
     @guidislink = false
     id = getAttribute(attrsD, 'rdf:about')
     if id and not id.empty?
@@ -1053,15 +1059,21 @@ module FeedParserMixin
 
   def _end_title
     value = popContent('title')
-    context = getContext()
+    context = getContext
     if @intextinput
       context['textinput']['title'] = value
     elsif @inimage
       context['image']['title'] = value
     end
+    @has_title = true
   end
   alias :_end_dc_title :_end_title
-  alias :_end_media_title :_end_title
+
+  def _end_media_title
+    orig_has_title = @has_title
+    _end_title
+    @has_title = orig_has_title
+  end
 
   def _start_description(attrsD)
     context = getContext()
@@ -1180,6 +1192,7 @@ module FeedParserMixin
 
   def _start_source(attrsD)
     @insource = true
+    @has_title = false
   end
 
   def _end_source
