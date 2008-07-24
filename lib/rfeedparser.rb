@@ -41,9 +41,6 @@ require 'html/sgml-parser'
 gem 'htmlentities', ">=4.0.0"
 require 'htmlentities'
 
-gem 'activesupport', ">=1.4.1"
-require 'active_support'
-
 gem 'addressable', ">= 1.0.4"
 require 'addressable/uri'
 
@@ -73,11 +70,12 @@ rescue LoadError, NameError
   begin
     require 'rfeedparser/libxml_parser'
     StrictFeedParser = FeedParser::LibXml::StrictFeedParser
+
   rescue LoadError, NameError
+    StrictFeedParser = nil
     STDERR.puts "Could not load libxml either; will use loose parser."
   end
 end
-
 
 require 'rfeedparser/monkey_patches'
 
@@ -219,7 +217,7 @@ module FeedParser
     # Use the default compatibility if compatible is nil
     $compatible = options[:compatible].nil? ? $compatible : options[:compatible]
 
-    strictklass = options[:strict] || StrictFeedParser rescue nil
+    strictklass = options[:strict] || StrictFeedParser
     looseklass = options[:loose] || LooseFeedParser
     options[:handlers] = options[:handlers] || []
     
@@ -239,7 +237,7 @@ module FeedParser
       f = nil
     end
     
-    if f and !data.blank? and f.respond_to?(:meta)
+    if f and !(data.nil? || data.empty?) and f.respond_to?(:meta)
       # if feed is gzip-compressed, decompress it
       if f.meta['content-encoding'] == 'gzip'
         begin
@@ -291,17 +289,20 @@ module FeedParser
     # - result['encoding'] is the actual encoding, as per RFC 3023 and a variety of other conflicting specifications
     http_headers = result['headers'] || {}
     result['encoding'], http_encoding, xml_encoding, sniffed_xml_encoding, acceptable_content_type =
-    getCharacterEncoding(http_headers,data)
+    getCharacterEncoding(http_headers, data)
 
-    if not http_headers.blank? and not acceptable_content_type
-      unless http_headers['content-type'].nil?
+
+    if !(http_headers.nil? || http_headers.empty?) && !acceptable_content_type
+      if http_headers['content-type']
         bozo_message = "#{http_headers['content-type']} is not an XML media type"
       else
         bozo_message = 'no Content-type specified'
       end
+
       result['bozo'] = true
       result['bozo_exception'] = NonXMLContentType.new(bozo_message) # I get to care about this, cuz Mark says I should.
     end
+
     result['version'], data = stripDoctype(data)
     
     baseuri = http_headers['content-location'] || result['href']
@@ -337,6 +338,7 @@ module FeedParser
       rescue
       end
     end
+
     # if no luck and we have auto-detection library, try that
     if not known_encoding and $chardet
       begin 
@@ -350,8 +352,6 @@ module FeedParser
       end
     end
 
-
-
     # if still no luck and we haven't tried utf-8 yet, try that
     if not known_encoding and not tried_encodings.include?'utf-8'
       begin
@@ -362,6 +362,7 @@ module FeedParser
       rescue
       end
     end
+
     # if still no luck and we haven't tried windows-1252 yet, try that
     if not known_encoding and not tried_encodings.include?'windows-1252'
       begin
@@ -372,7 +373,7 @@ module FeedParser
       rescue
       end
     end
-    
+
     # NOTE this isn't in FeedParser.py 4.1
     # if still no luck and we haven't tried iso-8859-2 yet, try that.
     #if not known_encoding and not tried_encodings.include?'iso-8859-2'
@@ -397,13 +398,14 @@ module FeedParser
       result['encoding'] = proposed_encoding
     end
 
-    use_strict_parser = false if !defined? StrictFeedParser
+    use_strict_parser = false unless StrictFeedParser
 
     if use_strict_parser
       begin
         parser = StrictFeedParser.new(baseuri, baselang)
         feedparser = parser.handler
         parser.parse(data)
+
       rescue => err
         $stderr << "xml parsing failed: #{err.message}\n#{err.backtrace.join("\n")}" if $debug
         result['bozo'] = true
@@ -411,11 +413,13 @@ module FeedParser
         use_strict_parser = false
       end
     end
+    
     if not use_strict_parser
       $stderr << "Using LooseFeed\n\n" if $debug
       feedparser = looseklass.new(baseuri, baselang, (known_encoding and 'utf-8' or ''))
       feedparser.parse(data)
     end
+
     result['feed'] = feedparser.feeddata
     result['entries'] = feedparser.entries
     result['version'] = result['version'] || feedparser.version

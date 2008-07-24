@@ -1,18 +1,10 @@
-# FIXME line 5 maps to line 171 in saxdriver.rb. note that there is no return 
-# in the original
-class XML::Parser::SAXDriver
-   def openInputStream(stream)
-      if stream.getByteStream
-        return stream
-      else stream.getSystemId
-        url = URL.new(stream.getSystemId)
-        if url.scheme == 'file' && url.login == 'localhost'
-          s = open(url.urlpath)
-          stream.setByteStream(s)
-          return stream
-        end
-      end
-      return nil
+class Time
+  class << self
+    COMMON_YEAR_DAYS_IN_MONTH = [nil, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+    def days_in_month(month, year = now.year)
+      return 29 if month == 2 && ::Date.gregorian_leap?(year)
+      COMMON_YEAR_DAYS_IN_MONTH[month]
     end
+  end
 end
-    

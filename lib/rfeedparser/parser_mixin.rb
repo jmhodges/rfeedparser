@@ -138,6 +138,7 @@ module FeedParserMixin
       # if no xml:lang is specified, use parent lang
       lang = @lang
     end
+
     if lang and not lang.empty? # Seriously, this cannot be correct
       if ['feed', 'rss', 'rdf:RDF'].include?tag
         @feeddata['language'] = lang.gsub('_','-')
@@ -289,7 +290,7 @@ module FeedParserMixin
     # not containing any character or entity references
     return if @elementstack.nil? or @elementstack.empty?
     if escape and @contentparams['type'] == 'application/xhtml+xml'
-      text = text.to_xs 
+      text = text.to_xs
     end
     @elementstack[-1][2] << text
   end
@@ -369,6 +370,7 @@ module FeedParserMixin
     return if @elementstack.nil? or @elementstack.empty?
     return if @elementstack[-1][0] != element
     element, expectingText, pieces = @elementstack.pop
+
     if pieces.class == Array
       output = pieces.join('')
     else
@@ -388,7 +390,7 @@ module FeedParserMixin
     end
 
     # resolve relative URIs
-    if @can_be_relative_uri.include?(element) and !output.blank?
+    if @can_be_relative_uri.include?(element) && output && !output.empty?
       output = resolveURI(output)
     end
 
@@ -402,20 +404,20 @@ module FeedParserMixin
     @contentparams.delete('base64')
 
     # resolve relative URIs within embedded markup
-    if @html_types.include?mapContentType(@contentparams['type'] || 'text/html')
-      if @can_contain_relative_uris.include?element
+    if @html_types.include?(mapContentType(@contentparams['type'] || 'text/html'))
+      if @can_contain_relative_uris.include?(element)
         output = FeedParser.resolveRelativeURIs(output, @baseuri, @encoding)
       end
     end
     # sanitize embedded markup
-    if @html_types.include?mapContentType(@contentparams['type'] || 'text/html')
-      if @can_contain_dangerous_markup.include?element
+    if @html_types.include?(mapContentType(@contentparams['type'] || 'text/html'))
+      if @can_contain_dangerous_markup.include?(element)
         output = FeedParser.sanitizeHTML(output, @encoding)
       end
     end
 
     if @encoding and not @encoding.empty? and @encoding != 'utf-8'
-      output = uconvert(output, @encoding, 'utf-8') 
+      output = uconvert(output, @encoding, 'utf-8')
       # FIXME I turn everything into utf-8, not unicode, originally because REXML was being used but now beause I haven't tested it out yet.
     end
 
@@ -457,6 +459,7 @@ module FeedParserMixin
         context[element + '_detail'] = contentparams
       end
     end
+
     return output
   end
 

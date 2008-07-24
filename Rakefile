@@ -26,7 +26,6 @@ spec = Gem::Specification.new do |s|
 
   # Dependencies
   s.add_dependency('rchardet', '>=1.1')
-  s.add_dependency('activesupport', '>= 1.4.1')
   s.add_dependency('hpricot', '=0.6')
   s.add_dependency('character-encodings', '>= 0.2.0')
   s.add_dependency('htmltools', '>= 1.10')

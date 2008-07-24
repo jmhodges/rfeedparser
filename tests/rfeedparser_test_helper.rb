@@ -112,7 +112,7 @@ def scrape_assertion_strings(xmlfile)
   evalString.gsub!(/\bu'(.*?)'/) do |m| 
     esc = $1.to_s.dup
     # Replace \u hex values with actual Unicode char
-    esc.gsub!(/\\u([0-9a-fA-F]{4})/){ |m| [$1.hex].pack('U*') } 
+    esc.gsub!(/\\u([0-9a-fA-F]{4})/){ |m| [$1.hex].pack('U*') }
     " '"+esc+"'"
   end 
   

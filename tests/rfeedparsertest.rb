@@ -30,11 +30,13 @@ class XMLTests < Test::Unit::TestCase
     next if skip?(name)
     
     define_method(name) do
+
       fp = FeedParser.parse("http://127.0.0.1:#{$PORT}/#{xmlfile}", :compatible => true) 
       # I should point out that the 'compatible' arg is not necessary,
       # but probably will be in the future if we decide to change the default.
 
       description, evalString = scrape_assertion_strings(xmlfile)
+
       assert fp.instance_eval(evalString), description
     end
   end

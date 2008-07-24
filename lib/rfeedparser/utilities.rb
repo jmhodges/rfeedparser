@@ -18,6 +18,6 @@ module FeedParserUtilities
   module_function :extract_tuple
   
   def py2rtime(pytuple)
-    return Time.utc(*pytuple[0..5]) unless pytuple.blank? 
+    Time.utc(*pytuple[0..5]) unless pytuple.nil? || pytuple.empty? 
   end
 end
