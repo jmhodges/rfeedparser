@@ -35,12 +35,14 @@ module FeedParserUtilities
     true_encoding = nil
     
     http_content_type, charset = http_headers['content-type'].to_s.split(';',2)
+
     encoding_regexp = /\s*charset\s*=\s*(?:"|')?(.*?)(?:"|')?\s*$/
     http_encoding = charset.to_s.scan(encoding_regexp).flatten[0]
-    http_encoding = nil if http_encoding.blank?
-      # FIXME Open-Uri returns iso8859-1 if there is no charset header,
-      # but that doesn't pass the tests. Open-Uri claims its following
-      # the right RFC. Are they wrong or do we need to change the tests?
+
+    http_encoding = nil if http_encoding && http_encoding.empty?
+    # FIXME Open-Uri returns iso8859-1 if there is no charset header,
+    # but that doesn't pass the tests. Open-Uri claims its following
+    # the right RFC. Are they wrong or do we need to change the tests?
     
     # Must sniff for non-ASCII-compatible character encodings before
     # searching for XML declaration.  This heuristic is defined in
@@ -224,14 +226,19 @@ unless defined?(Builder::XChar)
       62 => '&gt;'  # right angle bracket
     }
     # http://www.w3.org/TR/REC-xml/#charsets
-    VALID = [[0x9, 0xA, 0xD], (0x20..0xD7FF), 
-    (0xE000..0xFFFD), (0x10000..0x10FFFF)]
+    VALID = [
+      0x9, 0xA, 0xD,
+      (0x20..0xD7FF),
+      (0xE000..0xFFFD),
+      (0x10000..0x10FFFF)
+    ]
   end
 
   class Fixnum
     # xml escaped version of chr
     def xchr
       n = XChar::CP1252[self] || self
+
       case n when *XChar::VALID
         XChar::PREDEFINED[n] or (n<128 ? n.chr : "&##{n};")
       else
@@ -241,8 +248,7 @@ unless defined?(Builder::XChar)
   end
 
   class String
-    alias :old_index :index
-    def to_xs 
+    def to_xs
       unpack('U*').map {|n| n.xchr}.join # ASCII, UTF-8
     rescue
       unpack('C*').map {|n| n.xchr}.join # ISO-8859-1, WIN-1252
