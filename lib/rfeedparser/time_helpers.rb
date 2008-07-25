@@ -277,14 +277,14 @@ module FeedParser
         end
         return r
       end
+      
       # W3DTF-style date parsing
-      # FIXME shouldn't it be "W3CDTF"?
       def parse_date_w3dtf(dateString)
         # Ruby's Time docs claim w3cdtf is an alias for iso8601 which is an alias for xmlschema
         # Whatever it is, it doesn't work.  This has been fixed in Ruby 1.9 and 
         # in Ruby on Rails, but not really. They don't fix the 25 hour or 61 minute or 61 second rollover and fail in other ways.
 
-        m = dateString.match(/^(\d{4})-?(?:(?:([01]\d)-?(?:([0123]\d)(?:T(\d\d):(\d\d):(\d\d)([+-]\d\d:\d\d|Z))?)?)?)?/)
+        m = dateString.match(/^(\d{4})-?(?:(?:([01]\d)-?(?:([0123]\d)(?:T(\d\d):(\d\d):(\d\d)(?:\.(\d+)?)([+-]\d\d:\d\d|Z))?)?)?)?/)
 
         w3 = m[1..3].map{|s| s=s.to_i; s += 1 if s == 0;s}  # Map the year, month and day to integers and, if they were nil, set them to 1
         w3 += m[4..6].map{|s| s.to_i}			  # Map the hour, minute and second to integers
