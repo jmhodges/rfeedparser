@@ -2,7 +2,7 @@ gem 'libxml-ruby', '>=0.8.3'
 require 'libxml'
 
 module FeedParser
- module LibXml
+ module LibXML
    class StrictFeedParser
      attr_reader :handler
 
@@ -24,7 +24,7 @@ module FeedParser
 
      attr_accessor :bozo, :entries, :feeddata, :exc
      def initialize(baseuri, baselang, encoding)
-       $stderr.puts "trying LibXml::StrictFeedParser" if $debug
+       $stderr.puts "trying LibXML::StrictFeedParser" if $debug
        startup(baseuri, baselang, encoding)
        @bozo = false
      end

@@ -69,7 +69,7 @@ rescue LoadError, NameError
   
   begin
     require 'rfeedparser/libxml_parser'
-    StrictFeedParser = FeedParser::LibXml::StrictFeedParser
+    StrictFeedParser = FeedParser::LibXML::StrictFeedParser
 
   rescue LoadError, NameError
     StrictFeedParser = nil
