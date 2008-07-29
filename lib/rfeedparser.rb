@@ -82,7 +82,7 @@ require 'rfeedparser/monkey_patches'
 module FeedParser
   extend FeedParserUtilities
   
-  VERSION = "0.9.940"
+  VERSION = "0.9.950"
 
   AUTHOR = "Mark Pilgrim <http://diveintomark.org/>"
   PORTER = "Jeff Hodges <http://somethingsimilar.com>"
