@@ -5,7 +5,7 @@
 #
 # Visit http://feedparser.org/ for the latest version in Python
 # Visit http://feedparser.org/docs/ for the latest documentation
-# Email Jeff Hodges at jeff@obquo.com for questions
+# Email Jeff Hodges at jeff@somethingsimilar.com with questions
 #
 # Required: Ruby 1.8
 
