@@ -32,7 +32,7 @@ spec = Gem::Specification.new do |s|
   s.add_dependency('htmlentities', '4.0.0')
   s.add_dependency('mongrel', '>=1.0.1')
   s.add_dependency('addressable', '>= 1.0.4')
-  s.requirements << "Ruby bindings to the Expat XML parser or libxml2 (version 0.5.2 or greater)"
+  s.requirements << "Ruby bindings to the Expat XML parser or libxml2 (version 0.8.3 or greater)"
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|
@@ -48,7 +48,6 @@ end
 task :default => [:test]
 
 # Taken liberally from http://blog.labnotes.org/2008/02/28/svn-checkout-rake-setup/
-# TODO: update to work with rubygems 1.0+
 desc "If you're building from source, run this task first to setup the necessary dependencies."
 task :setup do
   puts "\nOn top of these gems, you'll also need #{spec.requirements.join(',')}."
