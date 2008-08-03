@@ -11,7 +11,7 @@ module FeedParser
      end
 
      def parse(data)
-       saxparser = LibXML::XML::SaxParser.new
+       saxparser = ::LibXML::XML::SaxParser.new
        saxparser.callbacks = @handler
        saxparser.string = data
        saxparser.parse
@@ -19,7 +19,7 @@ module FeedParser
    end
 
    class StrictFeedParserHandler
-     include LibXML::XML::SaxParser::Callbacks
+     include ::LibXML::XML::SaxParser::Callbacks
      include FeedParserMixin
 
      attr_accessor :bozo, :entries, :feeddata, :exc
