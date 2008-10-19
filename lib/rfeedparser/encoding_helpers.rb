@@ -24,7 +24,7 @@ module FeedParserUtilities
   end
 
   def _ebcdic_to_ascii(s)   
-    Iconv.iconv("iso88591", "ebcdic-cp-be", s)[0]
+    Iconv.iconv("iso-8859-1", "cp500", s)[0]
   end
 
   def getCharacterEncoding(http_headers, xml_data)
@@ -98,7 +98,7 @@ module FeedParserUtilities
     if xml_encoding_match 
       xml_encoding = xml_encoding_match[1].downcase
       xencodings = ['iso-10646-ucs-2', 'ucs-2', 'csunicode', 'iso-10646-ucs-4', 'ucs-4', 'csucs4', 'utf-16', 'utf-32', 'utf_16', 'utf_32', 'utf16', 'u16']
-      if sniffed_xml_encoding and xencodings.include?xml_encoding
+      if sniffed_xml_encoding && xencodings.include?(xml_encoding)
         xml_encoding = sniffed_xml_encoding
       end
     end
