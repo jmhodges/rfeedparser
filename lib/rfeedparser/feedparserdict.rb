@@ -50,41 +50,45 @@ module FeedParser
     # but we'd still have to overwrite []= and such. 
     # I'm going to make it easy to turn lists of pairs into FeedParserDicts's though.
     def initialize(pairs=nil)
-      if pairs.class == Array and pairs[0].class == Array and pairs[0].length == 2
-	pairs.each do |l| 
-	  k,v = l
-	  self[k] = v
-	end
-      elsif pairs.class == Hash
-	self.merge!(pairs) 
+      if pairs.is_a?(Array) && pairs[0].is_a?(Array) && pairs[0].length == 2
+        pairs.each do |l|
+          k,v = l
+          self[k] = v
+        end
+      elsif pairs.is_a? Hash
+        self.merge!(pairs)
       end
     end
 
     def [](key)
       if key == 'category'
-	return self['tags'][0]['term']
+        return self['tags'][0]['term']
       end
+
       if key == 'categories'
-	return self['tags'].collect{|tag| [tag['scheme'],tag['term']]}
+        return self['tags'].collect{|tag| [tag['scheme'],tag['term']]}
       end
+
       realkey = @@keymap[key] || key 
-      if realkey.class == Array
-	realkey.each{ |key| return self[key] if has_key?key }
+      if realkey.is_a? Array
+        realkey.each{ |key| return self[key] if has_key?(key) }
       end
+
       # Note that the original key is preferred over the realkey we (might 
       # have) found in @@keymap
       if has_key?(key)
-	return super(key)
+        return super(key)
       end
-      return super(realkey)
+
+      super(realkey)
     end
 
     def []=(key,value)
-      if @@keymap.key?key
-	key = @@keymap[key]
-	if key.class == Array
-	  key = key[0]
-	end
+      if @@keymap.key?(key)
+        key = @@keymap[key]
+        if key.is_a? Array
+          key = key[0]
+        end
       end
       super(key,value)
     end
@@ -92,11 +96,11 @@ module FeedParser
     def method_missing(msym, *args)
       methodname = msym.to_s
       if methodname[-1] == '='
-	return self[methodname[0..-2]] = args[0]
-      elsif methodname[-1] != '!' and methodname[-1] != '?' and methodname[0] != "_" # FIXME implement with private?
-	return self[methodname]
+        self[methodname[0..-2]] = args[0]
+      elsif methodname[-1] != '!' && methodname[-1] != '?' && methodname[0] != "_" # FIXME implement with private?
+        self[methodname]
       else
-	raise NoMethodError, "whoops, we don't know about the attribute or method called `#{methodname}' for #{self}:#{self.class}"
+        raise NoMethodError, "whoops, we don't know about the attribute or method called `#{methodname}' for #{self}:#{self.class}"
       end
     end 
   end
