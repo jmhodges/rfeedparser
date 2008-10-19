@@ -14,7 +14,7 @@ module FeedParserUtilities
     Iconv.iconv(to_encoding, from_encoding, data)[0]
   end
 
-  def index_match(stri,regexp, offset)
+  def index_match(stri ,regexp, offset)
     i = stri.index(regexp, offset)
 
     return nil, nil unless i
@@ -24,7 +24,7 @@ module FeedParserUtilities
   end
 
   def _ebcdic_to_ascii(s)   
-    return Iconv.iconv("iso88591", "ebcdic-cp-be", s)[0]
+    Iconv.iconv("iso88591", "ebcdic-cp-be", s)[0]
   end
 
   def getCharacterEncoding(http_headers, xml_data)
@@ -56,7 +56,7 @@ module FeedParserUtilities
         # UTF-16BE
         sniffed_xml_encoding = 'utf-16be'
         xml_data = uconvert(xml_data, 'utf-16be', 'utf-8')
-      elsif xml_data.size >= 4 and xml_data[0..1] == "\xfe\xff" and xml_data[2..3] != "\x00\x00"
+      elsif xml_data.size >= 4 && xml_data[0..1] == "\xfe\xff" && xml_data[2..3] != "\x00\x00"
         # UTF-16BE with BOM
         sniffed_xml_encoding = 'utf-16be'
         xml_data = uconvert(xml_data[2..-1], 'utf-16be', 'utf-8')
@@ -64,7 +64,7 @@ module FeedParserUtilities
         # UTF-16LE
         sniffed_xml_encoding = 'utf-16le'
         xml_data = uconvert(xml_data, 'utf-16le', 'utf-8')
-      elsif xml_data.size >=4 and xml_data[0..1] == "\xff\xfe" and xml_data[2..3] != "\x00\x00"
+      elsif xml_data.size >=4 && xml_data[0..1] == "\xff\xfe" && xml_data[2..3] != "\x00\x00"
         # UTF-16LE with BOM
         sniffed_xml_encoding = 'utf-16le'
         xml_data = uconvert(xml_data[2..-1], 'utf-16le', 'utf-8')
@@ -107,15 +107,15 @@ module FeedParserUtilities
     application_content_types = ['application/xml', 'application/xml-dtd', 'application/xml-external-parsed-entity']
     text_content_types = ['text/xml', 'text/xml-external-parsed-entity']
 
-    if application_content_types.include?(http_content_type) or (/^application\// =~ http_content_type and /\+xml$/ =~ http_content_type)
+    if application_content_types.include?(http_content_type) || (/^application\// =~ http_content_type && /\+xml$/ =~ http_content_type)
       acceptable_content_type = true
       true_encoding = http_encoding || xml_encoding || 'utf-8'
-    elsif text_content_types.include?(http_content_type) or (/^text\// =~ http_content_type and /\+xml$/ =~ http_content_type)
+    elsif text_content_types.include?(http_content_type) || (/^text\// =~ http_content_type && /\+xml$/ =~ http_content_type)
       acceptable_content_type = true
       true_encoding = http_encoding || 'us-ascii'
     elsif /^text\// =~ http_content_type 
       true_encoding = http_encoding || 'us-ascii'
-    elsif http_headers and not http_headers.empty? and not http_headers.has_key?'content-type'
+    elsif http_headers && !http_headers.empty? && !http_headers['content-type']
       true_encoding = xml_encoding || 'iso-8859-1'
     else
       true_encoding = xml_encoding || 'utf-8'
@@ -124,9 +124,9 @@ module FeedParserUtilities
   end
   
   def toUTF8(data, encoding)
-    $stderr << "entering self.toUTF8, trying encoding %s\n" % encoding if $debug
+    $stderr << "entering self.toUTF8, trying encoding #{encoding}\n" if $debug
     # NOTE we must use double quotes when dealing with \x encodings!
-    if (data.size >= 4 and data[0..1] == "\xfe\xff" and data[2..3] != "\x00\x00")
+    if (data.size >= 4 && data[0..1] == "\xfe\xff" && data[2..3] != "\x00\x00")
       if $debug
         $stderr << "stripping BOM\n"
         if encoding != 'utf-16be'
@@ -135,7 +135,7 @@ module FeedParserUtilities
       end
       encoding = 'utf-16be'
       data = data[2..-1]
-    elsif (data.size >= 4 and data[0..1] == "\xff\xfe" and data[2..3] != "\x00\x00")
+    elsif (data.size >= 4 && data[0..1] == "\xff\xfe" && data[2..3] != "\x00\x00")
       if $debug
         $stderr << "stripping BOM\n"
         $stderr << "trying utf-16le instead\n" if encoding != 'utf-16le'
@@ -174,14 +174,17 @@ module FeedParserUtilities
       raise details
     end
     $stderr << "successfully converted #{encoding} data to utf-8\n" if $debug
+
     declmatch = /^<\?xml[^>]*?>/
     newdecl = "<?xml version=\'1.0\' encoding=\'utf-8\'?>"
+
     if declmatch =~ newdata
       newdata.sub!(declmatch, newdecl) 
     else
       newdata = newdecl + "\n" + newdata
     end
-    return newdata
+
+    newdata
   end
   
 end
