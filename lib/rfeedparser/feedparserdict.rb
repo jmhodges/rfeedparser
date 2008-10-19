@@ -41,7 +41,6 @@ module FeedParser
     end
 
     # Added to avoid deprecated method wornings
-    alias :object_type :type
     def type
       self['type']
     end
@@ -95,9 +94,9 @@ module FeedParser
 
     def method_missing(msym, *args)
       methodname = msym.to_s
-      if methodname[-1] == '='
+      if methodname[-1,1] == '='
         self[methodname[0..-2]] = args[0]
-      elsif methodname[-1] != '!' && methodname[-1] != '?' && methodname[0] != "_" # FIXME implement with private?
+      elsif methodname[-1,1] != '!' && methodname[-1,1] != '?' && methodname[0,1] != "_" # FIXME implement with private?
         self[methodname]
       else
         raise NoMethodError, "whoops, we don't know about the attribute or method called `#{methodname}' for #{self}:#{self.class}"
