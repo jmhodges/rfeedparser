@@ -51,7 +51,7 @@ module FeedParserUtilities
     begin 
       if xml_data[0..3] == "\x4c\x6f\xa7\x94"
         # EBCDIC
-        xml_data = __ebcdic_to_ascii(xml_data)
+        xml_data = _ebcdic_to_ascii(xml_data)
       elsif xml_data[0..3] == "\x00\x3c\x00\x3f"
         # UTF-16BE
         sniffed_xml_encoding = 'utf-16be'
