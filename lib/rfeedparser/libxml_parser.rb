@@ -1,5 +1,6 @@
 gem 'libxml-ruby', '>=0.9.8'
 require 'libxml/sax_parser'
+require 'libxml/sax_callbacks'
 
 module FeedParser
  module LibXML
