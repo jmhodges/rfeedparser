@@ -1,4 +1,4 @@
-gem 'libxml-ruby', '>=0.9.8'
+gem 'libxml-ruby', '=0.9.8'
 require 'libxml'
 
 module FeedParser
@@ -11,9 +11,8 @@ module FeedParser
      end
 
      def parse(data)
-       saxparser = ::LibXML::XML::SaxParser.new
+       saxparser = ::LibXML::XML::SaxParser.string(data)
        saxparser.callbacks = @handler
-       saxparser.string = data
        saxparser.parse
      end
    end
