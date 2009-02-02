@@ -60,15 +60,15 @@ require 'rfeedparser/parser_mixin'
 
 require 'rfeedparser/loose_feed_parser'
 
+
 begin
-  require 'rfeedparser/expat_parser'
-  StrictFeedParser = FeedParser::Expat::StrictFeedParser
+  require 'rfeedparser/libxml_parser'
+  StrictFeedParser = FeedParser::LibXML::StrictFeedParser
   
 rescue LoadError, NameError
-  
   begin
-    require 'rfeedparser/libxml_parser'
-    StrictFeedParser = FeedParser::LibXML::StrictFeedParser
+    require 'rfeedparser/expat_parser'
+    StrictFeedParser = FeedParser::Expat::StrictFeedParser
 
   rescue LoadError, NameError
     StrictFeedParser = nil
