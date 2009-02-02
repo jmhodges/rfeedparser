@@ -1,5 +1,5 @@
-gem 'libxml-ruby', '>=0.8.3'
-require 'libxml'
+gem 'libxml-ruby', '>=0.9.8'
+require 'libxml/sax_parser'
 
 module FeedParser
  module LibXML

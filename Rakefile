@@ -32,7 +32,7 @@ spec = Gem::Specification.new do |s|
   s.add_dependency('htmlentities', '4.0.0')
   s.add_dependency('mongrel', '>=1.0.1')
   s.add_dependency('addressable', '>= 1.0.4')
-  s.requirements << "Ruby bindings to the Expat XML parser or libxml2 (version 0.8.3 or greater)"
+  s.requirements << "Ruby bindings to the Expat XML parser or libxml2 (version 0.9.8 or greater)"
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|
