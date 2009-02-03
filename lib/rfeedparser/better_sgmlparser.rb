@@ -24,7 +24,7 @@ class BetterSGMLParser < HTML::SGMLParser
   Commentclose = /--\s*>/u
   Tagfind = /[a-zA-Z][-_.:a-zA-Z0-9]*/u
   Attrfind = Regexp.compile('\s*([a-zA-Z_][-:.a-zA-Z_0-9]*)(\s*=\s*'+
-  '(\'[^\']*\'|"[^"]*"|[\]\[\-a-zA-Z0-9./,:;+*%?!&$\(\)_#=~\'"@]*))?',
+  '(\'[^\']*\'|"[^"]*"|[\]\[\-a-zA-Z0-9./,:;+*%?!&$\(\)_#=~\'"@]*))?', # '
   64)
   Endtagfind = /\s*\/\s*>/u
   def initialize(verbose=false)
@@ -109,14 +109,14 @@ class BetterSGMLParser < HTML::SGMLParser
 
         # the Char must come first as its #=~ method is the only one that is UTF-8 safe 
         ni,match = index_match(rawdata, Charref, i)
-        if ni and ni == i # See? Ugly
+        if ni && ni == i # See? Ugly
           handle_charref(match[1]) # $1 is just the first group we captured (with parentheses)
           i += match[0].length  # $& is the "all" of the match.. it includes the full match we looked for not just the stuff we put parentheses around to capture. 
           i -= 1 unless rawdata[i-1..i-1] == ";"
           next
         end
         ni,match = index_match(rawdata, Entityref, i)
-        if ni and ni == i
+        if ni && ni == i
           handle_entityref(match[1])
           i += match[0].length
           i -= 1 unless rawdata[i-1..i-1] == ";"
@@ -128,7 +128,7 @@ class BetterSGMLParser < HTML::SGMLParser
       # We get here only if incomplete matches but
       # nothing else
       ni,match = index_match(rawdata,Incomplete,i)
-      unless ni and ni == 0
+      unless ni && ni == 0
         handle_data(rawdata[i...i+1]) # str[i...i+1] == str[i..i]
         i += 1
         next
@@ -139,7 +139,7 @@ class BetterSGMLParser < HTML::SGMLParser
       i = j
     end # end while
 
-    if _end and i < n
+    if _end && i < n
       handle_data(rawdata[i...n])
       i = n
     end
@@ -219,9 +219,9 @@ class BetterSGMLParser < HTML::SGMLParser
       break unless ni
       matched_length = match[0].length
       attrname, rest, attrvalue = match[1],match[2],match[3]
-      if rest.nil? or rest.empty?
+      if rest.nil? || rest.empty?
         attrvalue = '' # was: = attrname # Why the change?
-      elsif [?',?'] == [attrvalue[0..0], attrvalue[-1..-1]] or [?",?"] == [attrvalue[0],attrvalue[-1]]
+      elsif [?',?'] == [attrvalue[0..0], attrvalue[-1..-1]] || [?",?"] == [attrvalue[0],attrvalue[-1]]
         attrvalue = attrvalue[1...-1]
       end
       attrsd << [attrname.downcase, attrvalue]
