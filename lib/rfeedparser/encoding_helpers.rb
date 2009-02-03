@@ -243,7 +243,7 @@ unless defined?(Builder::XChar)
       n = XChar::CP1252[self] || self
 
       case n when *XChar::VALID
-        XChar::PREDEFINED[n] or (n<128 ? n.chr : "&##{n};")
+        XChar::PREDEFINED[n] || (n<128 ? n.chr : "&##{n};")
       else
         '*'
       end
