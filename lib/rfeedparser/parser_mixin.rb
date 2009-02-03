@@ -83,7 +83,7 @@ module FeedParserMixin
     @version = '' # feed type/version see SUPPORTED_VERSIOSN
     @namespacesInUse = {} # hash of namespaces defined by the feed
 
-    # the following are used internall to track state;
+    # the following are used internally to track state;
     # this is really out of control and should be refactored
     @infeed = false
     @inentry = false
@@ -111,7 +111,7 @@ module FeedParserMixin
   end
 
   def unknown_starttag(tag, attrsd)
-    $stderr << "start #{tag} with #{attrsd}\n" if $debug
+    $stderr << "start #{tag} with #{attrsd.inspect}\n" if $debug
     # normalize attrs
     attrsD = {}
     attrsd = Hash[*attrsd.flatten] if attrsd.class == Array # Magic! Asterisk!
