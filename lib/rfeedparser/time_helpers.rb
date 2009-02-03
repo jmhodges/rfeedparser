@@ -1,4 +1,6 @@
 #!/usr/bin/env ruby
+# -*- coding: utf-8 -*-
+
 require 'time'
 
 module FeedParser
@@ -65,7 +67,7 @@ module FeedParser
           m = dateString.match(Regexp.new(s+add_to_all))
           break if m
         end
-        return if m.nil? or (m.begin(0).zero? and m.end(0).zero?) 
+        return if m.nil? || (m.begin(0).zero? && m.end(0).zero?)
 
         param_values = m.to_a
         param_values = param_values[1..-1] 
@@ -76,7 +78,7 @@ module FeedParser
 
         ordinal = params['ordinal'].to_i unless params['ordinal'].nil?
         year = params['year'] || '--'
-        if year.nil? or year.empty? or year == '--' # FIXME When could the regexp ever return a year equal to '--'?
+        if year.nil? || year.empty? || year == '--' # FIXME When could the regexp ever return a year equal to '--'?
           year = Time.now.utc.year
         elsif year.length == 2
           # ISO 8601 assumes current century, i.e. 93 -> 2093, NOT 1993
@@ -86,7 +88,7 @@ module FeedParser
         end
 
         month = params['month'] || '-'
-        if month.nil? or month.empty? or month == '-'
+        if month.nil? || month.empty? || month == '-'
           # ordinals are NOT normalized by mktime, we simulate them
           # by setting month=1, day=ordinal
           if ordinal
@@ -97,11 +99,11 @@ module FeedParser
         end
         month = month.to_i unless month.nil?
         day = params['day']
-        if day.nil? or day.empty?
+        if day.nil? || day.empty?
           # see above
           if ordinal
             day = DateTime.ordinal(year,ordinal).day
-          elsif params['century'] or params['year'] or params['month']
+          elsif params['century'] || params['year'] || params['month']
             day = 1
           else
             day = Time.now.utc.day
@@ -125,7 +127,7 @@ module FeedParser
         # and most implementations have DST bugs
         tm = [second, minute, hour, day, month, year, nil, ordinal, false, nil]
         tz = params['tz']
-        if tz and not tz.empty? and tz != 'Z'
+        if tz && ! tz.empty? && tz != 'Z'
           # FIXME does this cross over days?
           if tz[0] == '-'
             tm[3] += params['tzhour'].to_i
@@ -336,10 +338,10 @@ module FeedParser
         }
 
         mon = dateString.split[2]
-        if mon.length > 3 and Time::RFC2822_MONTH_NAME.include?mon[0..2]
+        if mon.length > 3 && Time::RFC2822_MONTH_NAME.include?mon[0..2]
           dateString.sub!(mon,mon[0..2])
         end
-        if dateString[-3..-1] != "GMT" and unknown_timezones[dateString[-2..-1]]
+        if dateString[-3..-1] != "GMT" && unknown_timezones[dateString[-2..-1]]
           dateString[-2..-1] = unknown_timezones[dateString[-2..-1]]
         end
 
@@ -347,7 +349,7 @@ module FeedParser
         rfc_tz = '([A-Za-z]{3}|[\+\-]?\d\d\d\d)'
         rfc = dateString.match(/([A-Za-z]{3}), ([0123]\d) ([A-Za-z]{3}) (\d{4})( (\d\d):(\d\d)(?::(\d\d))? #{rfc_tz})?/)
 
-        if rfc.to_a.length > 1 and rfc.to_a.include? nil
+        if rfc.to_a.length > 1 && rfc.to_a.include? nil
           dow, day, mon, year, hour, min, sec, tz = rfc[1..-1]
           hour,min,sec = [hour,min,sec].map{|e| e.to_s.rjust(2,'0') }
           tz ||= "GMT"
@@ -360,7 +362,7 @@ module FeedParser
           day.to_s.rjust(2,'0')
         end
 
-        if (rfc.to_a.length > 1 and rfc.to_a.include? nil) or asctime_match.to_a.length > 1
+        if (rfc.to_a.length > 1 && rfc.to_a.include? nil) || asctime_match.to_a.length > 1
           ds = "#{dow}, #{day} #{mon} #{year} #{hour}:#{min}:#{sec} #{tz}"
         else
           ds = dateString
