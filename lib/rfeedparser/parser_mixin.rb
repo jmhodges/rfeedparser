@@ -104,7 +104,7 @@ module FeedParserMixin
     @baseuri = baseuri || ''
     @lang = baselang || nil
     @has_title = false
-    if baselang 
+    if baselang
       @feeddata['language'] = baselang.gsub('_','-')
     end
     $stderr << "Leaving startup\n" if $debug # My addition
@@ -115,10 +115,10 @@ module FeedParserMixin
     # normalize attrs
     attrsD = {}
     attrsd = Hash[*attrsd.flatten] if attrsd.class == Array # Magic! Asterisk!
-    # LooseFeedParser needs the above because SGMLParser sends attrs as a 
+    # LooseFeedParser needs the above because SGMLParser sends attrs as a
     # list of lists (like [['type','text/html'],['mode','escaped']])
 
-    attrsd.each do |old_k,value| 
+    attrsd.each do |old_k,value|
       # There has to be a better, non-ugly way of doing this
       k = old_k.downcase # Downcase all keys
       attrsD[k] = value
@@ -128,7 +128,7 @@ module FeedParserMixin
     end
 
     # track xml:base and xml:lang
-    baseuri = attrsD['xml:base'] || attrsD['base'] || @baseuri 
+    baseuri = attrsD['xml:base'] || attrsD['base'] || @baseuri
     @baseuri = urljoin(@baseuri, baseuri)
     lang = attrsD['xml:lang'] || attrsD['lang']
     if lang == '' # FIXME This next bit of code is right? Wtf?
@@ -139,13 +139,13 @@ module FeedParserMixin
       lang = @lang
     end
 
-    if lang and not lang.empty? # Seriously, this cannot be correct
+    if lang && ! lang.empty? # Seriously, this cannot be correct
       if ['feed', 'rss', 'rdf:RDF'].include?tag
         @feeddata['language'] = lang.gsub('_','-')
       end
     end
     @lang = lang
-    @basestack << @baseuri 
+    @basestack << @baseuri
     @langstack << lang
 
     # track namespaces
@@ -158,12 +158,12 @@ module FeedParserMixin
     end
 
     # track inline content
-    if @incontent != 0 and @contentparams.has_key?('type') and not ( /xml$/ =~ (@contentparams['type'] || 'xml') )
+    if @incontent != 0 && @contentparams.has_key?('type') && ! ( /xml$/ =~ (@contentparams['type'] || 'xml') )
       # element declared itself as escaped markup, but isn't really
 
       @contentparams['type'] = 'application/xhtml+xml'
     end
-    if @incontent != 0 and @contentparams['type'] == 'application/xhtml+xml'
+    if @incontent != 0 && @contentparams['type'] == 'application/xhtml+xml'
       # Note: probably shouldn't simply recreate localname here, but
       # our namespace handling isn't actually 100% correct in cases where
       # the feed redefines the default namespace (which is actually
@@ -175,7 +175,7 @@ module FeedParserMixin
       tag = tag.split(':')[-1]
       attrsA = attrsd.to_a.collect{|l| "#{l[0]}=\"#{l[1]}\""}
       attrsS = ' '+attrsA.join(' ')
-      return handle_data("<#{tag}#{attrsS}>", escape=false) 
+      return handle_data("<#{tag}#{attrsS}>", escape=false)
     end
 
     # match namespaces
@@ -185,15 +185,15 @@ module FeedParserMixin
       prefix, suffix = '', tag
     end
     prefix = @namespacemap[prefix] || prefix
-    if prefix and not prefix.empty?
+    if prefix && ! prefix.empty?
       prefix = prefix + '_'
     end
 
     # special hack for better tracking of empty textinput/image elements in illformed feeds
-    if (not prefix and not prefix.empty?) and not (['title', 'link', 'description','name'].include?tag)
+    if (not prefix && ! prefix.empty?) && ! (['title', 'link', 'description','name'].include?tag)
       @intextinput = false
     end
-    if (prefix.nil? or prefix.empty?) and not (['title', 'link', 'description', 'url', 'href', 'width', 'height'].include?tag)
+    if (prefix.nil? || prefix.empty?) && ! (['title', 'link', 'description', 'url', 'href', 'width', 'height'].include?tag)
       @inimage = false
     end
 
@@ -201,8 +201,8 @@ module FeedParserMixin
     begin
       return send('_start_'+prefix+suffix, attrsD)
     rescue NoMethodError
-      return push(prefix + suffix, true) 
-    end  
+      return push(prefix + suffix, true)
+    end
   end # End unknown_starttag
 
   def unknown_endtag(tag)
@@ -214,7 +214,7 @@ module FeedParserMixin
       prefix, suffix = '', tag
     end
     prefix = @namespacemap[prefix] || prefix
-    if prefix and not prefix.empty?
+    if prefix && ! prefix.empty?
       prefix = prefix + '_'
     end
 
@@ -226,35 +226,36 @@ module FeedParserMixin
     end
 
     # track inline content
-    if @incontent != 0 and @contentparams.has_key?'type' and /xml$/ =~ (@contentparams['type'] || 'xml')
+    if @incontent != 0 && @contentparams.has_key?'type' && /xml$/ =~ (@contentparams['type'] || 'xml')
       # element declared itself as escaped markup, but it isn't really
       @contentparams['type'] = 'application/xhtml+xml'
     end
-    if @incontent != 0 and @contentparams['type'] == 'application/xhtml+xml'
+    if @incontent != 0 && @contentparams['type'] == 'application/xhtml+xml'
       tag = tag.split(':')[-1]
       handle_data("</#{tag}>", escape=false)
     end
 
     # track xml:base and xml:lang going out of scope
-    if @basestack and not @basestack.empty?
+    if @basestack && ! @basestack.empty?
       @basestack.pop
-      if @basestack and @basestack[-1] and not (@basestack.empty? or @basestack[-1].empty?)
+      if @basestack && @basestack[-1] && ! (@basestack.empty? || @basestack[-1].empty?)
         @baseuri = @basestack[-1]
       end
     end
-    if @langstack and not @langstack.empty?
+    if @langstack && ! @langstack.empty?
       @langstack.pop
-      if @langstack and not @langstack.empty? # and @langstack[-1] and not @langstack.empty?
+      if @langstack && ! @langstack.empty? # && @langstack[-1] && ! @langstack.empty?
         @lang = @langstack[-1]
       end
     end
   end
 
   def handle_charref(ref)
-    # LooseParserOnly 
+    # LooseParserOnly
     # called for each character reference, e.g. for '&#160;', ref will be '160'
     $stderr << "entering handle_charref with #{ref}\n" if $debug
-    return if @elementstack.nil? or @elementstack.empty? 
+    return if @elementstack.nil? || @elementstack.empty?
+
     ref.downcase!
     chars = ['34', '38', '39', '60', '62', 'x22', 'x26', 'x27', 'x3c', 'x3e']
     if chars.include?ref
@@ -274,7 +275,7 @@ module FeedParserMixin
     # LooseParserOnly
     # called for each entity reference, e.g. for '&copy;', ref will be 'copy'
 
-    return if @elementstack.nil? or @elementstack.empty?
+    return if @elementstack.nil? || @elementstack.empty?
     $stderr << "entering handle_entityref with #{ref}\n" if $debug
     ents = ['lt', 'gt', 'quot', 'amp', 'apos']
     if ents.include?ref
@@ -288,8 +289,8 @@ module FeedParserMixin
   def handle_data(text, escape=true)
     # called for each block of plain text, i.e. outside of any tag and
     # not containing any character or entity references
-    return if @elementstack.nil? or @elementstack.empty?
-    if escape and @contentparams['type'] == 'application/xhtml+xml'
+    return if @elementstack.nil? || @elementstack.empty?
+    if escape && @contentparams['type'] == 'application/xhtml+xml'
       text = text.to_xs
     end
     @elementstack[-1][2] << text
@@ -335,11 +336,11 @@ module FeedParserMixin
   def trackNamespace(prefix, uri)
 
     loweruri = uri.downcase.strip
-    if [prefix, loweruri] == [nil, 'http://my.netscape.com/rdf/simple/0.9/'] and (@version.nil? or @version.empty?)
+    if [prefix, loweruri] == [nil, 'http://my.netscape.com/rdf/simple/0.9/'] && (@version.nil? || @version.empty?)
       @version = 'rss090'
-    elsif loweruri == 'http://purl.org/rss/1.0/' and (@version.nil? or @version.empty?)
+    elsif loweruri == 'http://purl.org/rss/1.0/' && (@version.nil? || @version.empty?)
       @version = 'rss10'
-    elsif loweruri == 'http://www.w3.org/2005/atom' and (@version.nil? or @version.empty?)
+    elsif loweruri == 'http://www.w3.org/2005/atom' && (@version.nil? || @version.empty?)
       @version = 'atom10'
     elsif /backend\.userland\.com\/rss/ =~ loweruri
       # match any backend.userland.com namespace
@@ -367,7 +368,7 @@ module FeedParserMixin
   end
 
   def pop(element, stripWhitespace=true)
-    return if @elementstack.nil? or @elementstack.empty?
+    return if @elementstack.nil? || @elementstack.empty?
     return if @elementstack[-1][0] != element
     element, expectingText, pieces = @elementstack.pop
 
@@ -379,12 +380,12 @@ module FeedParserMixin
     if stripWhitespace
       output.strip!
     end
-    return output if not expectingText
+    return output if ! expectingText
 
     # decode base64 content
     if @contentparams['base64']
       out64 = Base64::decode64(output) # a.k.a. [output].unpack('m')[0]
-      if not output.empty? and not out64.empty?
+      if ! output.empty? && ! out64.empty?
         output = out64
       end
     end
@@ -395,7 +396,7 @@ module FeedParserMixin
     end
 
     # decode entities within embedded markup
-    if not @contentparams['base64']
+    if ! @contentparams['base64']
       output = decodeEntities(element, output)
     end
 
@@ -416,7 +417,7 @@ module FeedParserMixin
       end
     end
 
-    if @encoding and not @encoding.empty? and @encoding != 'utf-8'
+    if @encoding && ! @encoding.empty? && @encoding != 'utf-8'
       output = uconvert(output, @encoding, 'utf-8')
       # FIXME I turn everything into utf-8, not unicode, originally because REXML was being used but now beause I haven't tested it out yet.
     end
@@ -424,10 +425,10 @@ module FeedParserMixin
     # categories/tags/keywords/whatever are handled in _end_category
     return output if element == 'category'
 
-    return output if element == 'title' and @has_title
+    return output if element == 'title' && @has_title
 
     # store output in appropriate place(s)
-    if @inentry and not @insource
+    if @inentry && ! @insource
       if element == 'content'
         @entries[-1][element] ||= []
         contentparams = Marshal.load(Marshal.dump(@contentparams)) # deepcopy
@@ -435,7 +436,7 @@ module FeedParserMixin
         @entries[-1][element] << contentparams
       elsif element == 'link'
         @entries[-1][element] = output
-        if output and not output.empty?
+        if output && ! output.empty?
           @entries[-1]['links'][-1]['href'] = output
         end
       else
@@ -447,7 +448,7 @@ module FeedParserMixin
           @entries[-1][element + '_detail'] = contentparams
         end
       end
-    elsif (@infeed or @insource) and not @intextinput and not @inimage
+    elsif (@infeed || @insource) && ! @intextinput && ! @inimage
       context = getContext()
       element = 'subtitle' if element == 'description'
       context[element] = output
@@ -502,7 +503,7 @@ module FeedParserMixin
   end
 
   def itsAnHrefDamnIt(attrsD)
-    href= attrsD['url'] || attrsD['uri'] || attrsD['href'] 
+    href= attrsD['url'] || attrsD['uri'] || attrsD['href']
     if href
       attrsD.delete('url')
       attrsD.delete('uri')
@@ -524,10 +525,10 @@ module FeedParserMixin
       '0.94' => 'rss094'
     }
 
-    if not @version or @version.empty?
+    if ! @version || @version.empty?
       attr_version = attrsD['version'] || ''
       version = versionmap[attr_version]
-      if version and not version.empty?
+      if version && ! version.empty?
         @version = version
       elsif /^2\./ =~ attr_version
         @version = 'rss20'
@@ -561,16 +562,16 @@ module FeedParserMixin
   end
 
   def _start_feed(attrsD)
-    @infeed = true 
+    @infeed = true
     versionmap = {'0.1' => 'atom01',
       '0.2' => 'atom02',
       '0.3' => 'atom03'
     }
 
-    if not @version or @version.empty?
+    if ! @version || @version.empty?
       attr_version = attrsD['version']
       version = versionmap[attr_version]
-      if @version and not @version.empty?
+      if @version && ! @version.empty?
         @version = version
       else
         @version = 'atom'
@@ -693,7 +694,7 @@ module FeedParserMixin
 
   def _end_width
     value = pop('width').to_i
-    if @inimage 
+    if @inimage
       context = getContext
       context['image']['width'] = value
     end
@@ -778,20 +779,20 @@ module FeedParserMixin
   def _sync_author_detail(key='author')
     context = getContext()
     detail = context["#{key}_detail"]
-    if detail and not detail.empty?
+    if detail && ! detail.empty?
       name = detail['name']
       email = detail['email']
 
-      if name and email and not (name.empty? or name.empty?)
+      if name && email && ! (name.empty? || name.empty?)
         context[key] = "#{name} (#{email})"
-      elsif name and not name.empty?
+      elsif name && ! name.empty?
         context[key] = name
-      elsif email and not email.empty?
+      elsif email && ! email.empty?
         context[key] = email
       end
     else
       author = context[key].dup unless context[key].nil?
-      return if not author or author.empty?
+      return if ! author || author.empty?
       emailmatch = author.match(/(([a-zA-Z0-9\_\-\.\+]+)@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.)|(([a-zA-Z0-9\-]+\.)+))([a-zA-Z]{2,4}|[0-9]{1,3})(\]?))/)
       email = emailmatch[1]
       author.gsub!(email, '')
@@ -837,7 +838,7 @@ module FeedParserMixin
     @has_title = false
     @guidislink = false
     id = getAttribute(attrsD, 'rdf:about')
-    if id and not id.empty?
+    if id && ! id.empty?
       context = getContext()
       context['id'] = id
     end
@@ -932,7 +933,7 @@ module FeedParserMixin
   def _start_cc_license(attrsD)
     push('license', true)
     value = getAttribute(attrsD, 'rdf:resource')
-    if value and not value.empty?
+    if value && ! value.empty?
       @elementstack[-1][2] <<  value
       pop('license')
     end
@@ -950,11 +951,11 @@ module FeedParserMixin
     context = getContext()
     context['tags'] ||= []
     tags = context['tags']
-    if (term.nil? or term.empty?) and (scheme.nil? or scheme.empty?) and (label.nil? or label.empty?)
+    if (term.nil? || term.empty?) && (scheme.nil? || scheme.empty?) && (label.nil? || label.empty?)
       return
     end
     value = FeedParserDict.new({'term' => term, 'scheme' => scheme, 'label' => label})
-    if not tags.include?value
+    if ! tags.include?value
       context['tags'] << FeedParserDict.new({'term' => term, 'scheme' => scheme, 'label' => label})
     end
   end
@@ -984,10 +985,10 @@ module FeedParserMixin
 
   def _end_category
     value = pop('category')
-    return if value.nil? or value.empty?
+    return if value.nil? || value.empty?
     context = getContext()
     tags = context['tags']
-    if value and not value.empty? and not tags.empty? and not tags[-1]['term']:
+    if value && ! value.empty? && ! tags.empty? && ! tags[-1]['term']:
       tags[-1]['term'] = value
     else
       addTag(value, nil, nil)
@@ -1017,7 +1018,7 @@ module FeedParserMixin
     end
     if attrsD.has_key? 'href'
       expectingText = false
-      if (attrsD['rel'] == 'alternate') and @html_types.include?mapContentType(attrsD['type'])
+      if (attrsD['rel'] == 'alternate') && @html_types.include?mapContentType(attrsD['type'])
         context['link'] = attrsD['href']
       end
     else
@@ -1045,7 +1046,7 @@ module FeedParserMixin
 
   def _end_guid
     value = pop('id')
-    _save('guidislink', (@guidislink and not getContext().has_key?('link')))
+    _save('guidislink', (@guidislink && ! getContext().has_key?('link')))
     if @guidislink:
       # guid acts as link, but only if 'ispermalink' is not present or is 'true',
       # and only if the item doesn't already have a link element
@@ -1119,7 +1120,7 @@ module FeedParserMixin
   alias :_end_feedburner_browserfriendly :_end_info
 
   def _start_generator(attrsD)
-    if attrsD and not attrsD.empty?
+    if attrsD && ! attrsD.empty?
       attrsD = itsAnHrefDamnIt(attrsD)
       if attrsD.has_key?('href')
         attrsD['href'] = resolveURI(attrsD['href'])
@@ -1140,7 +1141,7 @@ module FeedParserMixin
   def _start_admin_generatoragent(attrsD)
     push('generator', true)
     value = getAttribute(attrsD, 'rdf:resource')
-    if value and not value.empty?
+    if value && ! value.empty?
       @elementstack[-1][2] << value
     end
     pop('generator')
@@ -1150,7 +1151,7 @@ module FeedParserMixin
   def _start_admin_errorreportsto(attrsD)
     push('errorreportsto', true)
     value = getAttribute(attrsD, 'rdf:resource')
-    if value and not value.empty?
+    if value && ! value.empty?
       @elementstack[-1][2] << value
     end
     pop('errorreportsto')
@@ -1183,9 +1184,9 @@ module FeedParserMixin
     getContext()['enclosures'] ||= []
     getContext()['enclosures'] << FeedParserDict.new(attrsD)
     href = attrsD['href']
-    if href and not href.empty?
+    if href && ! href.empty?
       context = getContext()
-      if not context['id']
+      if ! context['id']
         context['id'] = href
       end
     end
@@ -1207,7 +1208,7 @@ module FeedParserMixin
   def _start_content(attrsD)
     pushContent('content', attrsD, 'text/plain', true)
     src = attrsD['src']
-    if src and not src.empty?:
+    if src && ! src.empty?:
       @contentparams['src'] = src
     end
     push('content', true)
@@ -1239,7 +1240,7 @@ module FeedParserMixin
   alias :_end_content_encoded :_end_content
   alias :_end_fullitem :_end_content
   alias :_end_prodlink :_end_content
-  
+
   def _start_itunes_image(attrsD)
     push('itunes_image', false)
     getContext()['image'] = FeedParserDict.new({'href' => attrsD['href']})
@@ -1248,20 +1249,20 @@ module FeedParserMixin
 
   def _end_itunes_block
     value = pop('itunes_block', false)
-    getContext()['itunes_block'] = (value == 'yes') and true or false
+    getContext()['itunes_block'] = (value == 'yes') && true || false
   end
 
   def _end_itunes_explicit
     value = pop('itunes_explicit', false)
-    getContext()['itunes_explicit'] = (value == 'yes') and true or false
+    getContext()['itunes_explicit'] = (value == 'yes') && true || false
   end
-  
+
 end # End FeedParserMixin
 end
 
 def urljoin(base, uri)
   urifixer = /^([A-Za-z][A-Za-z0-9+-.]*:\/\/)(\/*)(.*?)/u
-  uri = uri.sub(urifixer, '\1\3') 
+  uri = uri.sub(urifixer, '\1\3')
   pbase = Addressable::URI.parse(base) rescue nil
   if pbase && pbase.absolute?
     puri = Addressable::URI.parse(uri) rescue nil
