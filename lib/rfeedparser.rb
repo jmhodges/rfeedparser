@@ -62,9 +62,9 @@ require 'rfeedparser/loose_feed_parser'
 
 
 begin
-  require 'rfeedparser/libxml_parser'
-  StrictFeedParser = FeedParser::LibXML::StrictFeedParser
-  
+  require 'rfeedparser/nokogiri_parser'
+  StrictFeedParser = FeedParser::Nokogiri::StrictFeedParser
+
 rescue LoadError, NameError
   begin
     require 'rfeedparser/expat_parser'
@@ -72,7 +72,7 @@ rescue LoadError, NameError
 
   rescue LoadError, NameError
     StrictFeedParser = nil
-    STDERR.puts "Could not load libxml or expat. Using loose parser."
+    STDERR.puts "Could not load nokogiri or expat. Using loose parser."
   end
 end
 
@@ -211,7 +211,6 @@ module FeedParser
   
   # Parse a feed from a URL, file, stream or string
   def parse(url_file_stream_or_string, options = {})
-      
     
     # Use the default compatibility if compatible is nil
     $compatible = options[:compatible].nil? ? $compatible : options[:compatible]
