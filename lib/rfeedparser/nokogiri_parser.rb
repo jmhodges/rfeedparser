@@ -13,6 +13,10 @@ module FeedParser
 
       def parse(data)
         saxparser = ::Nokogiri::XML::SAX::Parser.new(@handler)
+        ::Nokogiri.error_handler = lambda do |error|
+          raise error
+        end
+
         saxparser.parse data
       end
     end
