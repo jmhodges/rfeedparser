@@ -226,7 +226,7 @@ module FeedParserMixin
     end
 
     # track inline content
-    if @incontent != 0 && @contentparams.has_key?'type' && /xml$/ =~ (@contentparams['type'] || 'xml')
+    if @incontent != 0 && @contentparams.has_key?('type') && /xml$/ =~ (@contentparams['type'] || 'xml')
       # element declared itself as escaped markup, but it isn't really
       @contentparams['type'] = 'application/xhtml+xml'
     end
@@ -1018,7 +1018,7 @@ module FeedParserMixin
     end
     if attrsD.has_key? 'href'
       expectingText = false
-      if (attrsD['rel'] == 'alternate') && @html_types.include?mapContentType(attrsD['type'])
+      if (attrsD['rel'] == 'alternate') && @html_types.include?(mapContentType(attrsD['type']))
         context['link'] = attrsD['href']
       end
     else
@@ -1159,7 +1159,7 @@ module FeedParserMixin
 
   def _start_summary(attrsD)
     context = getContext()
-    if context.has_key?'summary'
+    if context.has_key?('summary')
       @summaryKey = 'content'
       _start_content(attrsD)
     else
@@ -1229,7 +1229,7 @@ module FeedParserMixin
   alias :_start_fullitem :_start_content_encoded
 
   def _end_content
-    copyToDescription = (['text/plain'] + @html_types).include? mapContentType(@contentparams['type'])
+    copyToDescription = (['text/plain'] + @html_types).include?(mapContentType(@contentparams['type']))
     value = popContent('content')
     if copyToDescription
       _save('description', value)
