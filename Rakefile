@@ -50,8 +50,7 @@ task :default => [:test]
 # Taken liberally from http://blog.labnotes.org/2008/02/28/svn-checkout-rake-setup/
 desc "If you're building from source, run this task first to setup the necessary dependencies."
 task :setup do
-  puts "\nOn top of these gems, you'll also need #{spec.requirements.join(',')}."
-  
+
   puts "Checking for gems that need to be installed."
   gems = Gem::SourceIndex.from_installed_gems
   
@@ -72,5 +71,6 @@ task :setup do
     end
   end
   
+  puts "\nDon't forget that you'll also need #{spec.requirements.join(',')}."
   puts "\nAnd done."
 end
