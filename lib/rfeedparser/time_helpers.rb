@@ -338,7 +338,7 @@ module FeedParser
         }
 
         mon = dateString.split[2]
-        if mon.length > 3 && Time::RFC2822_MONTH_NAME.include?mon[0..2]
+        if mon.length > 3 && Time::RFC2822_MONTH_NAME.include?(mon[0..2])
           dateString.sub!(mon,mon[0..2])
         end
         if dateString[-3..-1] != "GMT" && unknown_timezones[dateString[-2..-1]]
@@ -349,7 +349,7 @@ module FeedParser
         rfc_tz = '([A-Za-z]{3}|[\+\-]?\d\d\d\d)'
         rfc = dateString.match(/([A-Za-z]{3}), ([0123]\d) ([A-Za-z]{3}) (\d{4})( (\d\d):(\d\d)(?::(\d\d))? #{rfc_tz})?/)
 
-        if rfc.to_a.length > 1 && rfc.to_a.include? nil
+        if rfc.to_a.length > 1 && rfc.to_a.include?(nil)
           dow, day, mon, year, hour, min, sec, tz = rfc[1..-1]
           hour,min,sec = [hour,min,sec].map{|e| e.to_s.rjust(2,'0') }
           tz ||= "GMT"
@@ -362,7 +362,7 @@ module FeedParser
           day.to_s.rjust(2,'0')
         end
 
-        if (rfc.to_a.length > 1 && rfc.to_a.include? nil) || asctime_match.to_a.length > 1
+        if (rfc.to_a.length > 1 && rfc.to_a.include?(nil)) || asctime_match.to_a.length > 1
           ds = "#{dow}, #{day} #{mon} #{year} #{hour}:#{min}:#{sec} #{tz}"
         else
           ds = dateString
