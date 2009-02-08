@@ -1,9 +1,10 @@
-gem 'nokogiri', '~>1.1.1'
+gem 'nokogiri', '~>1.2'
 require 'nokogiri'
 
 module FeedParser
   module Nokogiri
-    class NokogiriError < StandardError; end
+
+    class NokogiriSyntaxError < StandardError; end
 
     class StrictFeedParser
       attr_reader :handler
@@ -13,9 +14,6 @@ module FeedParser
 
       def parse(data)
         saxparser = ::Nokogiri::XML::SAX::Parser.new(@handler)
-        ::Nokogiri.error_handler = lambda do |error|
-          raise error
-        end
 
         saxparser.parse data
       end
@@ -74,7 +72,7 @@ module FeedParser
 
       def error(error_string)
         @bozo = true
-        @exc = NokogiriError.new(error_string)
+        @exc = NokogiriSyntaxError.new(error_string)
         raise @exc
       end
     end
