@@ -407,7 +407,7 @@ module FeedParser
       rescue => err
         $stderr << "xml parsing failed: #{err.message}\n#{err.backtrace.join("\n")}" if $debug
         result['bozo'] = true
-        result['bozo_exception'] = feedparser.exc || e 
+        result['bozo_exception'] = feedparser.exc || err
         use_strict_parser = false
       end
     end
