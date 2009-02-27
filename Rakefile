@@ -27,12 +27,12 @@ spec = Gem::Specification.new do |s|
   # Dependencies
   s.add_dependency('rchardet', '>=1.1')
   s.add_dependency('hpricot', '~>0.6')
+  s.add_dependency('nokogiri', '~>1.2')
   s.add_dependency('character-encodings', '>= 0.2.0')
   s.add_dependency('htmltools', '>= 1.10')
   s.add_dependency('htmlentities', '4.0.0')
   s.add_dependency('mongrel', '>=1.0.1')
   s.add_dependency('addressable', '>= 1.0.4')
-  s.requirements << "Ruby bindings to the Expat XML parser or libxml2 (version 0.9.8 or greater)"
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|
@@ -71,6 +71,5 @@ task :setup do
     end
   end
   
-  puts "\nDon't forget that you'll also need #{spec.requirements.join(',')}."
   puts "\nAnd done."
 end

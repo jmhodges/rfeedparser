@@ -61,27 +61,15 @@ require 'rfeedparser/parser_mixin'
 require 'rfeedparser/loose_feed_parser'
 
 
-begin
-  require 'rfeedparser/nokogiri_parser'
-  StrictFeedParser = FeedParser::Nokogiri::StrictFeedParser
-
-rescue LoadError, NameError
-  begin
-    require 'rfeedparser/expat_parser'
-    StrictFeedParser = FeedParser::Expat::StrictFeedParser
-
-  rescue LoadError, NameError
-    StrictFeedParser = nil
-    STDERR.puts "Could not load nokogiri or expat. Using loose parser."
-  end
-end
+require 'rfeedparser/nokogiri_parser'
+StrictFeedParser = FeedParser::Nokogiri::StrictFeedParser
 
 require 'rfeedparser/monkey_patches'
 
 module FeedParser
   extend FeedParserUtilities
   
-  VERSION = "0.9.952"
+  VERSION = "0.9.960"
 
   AUTHOR = "Mark Pilgrim <http://diveintomark.org/>"
   PORTER = "Jeff Hodges <http://somethingsimilar.com>"
