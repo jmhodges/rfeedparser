@@ -34,8 +34,8 @@ spec = Gem::Specification.new do |s|
   s.add_dependency('addressable', '>= 1.0.4')
 end
 
-Rake::GemPackageTask.new(spec) do |pkg|
-  pkg.need_zip = true
+Rake::GemPackageTask.new(spec) do
+
 end
 
 Rake::TestTask.new do |t|
