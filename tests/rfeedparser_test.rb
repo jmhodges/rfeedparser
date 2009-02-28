@@ -42,7 +42,7 @@ class XMLTests < Test::Unit::TestCase
   end
 end
 
-# TODO: don't fail if the rfeedparserserver.rb is already running
+# TODO: don't fail if the rfeedparser_server.rb is already running
 # Start up the mongrel server and tell it how to send the tests
 server = Mongrel::HttpServer.new("0.0.0.0",$PORT)
 Mongrel::DirHandler::add_mime_type('.xml','application/xml')

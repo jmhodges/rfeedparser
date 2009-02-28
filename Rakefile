@@ -19,7 +19,6 @@ spec = Gem::Specification.new do |s|
   s.files      = FileList["{lib,tests}/**/*"].exclude("rdoc").to_a
   s.require_path      = "lib"
   # s.autorequire       = "feedparser" # tHe 3vil according to Why.
-  s.test_file         = "tests/rfeedparsertest.rb"
   s.has_rdoc          = false # TODO: fix
   s.extra_rdoc_files  = ['README','LICENSE', 'RUBY-TESTING']
   s.rubyforge_project = 'rfeedparser'
@@ -40,8 +39,7 @@ Rake::GemPackageTask.new(spec) do |pkg|
 end
 
 Rake::TestTask.new do |t|
-  t.libs << "test"
-  t.test_files = FileList['tests/rfeedparsertest.rb']
+  t.test_files = FileList['tests/rfeedparser_test.rb']
   t.verbose = true
 end
 
