@@ -31,7 +31,7 @@ spec = Gem::Specification.new do |s|
   s.add_dependency('character-encodings', '>= 0.2.0')
   s.add_dependency('htmltools', '>= 1.10')
   s.add_dependency('htmlentities', '4.0.0')
-  s.add_dependency('mongrel', '>=1.0.1')
+  s.add_dependency('mongrel', '>=1.0.2')
   s.add_dependency('addressable', '>= 1.0.4')
 end
 

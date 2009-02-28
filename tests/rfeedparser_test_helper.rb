@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 require 'test/unit'
 require File.join(File.dirname(__FILE__),'../lib/rfeedparser')
 
@@ -195,61 +194,6 @@ class FeedParserTestRequestHandler < Mongrel::DirHandler
         end
       rescue => details
         STDERR.puts "Error sending file #{req_path}: #{details}"
-      end
-    end
-  end
-  
-  # Overriding the send_file in DirHandler for a goddamn one line bug fix. 
-  # Holy shit does this suck.  Changing `response.status = 200` to 
-  # `response.status ||= 200`.  Also, adding Mongrel:: in front of the Const
-  # because subclassing makes them break.
-  def send_file(req_path, request, response, header_only=false)
-
-    stat = File.stat(req_path)
-
-    # Set the last modified times as well and etag for all files
-    mtime = stat.mtime
-    # Calculated the same as apache, not sure how well the works on win32
-    etag = Mongrel::Const::ETAG_FORMAT % [mtime.to_i, stat.size, stat.ino]
-
-    modified_since = request.params[Mongrel::Const::HTTP_IF_MODIFIED_SINCE]
-    none_match = request.params[Mongrel::Const::HTTP_IF_NONE_MATCH]
-
-    # test to see if this is a conditional request, and test if
-    # the response would be identical to the last response
-    same_response = case
-                    when modified_since && !last_response_time = Time.httpdate(modified_since) rescue nil : false
-                    when modified_since && last_response_time > Time.now                                  : false
-                    when modified_since && mtime > last_response_time                                     : false
-                    when none_match     && none_match == '*'                                              : false
-                    when none_match     && !none_match.strip.split(/\s*,\s*/).include?(etag)              : false
-                    else modified_since || none_match  # validation successful if we get this far and at least one of the header exists
-                    end
-
-    header = response.header
-    header[Mongrel::Const::ETAG] = etag
-
-    if same_response
-      response.start(304) {}
-    else
-      # first we setup the headers and status then we do a very fast send on the socket directly
-      response.status ||= 200
-      header[Mongrel::Const::LAST_MODIFIED] = mtime.httpdate
-
-      # set the mime type from our map based on the ending
-      dot_at = req_path.rindex('.')
-      if dot_at
-        header[Mongrel::Const::CONTENT_TYPE] = MIME_TYPES[req_path[dot_at .. -1]] || @default_content_type
-      else
-        header[Mongrel::Const::CONTENT_TYPE] = @default_content_type
-      end
-
-      # send a status with out content length
-      response.send_status(stat.size)
-      response.send_header
-
-      if not header_only
-        response.send_file(req_path, stat.size < Mongrel::Const::CHUNK_SIZE * 2)
       end
     end
   end
